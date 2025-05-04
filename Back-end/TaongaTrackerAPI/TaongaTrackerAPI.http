@@ -1,0 +1,6 @@
+@TaongaTrackerAPI_HostAddress = http://localhost:5240
+
+GET {{TaongaTrackerAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
