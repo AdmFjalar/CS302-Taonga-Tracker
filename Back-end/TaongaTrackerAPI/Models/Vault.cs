@@ -22,10 +22,10 @@ public class Vault
         if (vaultDto.VaultItemDtos != null)
         {
             VaultItems = new List<VaultItem>();
-        }
-        foreach (var vaultItemDto in vaultDto.VaultItemDtos)
-        {
-            VaultItems.Add(new VaultItem(vaultItemDto));    
+            foreach (VaultItemDTO vaultItemDto in vaultDto.VaultItemDtos)
+            {
+                VaultItems.Add(new VaultItem(vaultItemDto));    
+            }
         }
 
         if (vaultDto.SharedWithIds != null)
@@ -35,6 +35,11 @@ public class Vault
         }
     }
 
+    public VaultItem? GetItemById(int vaultItemId)
+    {
+        return VaultItems?.Find(x => x.GetVaultItemId() == vaultItemId);   
+    }
+    
     public Exception? AddItem(VaultItem vaultItem)
     {
         try
@@ -57,11 +62,17 @@ public class Vault
             {
                 return new InvalidOperationException("Vault has no items");
             }
-            else if (VaultItems.Any(x => x.GetVaultItemId() != vaultItemId))
+
+            VaultItem? item = GetItemById(vaultItemId);
+
+            if (item != null)
+            {
+                VaultItems.Remove(item);
+            }
+            else
             {
                 return new InvalidOperationException("Vault item does not exist");
             }
-            VaultItems.Remove(VaultItems.Find(x => x.GetVaultItemId() == vaultItemId));
         }
         catch (Exception? e)
         {
@@ -70,6 +81,53 @@ public class Vault
 
         return null;
     }
+
+    public List<int>? GetItemIds()
+    {
+        return VaultItems?.Select(x => x.GetVaultItemId()).ToList();
+    }
     
+    public List<string>? GetSharedWithIds()
+    {
+        return SharedWithIds;
+    }
+
+    public string GetOwnerId()
+    {
+        return OwnerId;
+    }
     
+    public int GetVaultId()
+    {
+        return VaultId;
+    }
+
+    public Exception? ShareWith(string userId)
+    {
+        if (SharedWithIds != null && SharedWithIds.Contains(userId))
+        {
+            return new InvalidOperationException("User is already shared with this vault");
+        }
+
+        SharedWithIds ??= new List<string>();
+        SharedWithIds.Add(userId);
+        
+        return null;
+    }
+
+    public Exception? StopSharingWith(string userId)
+    {
+        if (SharedWithIds == null)
+        {
+            return new InvalidOperationException("Vault is not shared with anyone");
+        }
+        else if (!SharedWithIds.Contains(userId))
+        {
+            return new InvalidOperationException("User is not shared with this vault");
+        }
+        
+        SharedWithIds.Remove(userId);
+        
+        return null;   
+    }
 }
