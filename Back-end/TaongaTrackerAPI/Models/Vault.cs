@@ -1,6 +1,8 @@
+using TaongaTrackerAPI.Interfaces;
+
 namespace TaongaTrackerAPI.Models;
 
-public class Vault
+public class Vault : IShare
 {
     private int VaultId;
     private string OwnerId;
@@ -104,30 +106,11 @@ public class Vault
 
     public Exception? ShareWith(string userId)
     {
-        if (SharedWithIds != null && SharedWithIds.Contains(userId))
-        {
-            return new InvalidOperationException("User is already shared with this vault");
-        }
-
-        SharedWithIds ??= new List<string>();
-        SharedWithIds.Add(userId);
-        
-        return null;
+        return ((IShare)this).ShareWith(userId, ref SharedWithIds);
     }
 
     public Exception? StopSharingWith(string userId)
     {
-        if (SharedWithIds == null)
-        {
-            return new InvalidOperationException("Vault is not shared with anyone");
-        }
-        else if (!SharedWithIds.Contains(userId))
-        {
-            return new InvalidOperationException("User is not shared with this vault");
-        }
-        
-        SharedWithIds.Remove(userId);
-        
-        return null;   
+        return ((IShare)this).StopSharingWith(userId, ref SharedWithIds);
     }
 }

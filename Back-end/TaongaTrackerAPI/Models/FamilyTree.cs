@@ -1,6 +1,8 @@
+using TaongaTrackerAPI.Interfaces;
+
 namespace TaongaTrackerAPI.Models;
 
-public class FamilyTree
+public class FamilyTree : IShare
 {
     private int FamilyTreeId;
     private string OwnerUserId;
@@ -19,12 +21,18 @@ public class FamilyTree
     {
         FamilyTreeId = familyTreeDto.FamilyTreeId;
         OwnerUserId = familyTreeDto.OwnerUserId;
-        
-        foreach (FamilyMemberDto member in familyTreeDto.FamilyMembers)
+
+        if (familyTreeDto.SharedWithIds != null)
         {
             FamilyMembers ??= new List<FamilyMember>();
-            FamilyMembers.Add(new FamilyMember(member));
+            
+            foreach (FamilyMemberDto member in familyTreeDto.FamilyMembers)
+            {
+                FamilyMembers.Add(new FamilyMember(member));
+            }   
         }
+
+        SharedWithIds = familyTreeDto.SharedWithIds;
     }
 
     public Exception? AddMember(FamilyMember familyMember)
@@ -62,5 +70,15 @@ public class FamilyTree
         }
         
         return null;
+    }
+    
+    public Exception? ShareWith(string userId)
+    {
+        return ((IShare)this).ShareWith(userId, ref SharedWithIds);
+    }
+
+    public Exception? StopSharingWith(string userId)
+    {
+        return ((IShare)this).StopSharingWith(userId, ref SharedWithIds);
     }
 }
