@@ -39,7 +39,7 @@ namespace TaongaTrackerAPI.Models
             SharedWithIds = sharedWithIds;
         }
 
-        public VaultItem(VaultItemDTO vaultItemDto)
+        public VaultItem(VaultItemDto vaultItemDto)
         {
             if (UpdateDetails(vaultItemDto) != null)
             {
@@ -64,7 +64,7 @@ namespace TaongaTrackerAPI.Models
             return null;
         }
 
-        private Exception? UpdateDetails(VaultItemDTO updatedItem)
+        private Exception? UpdateDetails(VaultItemDto updatedItem)
         {
             try
             {

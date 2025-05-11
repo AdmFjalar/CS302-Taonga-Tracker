@@ -15,14 +15,14 @@ public class Vault
         SharedWithIds = sharedWithIds;
     }
 
-    public Vault(VaultDTO vaultDto)
+    public Vault(VaultDto vaultDto)
     {
         VaultId = vaultDto.VaultId;
         OwnerId = vaultDto.OwnerId;
         if (vaultDto.VaultItemDtos != null)
         {
             VaultItems = new List<VaultItem>();
-            foreach (VaultItemDTO vaultItemDto in vaultDto.VaultItemDtos)
+            foreach (VaultItemDto vaultItemDto in vaultDto.VaultItemDtos)
             {
                 VaultItems.Add(new VaultItem(vaultItemDto));    
             }

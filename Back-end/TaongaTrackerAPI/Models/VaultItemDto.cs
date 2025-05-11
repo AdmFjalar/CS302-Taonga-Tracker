@@ -1,6 +1,6 @@
 namespace TaongaTrackerAPI.Models;
 
-public record VaultItemDTO
+public record VaultItemDto
 {
     public int VaultItemId;
     public int CurrentOwnerId;
@@ -19,7 +19,7 @@ public record VaultItemDTO
     public List<string>? CraftType;
     public List<string>? SharedWithIds;
 
-    public VaultItemDTO(int vaultItemId, int currentOwnerId, string title, string currentOwnerUserId, int? creatorId = default, List<int>? previousOwnerIds = null, decimal? estimatedValue = default, DateTime? creationDate = default, DateTime? dateAcquired = default, string? creationPlace = null, string? itemType = null, string? photoUrl = null, string? description = null, List<string>? materials = null, List<string>? craftType = null, List<string>? sharedWithIds = null)
+    public VaultItemDto(int vaultItemId, int currentOwnerId, string title, string currentOwnerUserId, int? creatorId = default, List<int>? previousOwnerIds = null, decimal? estimatedValue = default, DateTime? creationDate = default, DateTime? dateAcquired = default, string? creationPlace = null, string? itemType = null, string? photoUrl = null, string? description = null, List<string>? materials = null, List<string>? craftType = null, List<string>? sharedWithIds = null)
     {
         VaultItemId = vaultItemId;
         CurrentOwnerId = currentOwnerId;
