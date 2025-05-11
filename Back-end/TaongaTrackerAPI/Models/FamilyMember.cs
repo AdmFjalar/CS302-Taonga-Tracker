@@ -21,7 +21,7 @@ public class FamilyMember
     private int? SpouseId;
     private string? RelationshipType;
 
-    public FamilyMember(int familyMemberId, string? userId = null, string? firstName = null, List<string>? middleNames = null, string? lastName = null, DateTime? dateOfBirth = default, DateTime? dateOfDeath = default, string? gender = null, List<int>? parentsIds = null, List<int>? childrenIds = null, string? occupation = null, string? placeOfBirth = null, string? placeOfDeath = null, string? nationality = null, string? religion = null, string? maritalStatus = null, int? spouseId = default, string? relationshipType = null)
+    public FamilyMember(int familyMemberId, string? userId = null, string? firstName = null, List<string>? middleNames = null, string? lastName = null, DateTime? dateOfBirth = null, DateTime? dateOfDeath = null, string? gender = null, List<int>? parentsIds = null, List<int>? childrenIds = null, string? occupation = null, string? placeOfBirth = null, string? placeOfDeath = null, string? nationality = null, string? religion = null, string? maritalStatus = null, int? spouseId = null, string? relationshipType = null)
     {
         FamilyMemberId = familyMemberId;
         UserId = userId;

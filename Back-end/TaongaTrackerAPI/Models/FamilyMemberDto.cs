@@ -21,7 +21,7 @@ public record FamilyMemberDto()
     public int? SpouseId;
     public string? RelationshipType;
 
-    public FamilyMemberDto(int familyMemberId, string? userId = null, string? firstName = null, List<string>? middleNames = null, string? lastName = null, DateTime? dateOfBirth = default, DateTime? dateOfDeath = default, string? gender = null, List<int>? parentsIds = null, List<int>? childrenIds = null, string? occupation = null, string? placeOfBirth = null, string? placeOfDeath = null, string? nationality = null, string? religion = null, string? maritalStatus = null, int? spouseId = default, string? relationshipType = null) : this()
+    public FamilyMemberDto(int familyMemberId, string? userId = null, string? firstName = null, List<string>? middleNames = null, string? lastName = null, DateTime? dateOfBirth = null, DateTime? dateOfDeath = null, string? gender = null, List<int>? parentsIds = null, List<int>? childrenIds = null, string? occupation = null, string? placeOfBirth = null, string? placeOfDeath = null, string? nationality = null, string? religion = null, string? maritalStatus = null, int? spouseId = null, string? relationshipType = null) : this()
     {
         FamilyMemberId = familyMemberId;
         UserId = userId;

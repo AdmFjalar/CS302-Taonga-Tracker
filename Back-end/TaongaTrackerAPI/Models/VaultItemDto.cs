@@ -19,7 +19,7 @@ public record VaultItemDto
     public List<string>? CraftType;
     public List<string>? SharedWithIds;
 
-    public VaultItemDto(int vaultItemId, int currentOwnerId, string title, string currentOwnerUserId, int? creatorId = default, List<int>? previousOwnerIds = null, decimal? estimatedValue = default, DateTime? creationDate = default, DateTime? dateAcquired = default, string? creationPlace = null, string? itemType = null, string? photoUrl = null, string? description = null, List<string>? materials = null, List<string>? craftType = null, List<string>? sharedWithIds = null)
+    public VaultItemDto(int vaultItemId, int currentOwnerId, string title, string currentOwnerUserId, int? creatorId = null, List<int>? previousOwnerIds = null, decimal? estimatedValue = null, DateTime? creationDate = null, DateTime? dateAcquired = null, string? creationPlace = null, string? itemType = null, string? photoUrl = null, string? description = null, List<string>? materials = null, List<string>? craftType = null, List<string>? sharedWithIds = null)
     {
         VaultItemId = vaultItemId;
         CurrentOwnerId = currentOwnerId;
