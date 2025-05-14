@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import "./Header.css"; 
 
 const Header = () => (
   <header className="header">
