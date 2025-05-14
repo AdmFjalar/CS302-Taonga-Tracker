@@ -17,11 +17,16 @@ namespace TaongaTrackerAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember(FamilyMemberDto familyMember)
+        public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember([FromBody] string jsonRequest)
         {
-            await _neo4jService.CreateFamilyMemberAsync(familyMember);
-            return Ok(familyMember);
+            await _neo4jService.CreateFamilyMemberFromJsonAsync(jsonRequest);
+            return Ok();
         }
+        // public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember(FamilyMemberDto familyMember)
+        // {
+        //     await _neo4jService.CreateFamilyMemberAsync(familyMember);
+        //     return Ok(familyMember);
+        // }
         
         [HttpGet]
         public async Task<ActionResult<List<FamilyMemberDto>>> GetAllFamilyMembers()

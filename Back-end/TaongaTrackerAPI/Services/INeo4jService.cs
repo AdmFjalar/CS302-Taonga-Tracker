@@ -5,6 +5,7 @@ namespace TaongaTrackerAPI.Services
     public interface INeo4jService
     {
         Task CreateFamilyMemberAsync(FamilyMemberDto familyMember);
-        Task<List<FamilyMemberDto>> GetAllFamilyMembersAsync();
+        Task CreateFamilyMemberFromJsonAsync(string jsonRequest);
+        Task<List<FamilyMemberDto>> GetAllFamilyMembersAsync(int skip = 0, int limit = 100);
     }
 }

@@ -1,5 +1,6 @@
 using Neo4j.Driver;
 using TaongaTrackerAPI.Models;
+using System.Text.Json;
 
 namespace TaongaTrackerAPI.Services
 {
@@ -9,57 +10,135 @@ namespace TaongaTrackerAPI.Services
 
         public Neo4jService(IConfiguration config)
         {
+            var host = config["Neo4j:Host"] ?? "localhost";
+            var boltPort = config["Neo4j:BoltPort"] ?? "7687";
+
+            // Validate configuration values
+            var username = config["Neo4j:Username"] ?? throw new ArgumentNullException("Neo4j:Username is missing in configuration.");
+            var password = config["Neo4j:Password"] ?? throw new ArgumentNullException("Neo4j:Password is missing in configuration.");
+
             _driver = GraphDatabase.Driver(
-                config["Neo4j:Uri"],
-                AuthTokens.Basic(config["Neo4j:Username"], config["Neo4j:Password"]));
+                $"bolt://{host}:{boltPort}",
+                AuthTokens.Basic(username, password));
+
         }
 
+        public async Task CreateFamilyMemberFromJsonAsync(string jsonRequest)
+        {
+            if (string.IsNullOrEmpty(jsonRequest))
+                throw new ArgumentException("JSON request cannot be empty");
+
+            Console.WriteLine($"Received JSON Request: {jsonRequest}");
+
+            try
+            {
+                var familyMember = JsonSerializer.Deserialize<FamilyMemberDto>(jsonRequest);
+                if (familyMember == null)
+                    throw new ArgumentException("Failed to deserialize family member data");
+
+                Console.WriteLine("Deserialized FamilyMemberDto successfully.");
+                await CreateFamilyMemberAsync(familyMember);
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"Invalid JSON Format Exception: {ex.Message}");
+                throw new ArgumentException("Invalid JSON format", ex);
+            }
+        }
+        
         public async Task CreateFamilyMemberAsync(FamilyMemberDto familyMember)
         {
-            var session = _driver.AsyncSession();
+            // Validation on input familyMember
+            ValidateFamilyMemberData(familyMember);
+
+            await using var session = _driver.AsyncSession();
             try
             {
                 await session.RunAsync(
-                    "CREATE (p:FamilyMember {userId: $userId, firstName: $firstName, middleNames: $middleNames, lastName: $lastName, dateOfBirth: $dateOfBirth, dateOfDeath: $dateOfDeath, gender: $gender, parentsIds: $parentsIds, childrenIds: $childrenIds, occupation: $occupation, placeOfBirth: $placeOfBirth, placeOfDeath: $placeOfDeath, nationality: $nationality, religion: $religion, maritalStatus: $maritalStatus, spouseId: $spouseId, relationshipType: $relationshipType})",
-                    new { userId = familyMember.UserId, firstName = familyMember.FirstName, middleNames = familyMember.MiddleNames, lastName = familyMember.LastName, dateOfBirth = familyMember.DateOfBirth, dateOfDeath = familyMember.DateOfDeath, gender = familyMember.Gender, parentsIds = familyMember.ParentsIds, childrenIds = familyMember.ChildrenIds, occupation = familyMember.Occupation, placeOfBirth = familyMember.PlaceOfBirth, placeOfDeath = familyMember.PlaceOfDeath, nationality = familyMember.Nationality, religion = familyMember.Religion, maritalStatus = familyMember.MaritalStatus, spouseId = familyMember.SpouseId, relationshipType = familyMember.RelationshipType });
+                    "CREATE (p:FamilyMember {userId: $userId, firstName: $firstName, middleNames: $middleNames, " +
+                    "lastName: $lastName, dateOfBirth: $dateOfBirth, dateOfDeath: $dateOfDeath, gender: $gender, " +
+                    "parentsIds: $parentsIds, childrenIds: $childrenIds, occupation: $occupation, placeOfBirth: $placeOfBirth, " +
+                    "placeOfDeath: $placeOfDeath, nationality: $nationality, religion: $religion, maritalStatus: $maritalStatus, " +
+                    "spouseId: $spouseId, relationshipType: $relationshipType})",
+                    new
+                    {
+                        userId = familyMember.UserId,
+                        firstName = familyMember.FirstName,
+                        middleNames = familyMember.MiddleNames,
+                        lastName = familyMember.LastName,
+                        dateOfBirth = familyMember.DateOfBirth,
+                        dateOfDeath = familyMember.DateOfDeath,
+                        gender = familyMember.Gender,
+                        parentsIds = familyMember.ParentsIds ?? new List<int>(),
+                        childrenIds = familyMember.ChildrenIds ?? new List<int>(),
+                        occupation = familyMember.Occupation,
+                        placeOfBirth = familyMember.PlaceOfBirth,
+                        placeOfDeath = familyMember.PlaceOfDeath,
+                        nationality = familyMember.Nationality,
+                        religion = familyMember.Religion,
+                        maritalStatus = familyMember.MaritalStatus,
+                        spouseId = familyMember.SpouseId,
+                        relationshipType = familyMember.RelationshipType
+                    });
             }
-            finally
+            catch (Neo4jException ex)
             {
-                await session.CloseAsync();
+                // Example of meaningful error logging
+                throw new ApplicationException("Error creating FamilyMember node in Neo4j.", ex);
             }
         }
 
-        public async Task<List<FamilyMemberDto>> GetAllFamilyMembersAsync()
+        public async Task<List<FamilyMemberDto>> GetAllFamilyMembersAsync(int skip = 0, int limit = 100)
         {
-            var session = _driver.AsyncSession();
+            await using var session = _driver.AsyncSession();
+
             try
             {
-                var result = await session.RunAsync("MATCH (p:FamilyMember) RETURN p");
-                return await result.ToListAsync(r => new FamilyMemberDto
+                // Added pagination with SKIP & LIMIT
+                var query = "MATCH (p:FamilyMember) RETURN p SKIP $skip LIMIT $limit";
+                var result = await session.RunAsync(query, new { skip, limit });
+
+                // Optimize INode extraction
+                return await result.ToListAsync(record =>
                 {
-                    UserId = r["p"].As<INode>()["userId"].As<string>(),
-                    FirstName = r["p"].As<INode>()["firstName"].As<string>(),
-                    MiddleNames = r["p"].As<INode>()["middleNames"].As<List<string>>(),
-                    LastName = r["p"].As<INode>()["lastName"].As<string>(),
-                    DateOfBirth = r["p"].As<INode>()["dateOfBirth"].As<DateTime?>(),
-                    DateOfDeath = r["p"].As<INode>()["dateOfDeath"].As<DateTime?>(),
-                    Gender = r["p"].As<INode>()["gender"].As<string>(),
-                    ParentsIds = r["p"].As<INode>()["parentsIds"].As<List<int>>(),
-                    ChildrenIds = r["p"].As<INode>()["childrenIds"].As<List<int>>(),
-                    Occupation = r["p"].As<INode>()["occupation"].As<string>(),
-                    PlaceOfBirth = r["p"].As<INode>()["placeOfBirth"].As<string>(),
-                    PlaceOfDeath = r["p"].As<INode>()["placeOfDeath"].As<string>(),
-                    Nationality = r["p"].As<INode>()["nationality"].As<string>(),
-                    Religion = r["p"].As<INode>()["religion"].As<string>(),
-                    MaritalStatus = r["p"].As<INode>()["maritalStatus"].As<string>(),
-                    SpouseId = r["p"].As<INode>()["spouseId"].As<int?>(),
-                    RelationshipType = r["p"].As<INode>()["relationshipType"].As<string>()
+                    var node = record["p"].As<INode>();
+                    return new FamilyMemberDto
+                    {
+                        UserId = node.Properties.ContainsKey("userId") ? node["userId"]?.As<string>() : null,
+                        FirstName = node.Properties.ContainsKey("firstName") ? node["firstName"]?.As<string>() : null,
+                        MiddleNames = node.Properties.ContainsKey("middleNames") ? node["middleNames"]?.As<List<string>>() ?? new List<string>() : null,
+                        LastName = node.Properties.ContainsKey("lastName") ? node["lastName"]?.As<string>() : null,
+                        DateOfBirth = node.Properties.ContainsKey("dateOfBirth") ? node["dateOfBirth"]?.As<DateTime?>() : null,
+                        DateOfDeath = node.Properties.ContainsKey("dateOfDeath") ? node["dateOfDeath"]?.As<DateTime?>() : null,
+                        Gender = node.Properties.ContainsKey("gender") ? node["gender"]?.As<string>() : null,
+                        ParentsIds = node.Properties.ContainsKey("parentsIds") ? node["parentsIds"]?.As<List<int>>() ?? new List<int>() : null,
+                        ChildrenIds = node.Properties.ContainsKey("childrenIds") ? node["childrenIds"]?.As<List<int>>() ?? new List<int>() : null,
+                        Occupation = node.Properties.ContainsKey("occupation") ? node["occupation"]?.As<string>() : null,
+                        PlaceOfBirth = node.Properties.ContainsKey("placeOfBirth") ? node["placeOfBirth"]?.As<string>() : null,
+                        PlaceOfDeath = node.Properties.ContainsKey("placeOfDeath") ? node["placeOfDeath"]?.As<string>() : null,
+                        Nationality = node.Properties.ContainsKey("nationality") ? node["nationality"]?.As<string>() : null,
+                        Religion = node.Properties.ContainsKey("religion") ? node["religion"]?.As<string>() : null,
+                        MaritalStatus = node.Properties.ContainsKey("maritalStatus") ? node["maritalStatus"]?.As<string>() : null,
+                        SpouseId = node.Properties.ContainsKey("spouseId") ? node["spouseId"]?.As<int?>() : null,
+                        RelationshipType = node.Properties.ContainsKey("relationshipType") ? node["relationshipType"]?.As<string>() : null
+                    };
                 });
             }
-            finally
+            catch (Neo4jException ex)
             {
-                await session.CloseAsync();
+                // Example of meaningful error logging
+                throw new ApplicationException("Error retrieving FamilyMember nodes from Neo4j.", ex);
             }
+        }
+
+        private static void ValidateFamilyMemberData(FamilyMemberDto familyMember)
+        {
+            Console.WriteLine(familyMember);
+            if (string.IsNullOrEmpty(familyMember.FirstName))
+                throw new ArgumentException("FirstName is required.");
+            if (string.IsNullOrEmpty(familyMember.LastName))
+                throw new ArgumentException("LastName is required.");
+            // Additional validation can be included as needed
         }
 
         public void Dispose() => _driver?.Dispose();

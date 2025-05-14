@@ -2,26 +2,45 @@ namespace TaongaTrackerAPI.Models;
 
 public record FamilyMemberDto()
 {
-    public int FamilyMemberId;
-    public string? UserId;
-    public string? FirstName;
-    public List<string>? MiddleNames;
-    public string? LastName;
-    public DateTime? DateOfBirth;
-    public DateTime? DateOfDeath;
-    public string? Gender;
-    public List<int>? ParentsIds;
-    public List<int>? ChildrenIds;
-    public string? Occupation;
-    public string? PlaceOfBirth;
-    public string? PlaceOfDeath;
-    public string? Nationality;
-    public string? Religion;
-    public string? MaritalStatus;
-    public int? SpouseId;
-    public string? RelationshipType;
+    public int FamilyMemberId { get; set; }
+    public string? UserId { get; set; }
+    public string? FirstName { get; set; }
+    public List<string>? MiddleNames { get; set; }
+    public string? LastName { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+    public DateTime? DateOfDeath { get; set; }
+    public string? Gender { get; set; }
+    public List<int>? ParentsIds { get; set; }
+    public List<int>? ChildrenIds { get; set; }
+    public string? Occupation { get; set; }
+    public string? PlaceOfBirth { get; set; }
+    public string? PlaceOfDeath { get; set; }
+    public string? Nationality { get; set; }
+    public string? Religion { get; set; }
+    public string? MaritalStatus { get; set; }
+    public int? SpouseId { get; set; }
+    public string? RelationshipType { get; set; }
 
-    public FamilyMemberDto(int familyMemberId, string? userId = null, string? firstName = null, List<string>? middleNames = null, string? lastName = null, DateTime? dateOfBirth = null, DateTime? dateOfDeath = null, string? gender = null, List<int>? parentsIds = null, List<int>? childrenIds = null, string? occupation = null, string? placeOfBirth = null, string? placeOfDeath = null, string? nationality = null, string? religion = null, string? maritalStatus = null, int? spouseId = null, string? relationshipType = null) : this()
+    public FamilyMemberDto(
+        int familyMemberId, 
+        string? userId = null, 
+        string? firstName = null, 
+        List<string>? middleNames = null, 
+        string? lastName = null, 
+        DateTime? dateOfBirth = null, 
+        DateTime? dateOfDeath = null, 
+        string? gender = null, 
+        List<int>? parentsIds = null, 
+        List<int>? childrenIds = null, 
+        string? occupation = null, 
+        string? placeOfBirth = null, 
+        string? placeOfDeath = null, 
+        string? nationality = null, 
+        string? religion = null, 
+        string? maritalStatus = null, 
+        int? spouseId = null, 
+        string? relationshipType = null
+    ) : this()
     {
         FamilyMemberId = familyMemberId;
         UserId = userId;
