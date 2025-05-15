@@ -13,7 +13,6 @@ namespace TaongaTrackerAPI.Services
             var host = config["Neo4j:Host"] ?? "localhost";
             var boltPort = config["Neo4j:BoltPort"] ?? "7687";
 
-            // Validate configuration values
             var username = config["Neo4j:Username"] ?? throw new ArgumentNullException("Neo4j:Username is missing in configuration.");
             var password = config["Neo4j:Password"] ?? throw new ArgumentNullException("Neo4j:Password is missing in configuration.");
 
@@ -48,7 +47,6 @@ namespace TaongaTrackerAPI.Services
         
         public async Task CreateFamilyMemberAsync(FamilyMemberDto familyMember)
         {
-            // Validation on input familyMember
             ValidateFamilyMemberData(familyMember);
 
             await using var session = _driver.AsyncSession();
@@ -83,7 +81,6 @@ namespace TaongaTrackerAPI.Services
             }
             catch (Neo4jException ex)
             {
-                // Example of meaningful error logging
                 throw new ApplicationException("Error creating FamilyMember node in Neo4j.", ex);
             }
         }
@@ -94,11 +91,9 @@ namespace TaongaTrackerAPI.Services
 
             try
             {
-                // Added pagination with SKIP & LIMIT
                 var query = "MATCH (p:FamilyMember) RETURN p SKIP $skip LIMIT $limit";
                 var result = await session.RunAsync(query, new { skip, limit });
 
-                // Optimize INode extraction
                 return await result.ToListAsync(record =>
                 {
                     var node = record["p"].As<INode>();
@@ -126,8 +121,42 @@ namespace TaongaTrackerAPI.Services
             }
             catch (Neo4jException ex)
             {
-                // Example of meaningful error logging
                 throw new ApplicationException("Error retrieving FamilyMember nodes from Neo4j.", ex);
+            }
+        }
+        
+        public async Task CreateFamilyTreeFromJsonAsync(string jsonRequest)
+        {
+            if (string.IsNullOrEmpty(jsonRequest))
+                throw new ArgumentException("JSON request cannot be empty");
+            
+        }
+
+        public async Task<List<FamilyTreeDto>> GetAllFamilyTreesAsync()
+        {
+            await using var session = _driver.AsyncSession();
+
+            try
+            {
+                var query = "MATCH (p:FamilyTree) RETURN ID(p) as nodeId, p";
+                var result = await session.RunAsync(query);
+        
+                return await result.ToListAsync(record =>
+                {
+                    var node = record["p"].As<INode>();
+                    var nodeId = record["nodeId"].As<long>();
+                    return new FamilyTreeDto
+                    {
+                        FamilyTreeId = (int)nodeId,
+                        OwnerUserId = node["ownerUserId"]?.As<string>() ?? string.Empty,
+                        FamilyMembers = node["familyMembers"]?.As<List<FamilyMemberDto>>() ?? new List<FamilyMemberDto>(),
+                        SharedWithIds = node["sharedWithIds"]?.As<List<string>>() ?? new List<string>()
+                    };
+                });
+            }
+            catch (Exception e)
+            {
+                throw new ApplicationException("Error retrieving FamilyTree nodes from Neo4j.", e);
             }
         }
 
@@ -138,7 +167,6 @@ namespace TaongaTrackerAPI.Services
                 throw new ArgumentException("FirstName is required.");
             if (string.IsNullOrEmpty(familyMember.LastName))
                 throw new ArgumentException("LastName is required.");
-            // Additional validation can be included as needed
         }
 
         public void Dispose() => _driver?.Dispose();
