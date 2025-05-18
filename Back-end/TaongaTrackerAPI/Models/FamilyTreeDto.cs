@@ -2,12 +2,12 @@ namespace TaongaTrackerAPI.Models;
 
 public record FamilyTreeDto()
 {
-    public int FamilyTreeId;
-    public string OwnerUserId;
-    public List<FamilyMemberDto>? FamilyMembers;
-    public List<string>? SharedWithIds;
+    public string FamilyTreeId { get; set; }
+    public string OwnerUserId { get; set; }
+    public List<FamilyMemberDto>? FamilyMembers { get; set; }
+    public List<string>? SharedWithIds { get; set; }
     
-    public FamilyTreeDto(int familyTreeId, string ownerUserId, List<FamilyMemberDto>? familyMembers = null, List<string>? sharedWithIds = null) : this()
+    public FamilyTreeDto(string familyTreeId, string ownerUserId, List<FamilyMemberDto>? familyMembers = null, List<string>? sharedWithIds = null) : this()
     {
         FamilyTreeId = familyTreeId;
         OwnerUserId = ownerUserId;

@@ -4,12 +4,12 @@ namespace TaongaTrackerAPI.Models;
 
 public class FamilyTree : IShare
 {
-    private int FamilyTreeId;
+    private string FamilyTreeId;
     private string OwnerUserId;
     private List<FamilyMember>? FamilyMembers;
     private List<string>? SharedWithIds;
     
-    public FamilyTree(int familyTreeId, string ownerUserId, List<FamilyMember>? familyMembers = null, List<string>? sharedWithIds = null)
+    public FamilyTree(string familyTreeId, string ownerUserId, List<FamilyMember>? familyMembers = null, List<string>? sharedWithIds = null)
     {
         FamilyTreeId = familyTreeId;
         OwnerUserId = ownerUserId;
@@ -50,7 +50,7 @@ public class FamilyTree : IShare
         return null;
     }
 
-    public Exception? RemoveMember(int familyMemberId)
+    public Exception? RemoveMember(string familyMemberId)
     {
         if (FamilyMembers == null)
         {

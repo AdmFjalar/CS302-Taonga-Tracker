@@ -9,29 +9,29 @@ namespace TaongaTrackerAPI.Controllers
     [Route("api/[controller]")]
     public class FamilyTreeController : ControllerBase
     {
-        private readonly INeo4jService _neo4jService;
+        private readonly INeo4jService Neo4jService;
         
         public FamilyTreeController(INeo4jService neo4jService)
         {
-            _neo4jService = neo4jService;
+            Neo4jService = neo4jService;
         }
 
         [HttpPost]
         public async Task<ActionResult<FamilyMemberDto>> CreateFamilyTreeFromJsonAsync([FromBody] string jsonRequest)
         {
-            await _neo4jService.CreateFamilyTreeFromJsonAsync(jsonRequest);
+            await Neo4jService.CreateFamilyTreeFromJsonAsync(jsonRequest);
             return Ok();
         }
         // public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember(FamilyMemberDto familyMember)
         // {
-        //     await _neo4jService.CreateFamilyMemberAsync(familyMember);
+        //     await Neo4jService.CreateFamilyMemberAsync(familyMember);
         //     return Ok(familyMember);
         // }
         
         [HttpGet]
         public async Task<ActionResult<List<FamilyTreeDto>>> GetAllFamilyTrees()
         {
-            var familyTrees = await _neo4jService.GetAllFamilyTreesAsync();
+            var familyTrees = await Neo4jService.GetAllFamilyTreesAsync();
             return Ok(familyTrees);
         }
     }   

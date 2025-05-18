@@ -2,7 +2,7 @@ namespace TaongaTrackerAPI.Models;
 
 public class FamilyMember
 {
-    private int FamilyMemberId;
+    private string FamilyMemberId;
     private string? UserId;
     private string? FirstName;
     private List<string>? MiddleNames;
@@ -10,8 +10,8 @@ public class FamilyMember
     private DateTime? DateOfBirth;
     private DateTime? DateOfDeath;
     private string? Gender;
-    private List<int>? ParentsIds;
-    private List<int>? ChildrenIds;
+    private List<string>? ParentsIds;
+    private List<string>? ChildrenIds;
     private string? Occupation;
     private string? PlaceOfBirth;
     private string? PlaceOfDeath;
@@ -21,7 +21,7 @@ public class FamilyMember
     private int? SpouseId;
     private string? RelationshipType;
 
-    public FamilyMember(int familyMemberId, string? userId = null, string? firstName = null, List<string>? middleNames = null, string? lastName = null, DateTime? dateOfBirth = null, DateTime? dateOfDeath = null, string? gender = null, List<int>? parentsIds = null, List<int>? childrenIds = null, string? occupation = null, string? placeOfBirth = null, string? placeOfDeath = null, string? nationality = null, string? religion = null, string? maritalStatus = null, int? spouseId = null, string? relationshipType = null)
+    public FamilyMember(string familyMemberId, string? userId = null, string? firstName = null, List<string>? middleNames = null, string? lastName = null, DateTime? dateOfBirth = null, DateTime? dateOfDeath = null, string? gender = null, List<string>? parentsIds = null, List<string>? childrenIds = null, string? occupation = null, string? placeOfBirth = null, string? placeOfDeath = null, string? nationality = null, string? religion = null, string? maritalStatus = null, int? spouseId = null, string? relationshipType = null)
     {
         FamilyMemberId = familyMemberId;
         UserId = userId;
@@ -65,7 +65,7 @@ public class FamilyMember
         RelationshipType = familyMemberDto.RelationshipType;
     }
     
-    public int GetFamilyMemberId() => FamilyMemberId;
+    public string GetFamilyMemberId() => FamilyMemberId;
     
     public string? GetUserId() => UserId;
     public void SetUserId(string? value) => UserId = value;
@@ -88,11 +88,11 @@ public class FamilyMember
     public string? GetGender() => Gender;
     public void SetGender(string? value) => Gender = value;
     
-    public List<int>? GetParentsIds() => ParentsIds;
-    public void SetParentsIds(List<int>? value) => ParentsIds = value;
+    public List<string>? GetParentsIds() => ParentsIds;
+    public void SetParentsIds(List<string>? value) => ParentsIds = value;
     
-    public List<int>? GetChildrenIds() => ChildrenIds;
-    public void SetChildrenIds(List<int>? value) => ChildrenIds = value;
+    public List<string>? GetChildrenIds() => ChildrenIds;
+    public void SetChildrenIds(List<string>? value) => ChildrenIds = value;
     
     public string? GetOccupation() => Occupation;
     public void SetOccupation(string? value) => Occupation = value;

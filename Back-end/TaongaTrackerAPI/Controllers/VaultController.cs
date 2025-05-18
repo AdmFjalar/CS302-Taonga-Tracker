@@ -9,11 +9,11 @@ namespace TaongaTrackerAPI.Controllers
     [Route("api/[controller]")]
     public class VaultController : ControllerBase
     {
-        private readonly INeo4jService _neo4jService;
+        private readonly INeo4jService Neo4jService;
         
         public VaultController(INeo4jService neo4jService)
         {
-            _neo4jService = neo4jService;
+            Neo4jService = neo4jService;
         }
         
         

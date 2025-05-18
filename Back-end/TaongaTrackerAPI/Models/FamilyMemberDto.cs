@@ -2,7 +2,7 @@ namespace TaongaTrackerAPI.Models;
 
 public record FamilyMemberDto()
 {
-    public int FamilyMemberId { get; set; }
+    public string FamilyMemberId { get; set; }
     public string? UserId { get; set; }
     public string? FirstName { get; set; }
     public List<string>? MiddleNames { get; set; }
@@ -10,8 +10,8 @@ public record FamilyMemberDto()
     public DateTime? DateOfBirth { get; set; }
     public DateTime? DateOfDeath { get; set; }
     public string? Gender { get; set; }
-    public List<int>? ParentsIds { get; set; }
-    public List<int>? ChildrenIds { get; set; }
+    public List<string>? ParentsIds { get; set; }
+    public List<string>? ChildrenIds { get; set; }
     public string? Occupation { get; set; }
     public string? PlaceOfBirth { get; set; }
     public string? PlaceOfDeath { get; set; }
@@ -22,7 +22,7 @@ public record FamilyMemberDto()
     public string? RelationshipType { get; set; }
 
     public FamilyMemberDto(
-        int familyMemberId, 
+        string familyMemberId, 
         string? userId = null, 
         string? firstName = null, 
         List<string>? middleNames = null, 
@@ -30,8 +30,8 @@ public record FamilyMemberDto()
         DateTime? dateOfBirth = null, 
         DateTime? dateOfDeath = null, 
         string? gender = null, 
-        List<int>? parentsIds = null, 
-        List<int>? childrenIds = null, 
+        List<string>? parentsIds = null, 
+        List<string>? childrenIds = null, 
         string? occupation = null, 
         string? placeOfBirth = null, 
         string? placeOfDeath = null, 
