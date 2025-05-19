@@ -7,6 +7,7 @@ namespace TaongaTrackerAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class FamilyTreeController : ControllerBase
     {
         private readonly INeo4jService Neo4jService;
