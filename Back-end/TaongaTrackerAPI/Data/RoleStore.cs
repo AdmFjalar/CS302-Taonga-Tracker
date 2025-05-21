@@ -1,42 +1,23 @@
 using Microsoft.AspNetCore.Identity;
 using Neo4j.Driver;
 using TaongaTrackerAPI.Models;
+using TaongaTrackerAPI.Services;
 
 namespace TaongaTrackerAPI.Data;
 
 public class RoleStore : IRoleStore<ApplicationRole>
 {
-    private readonly IDriver _driver;
+    private readonly INeo4jService Neo4jService;
 
-    public RoleStore(IDriver driver)
+    public RoleStore(INeo4jService neo4jService)
     {
-        _driver = driver;
+        Neo4jService = neo4jService;
     }
 
     public async Task<IdentityResult> CreateAsync(ApplicationRole role, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = _driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-                CREATE (r:Role {Id: $Id, Name: $Name, NormalizedName: $NormalizedName})
-                RETURN r";
-
-            await session.RunAsync(query, new
-            {
-                role.Id,
-                role.Name,
-                role.NormalizedName
-            });
-
-            return IdentityResult.Success;
-        }
-        catch (Exception ex)
-        {
-            return IdentityResult.Failed(new IdentityError { Description = ex.Message });
-        }
+        var result = await Neo4jService.CreateRoleAsync(role, cancellationToken);
+        return result;
     }
 
     public Task<IdentityResult> DeleteAsync(ApplicationRole role, CancellationToken cancellationToken)

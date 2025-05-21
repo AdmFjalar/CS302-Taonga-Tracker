@@ -17,19 +17,12 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
         options.Password.RequireUppercase = false;
         options.Password.RequireLowercase = true;
     })
-    .AddUserStore<UserStore>()  // Custom user store
-    .AddRoleStore<RoleStore>()  // Custom role store
+    .AddUserStore<UserStore>()
+    .AddRoleStore<RoleStore>()
     .AddDefaultTokenProviders();
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = "Identity.Application";
-    options.DefaultChallengeScheme = "Identity.Application";
-}).AddCookie("Identity.Application");
 
 builder.Services.AddAuthorization();
 
-// Register your custom services (example: INeo4jService implementation)
 builder.Services.AddScoped<INeo4jService, Neo4jService>();
 
 var app = builder.Build();

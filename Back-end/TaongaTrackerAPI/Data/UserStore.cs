@@ -1,86 +1,29 @@
 using Microsoft.AspNetCore.Identity;
 using Neo4j.Driver;
 using TaongaTrackerAPI.Models;
+using TaongaTrackerAPI.Services;
 
 namespace TaongaTrackerAPI.Data;
 
 public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>
 {
-    private readonly IDriver _driver;
+    private readonly INeo4jService Neo4jService;
 
-    public UserStore(IDriver driver)
+    public UserStore(INeo4jService neo4JService)
     {
-        _driver = driver;
+        Neo4jService = neo4JService;
     }
 
     public async Task<IdentityResult> CreateAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = _driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-                CREATE (u:User {Id: $Id, UserName: $UserName, NormalizedUserName: $NormalizedUserName, 
-                                Email: $Email, NormalizedEmail: $NormalizedEmail, 
-                                PasswordHash: $PasswordHash, SecurityStamp: $SecurityStamp})
-                RETURN u";
-
-            await session.RunAsync(query, new
-            {
-                user.Id,
-                user.UserName,
-                user.NormalizedUserName,
-                user.Email,
-                user.NormalizedEmail,
-                user.PasswordHash,
-                user.SecurityStamp
-            });
-
-            return IdentityResult.Success;
-        }
-        catch (Exception ex)
-        {
-            return IdentityResult.Failed(new IdentityError { Description = ex.Message });
-        }
+        var result = await Neo4jService.CreateUserAsync(user, cancellationToken);
+        return result;
     }
 
     public async Task<ApplicationUser> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = _driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-                MATCH (u:User)
-                WHERE u.NormalizedEmail = $NormalizedEmail
-                RETURN u";
-            var result = await session.RunAsync(query, new { normalizedEmail });
-
-            var record = await result.SingleAsync();
-            if (record == null) return null;
-
-            var node = record["u"].As<INode>();
-            return new ApplicationUser
-            {
-                Id = node.ElementId,
-                Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
-                FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : null,
-                MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : null,
-                LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : null,
-                NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail") ? node["NormalizedEmail"].As<string>() : null,
-                UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
-                NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName") ? node["NormalizedUserName"].As<string>() : null,
-                PasswordHash = node.Properties.ContainsKey("PasswordHash") ? node["PasswordHash"].As<string>() : null,
-                SecurityStamp = node.Properties.ContainsKey("SecurityStamp") ? node["SecurityStamp"].As<string>() : null
-            };
-
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
+        var user = await Neo4jService.FindUserByEmailAsync(normalizedEmail, cancellationToken);
+        return user;
     }
 
     public Task<string> GetPasswordHashAsync(ApplicationUser user, CancellationToken cancellationToken)
@@ -143,158 +86,29 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
     
     public async Task<IdentityResult> UpdateAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = _driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-            MATCH (u:User {Id: $Id})
-            SET u.UserName = $UserName,
-                u.NormalizedUserName = $NormalizedUserName,
-                u.Email = $Email,
-                u.NormalizedEmail = $NormalizedEmail,
-                u.PasswordHash = $PasswordHash,
-                u.SecurityStamp = $SecurityStamp,
-                u.FirstName = $FirstName,
-                u.MiddleNames = $MiddleNames,
-                u.LastName = $LastName
-            RETURN u";
-
-            var result = await session.RunAsync(query, new
-            {
-                user.Id,
-                user.UserName,
-                user.NormalizedUserName,
-                user.Email,
-                user.NormalizedEmail,
-                user.PasswordHash,
-                user.SecurityStamp,
-                user.FirstName,
-                user.MiddleNames,
-                user.LastName
-            });
-
-            // If no records were affected, return a failure result.
-            if (!await result.FetchAsync())
-            {
-                return IdentityResult.Failed(new IdentityError { Description = "User not found or update failed." });
-            }
-
-            return IdentityResult.Success;
-        }
-        catch (Exception e)
-        {
-            return IdentityResult.Failed(new IdentityError { Description = e.Message });
-        }
+        var result = await Neo4jService.UpdateUserAsync(user, cancellationToken);
+        return result;
     }
 
     public async Task<IdentityResult> DeleteAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = _driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-            MATCH (u:User {Id: $Id})
-            DELETE u";
-
-        await session.RunAsync(query, new
-        {
-            user.Id
-        });
-
-        return IdentityResult.Success;
-        }
-        catch (Exception e)
-        {
-            return IdentityResult.Failed(new IdentityError { Description = e.Message });
-        }
+        var result = await Neo4jService.DeleteUserAsync(user, cancellationToken);
+        return result;
     }
 
     public async Task<ApplicationUser?> FindByIdAsync(string userId, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = _driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-            MATCH (u:User)
-            WHERE u.elementId = $ElementId
-            RETURN u";
-
-        var result = await session.RunAsync(query, new { ElementId = userId });
-        var record = await result.SingleAsync();
-
-        if (record == null)
-        {
-            return null;
-        }
-
-        var node = record["u"].As<INode>();
-        return new ApplicationUser
-        {
-            Id = node.ElementId, // Using ElementId
-            FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : null,
-            MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : null,
-            LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : null,
-            Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
-            NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail") ? node["NormalizedEmail"].As<string>() : null,
-            UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
-            NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName") ? node["NormalizedUserName"].As<string>() : null,
-            PasswordHash = node.Properties.ContainsKey("PasswordHash") ? node["PasswordHash"].As<string>() : null,
-            SecurityStamp = node.Properties.ContainsKey("SecurityStamp") ? node["SecurityStamp"].As<string>() : null
-        };
-    }
-    catch (Exception ex)
-    {
-        // Handle or log error if needed
-        throw new Exception($"Error occurred while finding user by ID: {ex.Message}", ex);
-    }
+        var user = await Neo4jService.FindUserByIdAsync(userId, cancellationToken);
+        return user;
 }
 
     public async Task<ApplicationUser?> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = _driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-                MATCH (u:User)
-                WHERE u.NormalizedUserName = $NormalizedUserName
-                RETURN u";
-            var result = await session.RunAsync(query, new { normalizedUserName });
-
-            var record = await result.SingleAsync();
-            if (record == null) return null;
-
-            var node = record["u"].As<INode>();
-            return new ApplicationUser
-            {
-                Id = node.ElementId,
-                Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
-                FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : null,
-                MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : null,
-                LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : null,
-                NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail") ? node["NormalizedEmail"].As<string>() : null,
-                UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
-                NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName") ? node["NormalizedUserName"].As<string>() : null,
-                PasswordHash = node.Properties.ContainsKey("PasswordHash") ? node["PasswordHash"].As<string>() : null,
-                SecurityStamp = node.Properties.ContainsKey("SecurityStamp") ? node["SecurityStamp"].As<string>() : null
-            };
-
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
+       var user = await Neo4jService.FindUserByNameAsync(normalizedUserName, cancellationToken);
+       return user;
     }
 
     public void Dispose()
     {
-        // Dispose resources if needed
     }
 }

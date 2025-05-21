@@ -1,6 +1,7 @@
 using Neo4j.Driver;
 using TaongaTrackerAPI.Models;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 
 namespace TaongaTrackerAPI.Services
 {
@@ -301,6 +302,253 @@ public async Task<List<FamilyTreeDto>> GetAllFamilyTreesAsync()
 
     return familyTrees;
 }
+
+public async Task<IdentityResult> CreateUserAsync(ApplicationUser user, CancellationToken cancellationToken)
+{
+    cancellationToken.ThrowIfCancellationRequested();
+    await using var session = Driver.AsyncSession();
+
+    try
+    {
+        var query = @"
+                CREATE (u:User {Id: $Id, UserName: $UserName, NormalizedUserName: $NormalizedUserName, 
+                                Email: $Email, NormalizedEmail: $NormalizedEmail, 
+                                PasswordHash: $PasswordHash, SecurityStamp: $SecurityStamp})
+                RETURN u";
+
+        await session.RunAsync(query, new
+        {
+            user.Id,
+            user.UserName,
+            user.NormalizedUserName,
+            user.Email,
+            user.NormalizedEmail,
+            user.PasswordHash,
+            user.SecurityStamp
+        });
+
+        return IdentityResult.Success;
+    }
+    catch (Exception e)
+    {
+        return IdentityResult.Failed(new IdentityError { Description = e.Message });
+    }
+}
+
+public async Task<ApplicationUser> FindUserByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+{
+    cancellationToken.ThrowIfCancellationRequested();
+    await using var session = Driver.AsyncSession();
+
+    try
+    {
+        var query = @"
+                MATCH (u:User)
+                WHERE u.NormalizedEmail = $NormalizedEmail
+                RETURN u";
+        var result = await session.RunAsync(query, new { normalizedEmail });
+
+        var record = await result.SingleAsync();
+        if (record == null) return null;
+
+        var node = record["u"].As<INode>();
+        return new ApplicationUser
+        {
+            Id = node.ElementId,
+            Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
+            FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : null,
+            MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : null,
+            LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : null,
+            NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail") ? node["NormalizedEmail"].As<string>() : null,
+            UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
+            NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName") ? node["NormalizedUserName"].As<string>() : null,
+            PasswordHash = node.Properties.ContainsKey("PasswordHash") ? node["PasswordHash"].As<string>() : null,
+            SecurityStamp = node.Properties.ContainsKey("SecurityStamp") ? node["SecurityStamp"].As<string>() : null
+        };
+
+    }
+    catch (Exception e)
+    {
+        throw new Exception(e.Message);
+    }
+}
+
+public async Task<IdentityResult> UpdateUserAsync(ApplicationUser user, CancellationToken cancellationToken)
+{
+    cancellationToken.ThrowIfCancellationRequested();
+    await using var session = Driver.AsyncSession();
+
+    try
+    {
+        var query = @"
+            MATCH (u:User {Id: $Id})
+            SET u.UserName = $UserName,
+                u.NormalizedUserName = $NormalizedUserName,
+                u.Email = $Email,
+                u.NormalizedEmail = $NormalizedEmail,
+                u.PasswordHash = $PasswordHash,
+                u.SecurityStamp = $SecurityStamp,
+                u.FirstName = $FirstName,
+                u.MiddleNames = $MiddleNames,
+                u.LastName = $LastName
+            RETURN u";
+
+        var result = await session.RunAsync(query, new
+        {
+            user.Id,
+            user.UserName,
+            user.NormalizedUserName,
+            user.Email,
+            user.NormalizedEmail,
+            user.PasswordHash,
+            user.SecurityStamp,
+            user.FirstName,
+            user.MiddleNames,
+            user.LastName
+        });
+
+        if (!await result.FetchAsync())
+        {
+            return IdentityResult.Failed(new IdentityError { Description = "User not found or update failed." });
+        }
+
+        return IdentityResult.Success;
+    }
+    catch (Exception e)
+    {
+        return IdentityResult.Failed(new IdentityError { Description = e.Message });
+    }
+}
+
+    public async Task<IdentityResult> DeleteUserAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+            MATCH (u:User {Id: $Id})
+            DELETE u";
+
+        await session.RunAsync(query, new
+        {
+            user.Id
+        });
+
+        return IdentityResult.Success;
+        }
+        catch (Exception e)
+        {
+            return IdentityResult.Failed(new IdentityError { Description = e.Message });
+        }
+    }
+
+    public async Task<ApplicationUser?> FindUserByIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+            MATCH (u:User)
+            WHERE u.elementId = $ElementId
+            RETURN u";
+
+        var result = await session.RunAsync(query, new { ElementId = userId });
+        var record = await result.SingleAsync();
+
+        if (record == null)
+        {
+            return null;
+        }
+
+        var node = record["u"].As<INode>();
+        return new ApplicationUser
+        {
+            Id = node.ElementId,
+            FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : null,
+            MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : null,
+            LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : null,
+            Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
+            NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail") ? node["NormalizedEmail"].As<string>() : null,
+            UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
+            NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName") ? node["NormalizedUserName"].As<string>() : null,
+            PasswordHash = node.Properties.ContainsKey("PasswordHash") ? node["PasswordHash"].As<string>() : null,
+            SecurityStamp = node.Properties.ContainsKey("SecurityStamp") ? node["SecurityStamp"].As<string>() : null
+        };
+    }
+    catch (Exception ex)
+    {
+        // Handle or log error if needed
+        throw new Exception($"Error occurred while finding user by ID: {ex.Message}", ex);
+    }
+}
+
+    public async Task<ApplicationUser?> FindUserByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+                MATCH (u:User)
+                WHERE u.NormalizedUserName = $NormalizedUserName
+                RETURN u";
+            var result = await session.RunAsync(query, new { normalizedUserName });
+
+            var record = await result.SingleAsync();
+            if (record == null) return null;
+
+            var node = record["u"].As<INode>();
+            return new ApplicationUser
+            {
+                Id = node.ElementId,
+                Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
+                FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : null,
+                MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : null,
+                LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : null,
+                NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail") ? node["NormalizedEmail"].As<string>() : null,
+                UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
+                NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName") ? node["NormalizedUserName"].As<string>() : null,
+                PasswordHash = node.Properties.ContainsKey("PasswordHash") ? node["PasswordHash"].As<string>() : null,
+                SecurityStamp = node.Properties.ContainsKey("SecurityStamp") ? node["SecurityStamp"].As<string>() : null
+            };
+
+        }
+        catch (Exception e)
+        {
+            throw new Exception(e.Message);
+        }
+    }
+    
+    public async Task<IdentityResult> CreateRoleAsync(ApplicationRole role, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+                CREATE (r:Role {Id: $Id, Name: $Name, NormalizedName: $NormalizedName})
+                RETURN r";
+
+            await session.RunAsync(query, new
+            {
+                role.Id,
+                role.Name,
+                role.NormalizedName
+            });
+
+            return IdentityResult.Success;
+        }
+        catch (Exception e)
+        {
+            return IdentityResult.Failed(new IdentityError { Description = e.Message });
+        }
+    }
 
         private static void ValidateFamilyMemberData(FamilyMemberDto familyMember)
         {
