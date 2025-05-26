@@ -1,12 +1,11 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import "./Header.css"; 
+import "./Header.css";
 
 const Header = () => (
   <header className="header">
-    <Button className="trial-button">
+    <button className="trial-button">
       Start Free Trial
-    </Button>
+    </button>
     <div className="header-icons">
       <span className="icon">💬</span>
       <span className="icon">🔔</span>

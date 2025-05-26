@@ -1,27 +1,27 @@
 .sidebar {
-  width: 15rem;
+  width: 18rem;
   background-color: #f6f9f3;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-right: 1px solid #ccc;
+  border-right: 2px solid #ccc;
 }
 
 .sidebar-title {
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: bold;
-  color: #1e1e1e;
-  margin-bottom: 2rem;
+  color: #273520;
+  margin-bottom: 12rem;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  font-size: 1.05rem;
+  gap: 2.5rem;
+  font-size: 1.4rem;
   font-weight: 600;
-  color: #1e1e1e;
+  color: #273520;
 }
 
 .nav-link,

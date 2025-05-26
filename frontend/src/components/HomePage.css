@@ -1,6 +1,7 @@
 .layout {
   display: flex;
   min-height: 100vh;
+  font-family: 'Georgia', serif;
   background-color: #f6f9f3;
 }
 

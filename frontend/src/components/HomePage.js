@@ -2,7 +2,7 @@ import React from "react";
 import Sidebar from "./SideBar";
 import Header from "./Header";
 import DashboardCard from "./DashboardCard";
-import "./HomePage.css"; 
+import "./HomePage.css";
 
 const MainContent = () => (
   <main className="main-content">
@@ -14,9 +14,11 @@ const MainContent = () => (
 const HomePage = () => (
   <div className="layout">
     <Sidebar />
-    <div className="content-wrapper">  
+    <div className="content-wrapper">
       <Header />
       <MainContent />
     </div>
   </div>
 );
+
+export default HomePage;
