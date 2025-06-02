@@ -2,6 +2,7 @@ import React from "react";
 import Sidebar from "./SideBar";
 import Header from "./Header";
 import DashboardCard from "./DashboardCard";
+import "./HomePage.css";
 
 const MainContent = () => (
   <main className="main-content">
@@ -19,3 +20,5 @@ const HomePage = () => (
     </div>
   </div>
 );
+
+export default HomePage;

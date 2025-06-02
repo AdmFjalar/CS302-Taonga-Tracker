@@ -1,75 +1,66 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TaongaTrackerAPI.Models;
-using System.Threading.Tasks;
 
-[Route("api/[controller]")]
+namespace TaongaTrackerAPI.Controllers;
+
 [ApiController]
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<ApplicationUser> UserManager;
-    private readonly SignInManager<ApplicationUser> SignInManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public AuthController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
     {
-        UserManager = userManager;
-        SignInManager = signInManager;
+        _userManager = userManager;
+        _signInManager = signInManager;
     }
-    
+
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+    public async Task<IActionResult> Register([FromBody] RegisterDto model)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        var newUser = new ApplicationUser
+        var user = new ApplicationUser
         {
-            UserName = registerDto.UserName,
-            Email = registerDto.Email,
-            NormalizedUserName = registerDto.UserName.ToUpper(),
-            NormalizedEmail = registerDto.Email.ToUpper(),
+            UserName = model.UserName,
+            NormalizedUserName = model.UserName.ToUpper(),
+            Email = model.Email,
+            NormalizedEmail = model.Email.ToUpper(),
+            FirstName = model.FirstName ?? string.Empty,
+            MiddleNames = model.MiddleNames ?? string.Empty,
+            LastName = model.LastName ?? string.Empty
         };
+        Console.WriteLine(user.NormalizedUserName);
 
-        var result = await UserManager.CreateAsync(newUser, registerDto.Password);
+        var result = await _userManager.CreateAsync(user, model.Password);
 
-        if (result.Succeeded)
-        {
-            return Ok(new { message = "User registered successfully." });
-        }
+        if (result.Succeeded) return Ok(new { Message = "User created successfully", UserId = user.Id });
 
-        foreach (var error in result.Errors)
-        {
-            ModelState.AddModelError(error.Code, error.Description);
-        }
-
-        return BadRequest(ModelState);
+        return BadRequest(result.Errors);
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+    public async Task<IActionResult> Login([FromBody] LoginDto model)
     {
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
 
-        ApplicationUser user = await UserManager.FindByNameAsync(loginDto.EmailOrUserName)
-                            ?? await UserManager.FindByEmailAsync(loginDto.EmailOrUserName);
-
+        var user = await _userManager.FindByEmailAsync(model.EmailOrUserName);
         if (user == null)
         {
-            return Unauthorized(new { message = "Invalid username or email." });
+            user = await _userManager.FindByNameAsync(model.EmailOrUserName);
+            if (user == null)
+                return Unauthorized(new { Message = "Invalid login credentials" });
         }
 
-        var result = await SignInManager.CheckPasswordSignInAsync(user, loginDto.Password, lockoutOnFailure: false);
+        var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
 
-        if (!result.Succeeded)
-        {
-            return Unauthorized(new { message = "Invalid password." });
-        }
+        if (result.Succeeded)
+            // For now, just return success. Later you can add JWT token generation
+            return Ok(new { Message = "Login successful", UserId = user.Id });
 
-        return Ok(new { message = "Login successful." });
+        return Unauthorized(new { Message = "Invalid login credentials" });
     }
 }

@@ -1,0 +1,11 @@
+POST http://localhost:5240/api/Auth/register
+Content-Type: application/json
+
+{
+  "userName": "john.doe.1234",
+  "email": "john.doe@example.com",
+  "password": "password123",
+  "firstName": "John",
+  "middleNames": "William",
+  "lastName": "Doe"
+}
