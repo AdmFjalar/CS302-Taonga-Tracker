@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+
 namespace TaongaTrackerAPI.Models;
 
-public class ApplicationUser
+public class ApplicationUser : IdentityUser
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string FirstName { get; set; }
-    public string MiddleNames { get; set; }
-    public string LastName { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string MiddleNames { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
     public string Email { get; set; }
     public string NormalizedEmail { get; set; }
     public string NormalizedUserName { get; set; }

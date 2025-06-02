@@ -18,5 +18,13 @@ namespace TaongaTrackerAPI.Services
         Task<ApplicationUser?> FindUserByIdAsync(string userId, CancellationToken cancellationToken);
         Task<ApplicationUser?> FindUserByNameAsync(string normalizedUserName, CancellationToken cancellationToken);
         Task<IdentityResult> CreateRoleAsync(ApplicationRole role, CancellationToken cancellationToken);
+        
+        // New methods for authorization
+        Task<bool> HasUserAccessToResourceAsync(string userId, string resourceId, string resourceType);
+        Task<List<FamilyTreeDto>> GetUserFamilyTreesAsync(string userId);
+        Task<List<FamilyMemberDto>> GetUserFamilyMembersAsync(string userId, int skip = 0, int limit = 100);
+        Task CreateFamilyTreeAsync(FamilyTreeDto familyTree, string ownerId);
+        Task CreateFamilyMemberAsync(FamilyMemberDto familyMember, string ownerId);
+        Task ShareResourceAsync(string resourceId, string resourceType, string ownerId, string targetUserId);
     }
 }

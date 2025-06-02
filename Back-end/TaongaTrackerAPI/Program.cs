@@ -2,13 +2,15 @@ using Microsoft.AspNetCore.Identity;
 using TaongaTrackerAPI.Services;
 using TaongaTrackerAPI.Models;
 using TaongaTrackerAPI.Data;
+using TaongaTrackerAPI.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Registering controllers and required services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
         options.Password.RequireDigit = true;
@@ -21,17 +23,28 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     .AddRoleStore<RoleStore>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddAuthorization();
+// Add HTTP Context Accessor for authorization handlers
+builder.Services.AddHttpContextAccessor();
+
+// Add authorization services
+builder.Services.AddScoped<IAuthorizationHandler, ResourceOwnershipHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("FamilyTreeOwnership", policy =>
+        policy.Requirements.Add(new ResourceOwnershipRequirement("familytree")));
+    
+    options.AddPolicy("FamilyMemberOwnership", policy =>
+        policy.Requirements.Add(new ResourceOwnershipRequirement("familymember")));
+});
 
 builder.Services.AddScoped<INeo4jService, Neo4jService>();
 
 var app = builder.Build();
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Map controllers to handle endpoints
 app.MapControllers();
-
 app.Run();
