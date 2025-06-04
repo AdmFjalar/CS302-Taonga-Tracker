@@ -1,11 +1,11 @@
 .sidebar {
   width: 18rem;
   background-color: #f6f9f3;
-  padding: 1rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-right: 2px solid #ccc;
+  border-right:  #1e321c 1.5px solid;
 }
 
 .sidebar-title {
@@ -24,15 +24,15 @@
   color: #273520;
 }
 
-.nav-link,
-.nav-link-active {
+.nav-link {
   text-decoration: none;
   color: inherit;
 }
 
-.nav-link-active {
+.nav-link.active {
   text-decoration: underline;
 }
+
 
 .signout-button {
   background-color: #1e321c;
