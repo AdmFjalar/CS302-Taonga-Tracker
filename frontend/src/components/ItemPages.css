@@ -45,7 +45,6 @@
 }
 
 .auth-button {
-  align-self: flex-start;
   background-color: #1e321c;
   color: white;
   font-size: 1.1rem;
@@ -60,4 +59,17 @@
 
 .auth-button:hover {
   background-color: #2e4d2a;
+}
+
+.item-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0rem 0 2rem;
+  flex-wrap: wrap;
+}
+
+.item-toolbar .auth-button {
+  margin: 0;
 }

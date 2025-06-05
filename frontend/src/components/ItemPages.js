@@ -6,7 +6,7 @@ const defaultItem = {
   name: "",
   date: "",
   tags: [],
-  image: "https://placehold.co/275",
+  image: "",
   description: "",
   story: "",
   documents: ""
@@ -18,6 +18,26 @@ export function CreateItemPage({ onSave, initialItem }) {
 
   const handleChange = (field, value) => {
     setItem(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("http://localhost:5240/api/Heirlooms/upload", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+      setItem(prev => ({ ...prev, image: data.imageUrl }));
+    } catch (err) {
+      alert("Image upload failed");
+    }
   };
 
   const handleSave = () => {
@@ -57,12 +77,12 @@ export function CreateItemPage({ onSave, initialItem }) {
 
   return (
     <div className="item-layout top-aligned">
-      <div className="save-button-top">
+      <div className="item-toolbar">
         <button onClick={handleSave} className="auth-button">Save Heirloom</button>
       </div>
 
       <div className="item-header">
-        <img src={item.image} alt="Item Preview" />
+        <img src={item.image || "https://placehold.co/275"} alt="Item Preview" />
         <div className="item-meta">
           <div className="form-row">
             <b>Name:</b>
@@ -75,6 +95,10 @@ export function CreateItemPage({ onSave, initialItem }) {
           <div className="form-row">
             <b>Add Tags:</b>
             <input onChange={e => handleChange("tags", e.target.value.split(","))} placeholder="Comma-separated" />
+          </div>
+          <div className="form-row">
+            <b>Upload Image:</b>
+            <input type="file" accept="image/*" onChange={handleImageUpload} />
           </div>
         </div>
       </div>
@@ -109,13 +133,13 @@ export function ViewItemPage({ item, onBack, onEdit }) {
 
   return (
     <div className="item-layout top-aligned">
-      <div className="save-button-top">
+      <div className="item-toolbar">
         <button onClick={onEdit} className="auth-button">Edit</button>
         <button onClick={onBack} className="auth-button">Back to List</button>
       </div>
 
       <div className="item-header">
-        <img src={item.image} alt="Item Preview" />
+        <img src={item.image || "https://placehold.co/275"} alt="Item Preview" />
         <div className="item-meta">
           <div className="form-row"><b>Name:</b> <span>{item.name}</span></div>
           <div className="form-row"><b>Date Added:</b> <span>{item.date}</span></div>
@@ -136,5 +160,3 @@ export function ViewItemPage({ item, onBack, onEdit }) {
     </div>
   );
 }
-
-

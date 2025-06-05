@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { CreateItemPage, ViewItemPage } from "./ItemPages";
 import Sidebar from "./SideBar";
 import Header from "./Header";
+import "./HeirloomPage.css";
 
 export default function HeirloomPage() {
   const [items, setItems] = useState([]);
@@ -33,7 +34,7 @@ export default function HeirloomPage() {
           {!adding && viewIndex === null && (
             <>
               <div className="add-heirloom-header">
-                <button onClick={() => setAdding(true)} className="auth-button">
+                <button onClick={() => setAdding(true)} className="heirloom-button">
                   Add Heirloom
                 </button>
               </div>

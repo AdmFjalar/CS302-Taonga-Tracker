@@ -11,9 +11,4 @@
   flex-direction: column;
 }
 
-.main-content {
-  padding: 2.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
+

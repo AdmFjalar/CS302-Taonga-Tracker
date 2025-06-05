@@ -22,8 +22,9 @@
 .heirloom-card {
   width: 240px;
   background-color: white;
-  border: 2px solid black;
+  border: 1.5px solid black;
   display: flex;
+  padding: 0.1rem, 0;
   flex-direction: column;
   justify-content: space-between;
 }
@@ -74,7 +75,12 @@
   background-color: #2e4d2a;
 }
 
-.auth-button {
+.heirloom-button {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 0.5rem -0.7rem 0.2rem auto;
   background-color: #1e321c;
   color: white;
   border: none;
@@ -89,6 +95,6 @@
   white-space: nowrap;
 }
 
-.auth-button:hover {
+.heirloom-button:hover {
   background-color: #2e4d2a;
 }

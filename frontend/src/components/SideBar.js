@@ -7,7 +7,7 @@ const Sidebar = () => {
 
   const handleSignOut = () => {
     console.log("Clicked Sign Out");
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -16,7 +16,7 @@ const Sidebar = () => {
         <h1 className="sidebar-title">Taonga Trove</h1>
         <nav className="sidebar-nav">
           <NavLink
-            to="/"
+            to="/home"
             className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
           >
             Home Page

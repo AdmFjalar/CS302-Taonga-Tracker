@@ -1,0 +1,92 @@
+.landing-layout {
+  background-color: #f6f9f3;
+  min-height: 100vh;
+  font-family: Georgia, serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #bcb88a;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #1e321c;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #1e321c;
+}
+
+.auth-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.signin-link {
+  color: #1e321c;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding-top: 0.25rem;
+}
+
+.signup-button {
+  background-color: #1e321c;
+  color: white;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 #7c9a7a;
+  transition: background 0.2s ease;
+}
+
+.signup-button:hover {
+  background-color: #2e4d2a;
+}
+
+.landing-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.headline {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1e321c;
+  margin-bottom: 0.5rem;
+}
+
+.subhead {
+  font-size: 1.1rem;
+  color: #1e321c;
+  margin-bottom: 2rem;
+}
+
+.features-bar {
+  background-color: #a2a078;
+  border-radius: 2rem;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  gap: 2rem;
+  box-shadow: 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.feature-pill {
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background-color: #bcb88a;
+  border-radius: 9999px;
+  padding: 0.4rem 1rem;
+}
