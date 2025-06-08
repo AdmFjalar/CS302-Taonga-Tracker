@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using TaongaTrackerAPI.Models;
 using TaongaTrackerAPI.Services;
+using System.Security.Claims;
 
 namespace TaongaTrackerAPI.Controllers
 {
@@ -20,7 +21,8 @@ namespace TaongaTrackerAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<FamilyMemberDto>> CreateFamilyTreeFromJsonAsync([FromBody] string jsonRequest)
         {
-            await Neo4jService.CreateFamilyTreeFromJsonAsync(jsonRequest);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            await Neo4jService.CreateFamilyTreeFromJsonAsync(userId, jsonRequest);
             return Ok();
         }
         // public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember(FamilyMemberDto familyMember)

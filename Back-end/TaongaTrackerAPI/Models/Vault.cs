@@ -4,12 +4,12 @@ namespace TaongaTrackerAPI.Models;
 
 public class Vault : IShare
 {
-    private int VaultId;
+    private string VaultId;
     private string OwnerId;
     private List<VaultItem>? VaultItems;
     private List<string>? SharedWithIds;
     
-    public Vault(int vaultId, string ownerId, List<VaultItem>? vaultItems = null, List<string>? sharedWithIds = null)
+    public Vault(string vaultId, string ownerId, List<VaultItem>? vaultItems = null, List<string>? sharedWithIds = null)
     {
         VaultId = vaultId;
         OwnerId = ownerId;
@@ -37,7 +37,7 @@ public class Vault : IShare
         }
     }
 
-    public VaultItem? GetItemById(int vaultItemId)
+    public VaultItem? GetItemById(string vaultItemId)
     {
         return VaultItems?.Find(x => x.GetVaultItemId() == vaultItemId);   
     }
@@ -56,7 +56,7 @@ public class Vault : IShare
         return null;   
     }
 
-    public Exception? RemoveItem(int vaultItemId)
+    public Exception? RemoveItem(string vaultItemId)
     {
         try
         {
@@ -84,7 +84,7 @@ public class Vault : IShare
         return null;
     }
 
-    public List<int>? GetItemIds()
+    public List<string>? GetItemIds()
     {
         return VaultItems?.Select(x => x.GetVaultItemId()).ToList();
     }
@@ -99,7 +99,7 @@ public class Vault : IShare
         return OwnerId;
     }
     
-    public int GetVaultId()
+    public string GetVaultId()
     {
         return VaultId;
     }

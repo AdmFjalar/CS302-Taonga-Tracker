@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using System.Data;
 using Neo4j.Driver;
 using TaongaTrackerAPI.Models;
@@ -56,7 +58,7 @@ public class Neo4jService : INeo4jService, IDisposable
     public async Task CreateFamilyMemberAsync(FamilyMemberDto familyMember)
     {
         ValidateFamilyMemberData(familyMember);
-
+        
         await using var session = Driver.AsyncSession();
         try
         {
@@ -152,7 +154,7 @@ public class Neo4jService : INeo4jService, IDisposable
         }
     }
 
-    public async Task CreateFamilyTreeFromJsonAsync(string jsonRequest)
+    public async Task CreateFamilyTreeFromJsonAsync(string userId, string jsonRequest)
     {
         if (string.IsNullOrEmpty(jsonRequest))
             throw new ArgumentException("JSON request cannot be null or empty.");
@@ -161,7 +163,9 @@ public class Neo4jService : INeo4jService, IDisposable
 
         if (familyTreeDto == null)
             throw new ArgumentException("Failed to deserialize JSON into FamilyTreeDto.");
-
+        
+        familyTreeDto.OwnerUserId = userId;
+        
         await using var session = Driver.AsyncSession();
 
         var createTreeQuery = @"
@@ -825,6 +829,161 @@ public class Neo4jService : INeo4jService, IDisposable
 
         await session.RunAsync(query, new { resourceId, ownerId, targetUserId });
     }
+    
+    public async Task CreateVaultAsync(VaultDto vault, string ownerId)
+{
+    await using var session = Driver.AsyncSession();
+
+    var query = @"
+        CREATE (v:Vault {
+            VaultId: randomUUID(),
+            OwnerId: $ownerId,
+            SharedWithIds: $sharedWithIds,
+            CreatedAt: datetime()
+        })
+        RETURN v.VaultId AS VaultId";
+
+    var result = await session.RunAsync(query, new
+    {
+        ownerId,
+        sharedWithIds = vault.SharedWithIds ?? new List<string>()
+    });
+
+    var record = await result.SingleAsync();
+    vault.VaultId = record["VaultId"].As<string>();
+    vault.OwnerId = ownerId;
+}
+
+public async Task<List<VaultDto>> GetUserVaultsAsync(string userId)
+{
+    await using var session = Driver.AsyncSession();
+
+    var query = @"
+        MATCH (v:Vault)
+        WHERE v.OwnerId = $userId OR $userId IN COALESCE(v.SharedWithIds, [])
+        RETURN v";
+
+    var result = await session.RunAsync(query, new { userId });
+    var vaults = await result.ToListAsync(record =>
+    {
+        var node = record["v"].As<INode>();
+        return new VaultDto
+        {
+            VaultId = node.Properties.ContainsKey("VaultId") ? node["VaultId"].As<string>() : node.ElementId,
+            OwnerId = node.Properties.ContainsKey("OwnerId") ? node["OwnerId"].As<string>() : null,
+            SharedWithIds = node.Properties.ContainsKey("SharedWithIds") ? node["SharedWithIds"].As<List<string>>() : new List<string>()
+        };
+    });
+
+    return vaults;
+}
+
+public async Task<VaultDto> GetOrCreateUserVaultAsync(string userId)
+{
+    var vaults = await GetUserVaultsAsync(userId);
+    var userVault = vaults.FirstOrDefault(v => v.OwnerId == userId);
+
+    if (userVault != null)
+        return userVault;
+
+    var defaultVault = new VaultDto
+    {
+        OwnerId = userId,
+        SharedWithIds = new List<string>()
+    };
+    await CreateVaultAsync(defaultVault, userId);
+    return defaultVault;
+}
+
+public async Task CreateVaultItemAsync(VaultItemDto item, string vaultId, string ownerId)
+{
+    await using var session = Driver.AsyncSession();
+
+    var query = @"
+        MATCH (v:Vault) WHERE v.VaultId = $vaultId AND v.OwnerId = $ownerId
+        CREATE (i:VaultItem {
+            VaultItemId: randomUUID(),
+            CurrentOwnerId: $ownerId,
+            CurrentOwnerUserId: $ownerId,
+            SharedWithIds: $sharedWithIds,
+            Title: $title,
+            Description: $description,
+            CreationDate: $creationDate,
+            CreationPlace: $creationPlace,
+            CreatorId: $creatorId,
+            Materials: $materials,
+            CraftType: $craftType,
+            ItemType: $itemType,
+            EstimatedValue: $estimatedValue,
+            DateAcquired: $dateAcquired,
+            PhotoUrl: $photoUrl,
+            PreviousOwnerIds: $previousOwnerIds
+        })
+        CREATE (v)-[:HAS_ITEM]->(i)
+        RETURN i.VaultItemId AS VaultItemId";
+
+    var result = await session.RunAsync(query, new
+    {
+        vaultId,
+        ownerId,
+        sharedWithIds = item.SharedWithIds ?? new List<string>(),
+        title = item.Title,
+        description = item.Description,
+        creationDate = item.CreationDate,
+        creationPlace = item.CreationPlace,
+        creatorId = item.CreatorId,
+        materials = item.Materials ?? new List<string>(),
+        craftType = item.CraftType ?? new List<string>(),
+        itemType = item.ItemType,
+        estimatedValue = item.EstimatedValue,
+        dateAcquired = item.DateAcquired,
+        photoUrl = item.PhotoUrl,
+        previousOwnerIds = item.PreviousOwnerIds ?? new List<string>()
+    });
+
+    var record = await result.SingleAsync();
+    item.VaultItemId = record["VaultItemId"].As<string>();
+    item.CurrentOwnerId = ownerId;
+    item.CurrentOwnerUserId = ownerId;
+}
+
+public async Task<List<VaultItemDto>> GetUserVaultItemsAsync(string userId)
+{
+    await using var session = Driver.AsyncSession();
+
+    var query = @"
+        MATCH (v:Vault)-[:HAS_ITEM]->(i:VaultItem)
+        WHERE v.OwnerId = $userId OR $userId IN COALESCE(v.SharedWithIds, [])
+           OR i.CurrentOwnerId = $userId OR $userId IN COALESCE(i.SharedWithIds, [])
+        RETURN i";
+
+    var result = await session.RunAsync(query, new { userId });
+    var items = await result.ToListAsync(record =>
+    {
+        var node = record["i"].As<INode>();
+        return new VaultItemDto
+        {
+            VaultItemId = node.Properties.ContainsKey("VaultItemId") ? node["VaultItemId"].As<string>() : node.ElementId,
+            CurrentOwnerId = node.Properties.ContainsKey("CurrentOwnerId") ? node["CurrentOwnerId"].As<string>() : null,
+            CurrentOwnerUserId = node.Properties.ContainsKey("CurrentOwnerUserId") ? node["CurrentOwnerUserId"].As<string>() : null,
+            SharedWithIds = node.Properties.ContainsKey("SharedWithIds") ? node["SharedWithIds"].As<List<string>>() : new List<string>(),
+            Title = node.Properties.ContainsKey("Title") ? node["Title"].As<string>() : null,
+            Description = node.Properties.ContainsKey("Description") ? node["Description"].As<string>() : null,
+            CreationDate = node.Properties.ContainsKey("CreationDate") ? node["CreationDate"].As<DateTime?>() : null,
+            CreationPlace = node.Properties.ContainsKey("CreationPlace") ? node["CreationPlace"].As<string>() : null,
+            CreatorId = node.Properties.ContainsKey("CreatorId") ? node["CreatorId"].As<string>() : null,
+            Materials = node.Properties.ContainsKey("Materials") ? node["Materials"].As<List<string>>() : new List<string>(),
+            CraftType = node.Properties.ContainsKey("CraftType") ? node["CraftType"].As<List<string>>() : new List<string>(),
+            ItemType = node.Properties.ContainsKey("ItemType") ? node["ItemType"].As<string>() : null,
+            EstimatedValue = node.Properties.ContainsKey("EstimatedValue") ? node["EstimatedValue"].As<decimal?>() ?? 0 : 0,
+            DateAcquired = node.Properties.ContainsKey("DateAcquired") ? node["DateAcquired"].As<DateTime?>() : null,
+            PhotoUrl = node.Properties.ContainsKey("PhotoUrl") ? node["PhotoUrl"].As<string>() : null,
+            PreviousOwnerIds = node.Properties.ContainsKey("PreviousOwnerIds") ? node["PreviousOwnerIds"].As<List<string>>() : new List<string>()
+        };
+    });
+
+    return items;
+}
 
     private static void ValidateFamilyMemberData(FamilyMemberDto familyMember)
     {

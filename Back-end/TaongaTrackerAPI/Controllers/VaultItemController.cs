@@ -1,4 +1,3 @@
-// Controllers/VaultController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -8,32 +7,34 @@ using TaongaTrackerAPI.Services;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class VaultController : ControllerBase
+public class VaultItemController : ControllerBase
 {
     private readonly INeo4jService _neo4jService;
 
-    public VaultController(INeo4jService neo4jService)
+    public VaultItemController(INeo4jService neo4jService)
     {
         _neo4jService = neo4jService;
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateVault([FromBody] VaultDto vault)
+    public async Task<IActionResult> CreateVaultItem([FromBody] VaultItemDto item)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null) return Unauthorized();
 
-        await _neo4jService.CreateVaultAsync(vault, userId);
-        return Ok(vault);
+        // Find or create a vault for the user
+        var vault = await _neo4jService.GetOrCreateUserVaultAsync(userId);
+        await _neo4jService.CreateVaultItemAsync(item, vault.VaultId, userId);
+        return Ok(item);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUserVaults()
+    public async Task<IActionResult> GetUserVaultItems()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null) return Unauthorized();
 
-        var vaults = await _neo4jService.GetUserVaultsAsync(userId);
-        return Ok(vaults);
+        var items = await _neo4jService.GetUserVaultItemsAsync(userId);
+        return Ok(items);
     }
 }

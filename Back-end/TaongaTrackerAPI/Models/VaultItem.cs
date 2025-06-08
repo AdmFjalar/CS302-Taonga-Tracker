@@ -4,10 +4,10 @@ namespace TaongaTrackerAPI.Models
 {
     public class VaultItem : IShare
     {
-        private int VaultItemId;
-        private int CurrentOwnerId;
-        private int? CreatorId;
-        private List<int>? PreviousOwnerIds;
+        private string VaultItemId;
+        private string CurrentOwnerId;
+        private string? CreatorId;
+        private List<string>? PreviousOwnerIds;
         private decimal? EstimatedValue;
         private DateTime? CreationDate;
         private DateTime? DateAcquired;
@@ -21,7 +21,7 @@ namespace TaongaTrackerAPI.Models
         private List<string>? CraftType;
         private List<string>? SharedWithIds;
 
-        public VaultItem(int vaultItemId, string title, string currentOwnerUserId, int currentOwnerId, int? creatorId = null, List<int>? previousOwnerIds = null, decimal? estimatedValue = null, DateTime? creationDate = null, DateTime? dateAcquired = null, string? creationPlace = null, string? itemType = null, string? photoUrl = null, string? description = null, List<string>? materials = null, List<string>? craftType = null, List<string>? sharedWithIds = null)
+        public VaultItem(string vaultItemId, string title, string currentOwnerUserId, string currentOwnerId, string? creatorId = null, List<string>? previousOwnerIds = null, decimal? estimatedValue = null, DateTime? creationDate = null, DateTime? dateAcquired = null, string? creationPlace = null, string? itemType = null, string? photoUrl = null, string? description = null, List<string>? materials = null, List<string>? craftType = null, List<string>? sharedWithIds = null)
         {
             VaultItemId = vaultItemId;
             CurrentOwnerId = currentOwnerId;
@@ -49,11 +49,11 @@ namespace TaongaTrackerAPI.Models
             }
         }
 
-        public Exception? TransferOwnership(string newOwnerUserId, int newOwnerId)
+        public Exception? TransferOwnership(string newOwnerUserId, string newOwnerId)
         {
             try
             {
-                PreviousOwnerIds ??= new List<int>();
+                PreviousOwnerIds ??= new List<string>();
 
                 PreviousOwnerIds.Add(CurrentOwnerId);
                 CurrentOwnerUserId = newOwnerUserId;
@@ -104,12 +104,12 @@ namespace TaongaTrackerAPI.Models
             return ((IShare)this).StopSharingWith(userId, ref SharedWithIds);
         }
         
-        public int GetVaultItemId()
+        public string GetVaultItemId()
         {
             return VaultItemId;
         }
         
-        public List<int>? GetPreviousOwnerIds()
+        public List<string>? GetPreviousOwnerIds()
         {
             return PreviousOwnerIds;
         }
@@ -119,7 +119,7 @@ namespace TaongaTrackerAPI.Models
             return CreationDate;
         }
         
-        public int? GetCurrentOwnerId()
+        public string? GetCurrentOwnerId()
         {
             return CurrentOwnerId;
         }
@@ -129,7 +129,7 @@ namespace TaongaTrackerAPI.Models
             return CreationPlace;
         }
         
-        public int? GetCreatorId()
+        public string? GetCreatorId()
         {
             return CreatorId;
         }
@@ -184,11 +184,11 @@ namespace TaongaTrackerAPI.Models
             return SharedWithIds;
         }
 
-        public Exception? AddPreviousOwnersId(int previousOwnerId)
+        public Exception? AddPreviousOwnersId(string previousOwnerId)
         {
             try
             {
-                PreviousOwnerIds ??= new List<int>();
+                PreviousOwnerIds ??= new List<string>();
                 PreviousOwnerIds.Add(previousOwnerId);
             }
             catch (Exception? e)
@@ -199,7 +199,7 @@ namespace TaongaTrackerAPI.Models
             return null;
         }
 
-        public Exception? RemovePreviousOwnersId(int previousOwnerId)
+        public Exception? RemovePreviousOwnersId(string previousOwnerId)
         {
             if (PreviousOwnerIds == null)
             {
@@ -231,7 +231,7 @@ namespace TaongaTrackerAPI.Models
             return null;
         }
 
-        public Exception? SetCurrentOwnerId(int currentOwnerId)
+        public Exception? SetCurrentOwnerId(string currentOwnerId)
         {
             try
             {
@@ -259,7 +259,7 @@ namespace TaongaTrackerAPI.Models
             return null;
         }
 
-        public Exception? SetCreatorId(int creatorId)
+        public Exception? SetCreatorId(string creatorId)
         {
             try
             {
@@ -357,7 +357,7 @@ namespace TaongaTrackerAPI.Models
             return null;
         }
 
-        public Exception? SetVaultItemId(int vaultItemId)
+        public Exception? SetVaultItemId(string vaultItemId)
         {
             try
             {
@@ -422,7 +422,7 @@ namespace TaongaTrackerAPI.Models
             return null;
         }
 
-        public Exception? SetPreviousOwnerIds(List<int> previousOwnerIds)
+        public Exception? SetPreviousOwnerIds(List<string> previousOwnerIds)
         {
             try
             {
