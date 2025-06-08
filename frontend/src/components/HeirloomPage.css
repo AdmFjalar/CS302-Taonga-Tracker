@@ -1,0 +1,100 @@
+.heirloom-container {
+  padding: 0rem;
+  background-color: #f6f9f3;
+  font-family: Georgia, serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.heirloom-header {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.heirloom-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.heirloom-card {
+  width: 240px;
+  background-color: white;
+  border: 1.5px solid black;
+  display: flex;
+  padding: 0.1rem, 0;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.heirloom-img {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-bottom: 1px solid black;
+}
+
+.heirloom-footer {
+  background-color: #bcb88a;
+  padding: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid black;
+  gap: 1rem;
+}
+
+.heirloom-name {
+  margin: 0;
+  color: #1e321c;
+  font-weight: 600;
+  font-size: 0.95rem;
+  font-family: Georgia, serif;
+  flex-grow: 1;
+  text-decoration: underline;
+}
+
+.heirloom-view {
+  background-color: #1e321c;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+  box-shadow: 2px 2px 0 #7c9a7a;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+  align-self: flex-end;
+}
+
+.heirloom-view:hover {
+  background-color: #2e4d2a;
+}
+
+.heirloom-button {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 0.5rem -0.7rem 0.2rem auto;
+  background-color: #1e321c;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 0.25rem 1rem;
+  box-shadow: 2px 2px 0 #7c9a7a;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  max-width: max-content;
+  white-space: nowrap;
+}
+
+.heirloom-button:hover {
+  background-color: #2e4d2a;
+}

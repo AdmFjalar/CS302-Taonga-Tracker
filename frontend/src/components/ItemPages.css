@@ -1,0 +1,75 @@
+.item-layout {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: #f6f9f3;
+  height: 100%;
+  font-family: Georgia, serif;
+}
+
+.item-header {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.item-header img {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+.item-header input {
+  margin-left: 0.5rem;
+  padding: 0.25rem;
+  font-size: 1rem;
+  border: 1px solid #1e321c;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tabs textarea {
+  min-height: 6rem;
+  padding: 0.5rem;
+  border: 1px solid #1e321c;
+  font-size: 1rem;
+  background-color: #d0d1b6;
+  resize: vertical;
+}
+
+.auth-button {
+  background-color: #1e321c;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #7c9a7a;
+  transition: background 0.2s ease;
+}
+
+.auth-button:hover {
+  background-color: #2e4d2a;
+}
+
+.item-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0rem 0 2rem;
+  flex-wrap: wrap;
+}
+
+.item-toolbar .auth-button {
+  margin: 0;
+}

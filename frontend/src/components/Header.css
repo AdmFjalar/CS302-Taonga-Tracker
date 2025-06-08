@@ -5,15 +5,15 @@
   justify-content: flex-end;
   align-items: center;
   gap: 1rem;
+  border-bottom: #1e321c 1.5px solid;
 }
 
 .trial-button {
-  background-color: #1e321c;
+  background-color:  #1e321c;
   color: white;
   font-size: 0.875rem;
-  border-radius: 9999px;
-  padding: 0.25rem 1rem;
-  transition: background 0.2s ease;
+  border-radius: 99px;
+  padding: 0.40rem 1rem;
 }
 
 .trial-button:hover {

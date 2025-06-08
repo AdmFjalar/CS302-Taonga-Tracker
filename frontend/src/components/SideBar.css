@@ -1,38 +1,38 @@
 .sidebar {
-  width: 18rem;
+  width: 17rem;
   background-color: #f6f9f3;
-  padding: 1rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-right: 2px solid #ccc;
+  border-right:  #1e321c 1.5px solid;
 }
 
 .sidebar-title {
-  font-size: 2rem;
+  font-size: 1.9rem;
   font-weight: bold;
   color: #273520;
-  margin-bottom: 12rem;
+  margin-bottom: 11.8rem;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2.7rem;
   font-size: 1.4rem;
   font-weight: 600;
   color: #273520;
 }
 
-.nav-link,
-.nav-link-active {
+.nav-link {
   text-decoration: none;
   color: inherit;
 }
 
-.nav-link-active {
+.nav-link.active {
   text-decoration: underline;
 }
+
 
 .signout-button {
   background-color: #1e321c;

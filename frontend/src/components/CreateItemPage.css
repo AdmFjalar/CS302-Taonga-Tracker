@@ -1,0 +1,200 @@
+.item-layout {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  background-color: #f6f9f3;
+  height: 100%;
+  font-family: Georgia, serif;
+  position: relative;
+  margin-top: 0;
+  padding-top: 0.5rem;
+}
+
+.add-heirloom-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 2rem;
+}
+
+.save-button-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  
+}
+
+.item-header {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  background-color: #f6f9f3;
+  justify-content: flex-start;
+  position: relative;
+}
+
+.item-header img {
+  width: 275px;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid #000;
+  background-color: white;
+}
+
+.item-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: flex-start;
+  align-items: flex-start;
+
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.form-row b {
+  width: 120px;
+  display: inline-block;
+  text-align: left;
+}
+
+.form-row input {
+  flex: 1;
+  padding: 0.25rem;
+  font-size: 1rem;
+  border: none;
+  border-bottom: 1px solid #1e321c;
+  background: none;
+  font-family: Georgia, serif;
+}
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background-color: #a2a078;
+  border: 1px solid #000;
+  margin-top: 2rem;
+}
+
+.tabs textarea,
+.tab-textarea {
+  min-height: 25rem;
+  padding: 1rem;
+  border: 1px solid #000;
+  font-size: 1rem;
+  background-color: #bcb88a;
+  font-family: Georgia, serif;
+  white-space: pre-wrap;
+}
+
+.tab-text {
+  font-family: Georgia, serif;
+  font-size: 1rem;
+}
+
+.tab-buttons {
+  display: flex;
+  background-color: #a2a078;
+  border-bottom: 1px solid #000;
+}
+
+.tab-buttons button {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #000;
+  background-color: #a2a078;
+  color: #1e321c;
+  font-weight: bold;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tab-buttons button.active {
+  background-color: #bcb88a;
+  border-bottom: none;
+}
+
+.auth-button {
+  background-color: #1e321c;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 0.5rem 1.25rem;
+  box-shadow: 2px 2px 0 #7c9a7a;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  max-width: max-content;
+}
+
+.auth-button:hover {
+  background-color: #2e4d2a;
+}
+
+.heirloom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 2rem;
+  justify-items: center;
+  padding: 2rem 1rem;
+}
+
+.heirloom-card {
+  border: 1px solid #000;
+  background-color: #f6f9f3;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.heirloom-img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-bottom: 1px solid #000;
+}
+
+.heirloom-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem;
+  background-color: #a2a078;
+}
+
+.heirloom-name {
+  font-family: Georgia, serif;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #1e321c;
+  margin: 0;
+  flex: 1;
+}
+
+.heirloom-view,
+.heirloom-edit {
+  background-color: #1e321c;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.heirloom-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}

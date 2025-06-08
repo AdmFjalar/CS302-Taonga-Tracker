@@ -1,26 +1,70 @@
-import React from "react";
+import React, { useState } from "react";
 import "./AuthPage.css";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
-const RegisterPage = () => (
-  <div className="auth-layout">
-    <h1 className="auth-title">Taonga Trove</h1>
-    <form className="auth-form">
-      <label>Email</label>
-      <input type="email" />
+const RegisterPage = () => {
+  const [form, setForm] = useState({
+    userName: "",
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: ""
+  });
 
-      <label>Username</label>
-      <input type="text" />
+  const navigate = useNavigate();
 
-      <label>Password</label>
-      <input type="password" />
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-      <Link to="/login" className="auth-link">Already have an account?</Link>
-      <Link to="/login">
-        <button type="button" className="auth-button">Sign Up</button>
-      </Link>
-    </form>
-  </div>
-);
+const handleRegister = async () => {
+  try {
+    const payload = { ...form };
+  
+    const res = await fetch("http://localhost:5240/api/Auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      throw new Error("Registration failed");
+    }
+
+    navigate("/login");
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+  return (
+    <div className="auth-layout">
+      <h1 className="auth-title">Taonga Trove</h1>
+      <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+        <label>Email</label>
+        <input name="email" type="email" value={form.email} onChange={handleChange} />
+
+        <label>Username</label>
+        <input name="userName" type="text" value={form.userName} onChange={handleChange} />
+
+        <label>Password</label>
+        <input name="password" type="password" value={form.password} onChange={handleChange} />
+
+        <label>First Name</label>
+        <input name="firstName" type="text" value={form.firstName} onChange={handleChange} />
+
+        <label>Last Name</label>
+        <input name="lastName" type="text" value={form.lastName} onChange={handleChange} />
+
+        <Link to="/login" className="auth-link">Already have an account?</Link>
+        <button type="button" className="auth-button" onClick={handleRegister}>
+          Sign Up
+        </button>
+      </form>
+    </div>
+  );
+};
 
 export default RegisterPage;
