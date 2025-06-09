@@ -5,7 +5,7 @@ import Sidebar from "./SideBar";
 
 const getFullImageUrl = (relativePath) => {
   const backendUrl = "http://localhost:5240";
-  if (!relativePath) return "https://placehold.co/32x32";
+  if (!relativePath) return "https://placehold.co/100x100";
   return `${backendUrl}${relativePath}`;
 };
 
@@ -18,6 +18,7 @@ const SettingsPage = () => {
     email: "",
     profilePictureUrl: "",
     region: "United States (English)",
+    userId: "",
   });
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
@@ -34,6 +35,7 @@ const SettingsPage = () => {
             ...prev,
             ...data,
             profilePictureUrl: data.profilePictureUrl || "",
+            userId: data.id || "",
           }));
         }
       } catch {}
@@ -80,6 +82,7 @@ const SettingsPage = () => {
         lastName: user.lastName,
         email: user.email,
         profilePictureUrl: user.profilePictureUrl,
+        region: user.region,
       };
       const res = await fetch("http://localhost:5240/api/Auth/me", {
         method: "PUT",
@@ -101,48 +104,89 @@ const SettingsPage = () => {
       <div className="layout">
         <Sidebar />
         <div className="content-wrapper">
-          <Header userImage={getFullImageUrl(user.profilePictureUrl)} />
-          <div className="settings-layout">
-            <main className="settings-main">
+          <Header />
+          <div className="settings-layout-sleek">
+            <main className="settings-main-sleek">
               <h1>Account Settings</h1>
-              <section className="settings-section">
-                <h2>Profile Picture</h2>
-                <div className="settings-item">
-                  <div className="avatar-box">
-                    <img
-                        src={getFullImageUrl(user.profilePictureUrl)}
-                        alt="Profile Preview"
-                        className="settings-avatar"
+              {/* Profile Details */}
+              <section className="settings-section-sleek">
+                <h2>Profile Details</h2>
+                <div className="settings-profile-row">
+                  <label className="settings-avatar-label" title="Click to upload a new image">
+                    <div className="settings-avatar-large">
+                      <img
+                          src={getFullImageUrl(user.profilePictureUrl)}
+                          alt="Profile Preview"
+                      />
+                    </div>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        style={{ display: "none" }}
                     />
+                  </label>
+                  <div className="settings-profile-fields">
+                    <div className="form-row">
+                      <b>First Name:</b>
+                      <input
+                          type="text"
+                          value={user.firstName}
+                          onChange={e => handleChange("firstName", e.target.value)}
+                          placeholder="First Name"
+                      />
+                    </div>
+                    <div className="form-row">
+                      <b>Middle Names:</b>
+                      <input
+                          type="text"
+                          value={user.middleNames}
+                          onChange={e => handleChange("middleNames", e.target.value)}
+                          placeholder="Middle Names"
+                      />
+                    </div>
+                    <div className="form-row">
+                      <b>Last Name:</b>
+                      <input
+                          type="text"
+                          value={user.lastName}
+                          onChange={e => handleChange("lastName", e.target.value)}
+                          placeholder="Last Name"
+                      />
+                    </div>
                   </div>
-                  <input type="file" accept="image/*" onChange={handleImageChange} />
                 </div>
               </section>
-              <section className="settings-section">
-                <h2>Account Information</h2>
-                <div className="settings-item">
-                  <strong>First Name:</strong>
-                  <input type="text" value={user.firstName} onChange={e => handleChange("firstName", e.target.value)} />
+              {/* Account Details */}
+              <section className="settings-section-sleek">
+                <h2>Account Details</h2>
+                <div className="form-row">
+                  <b>Username:</b>
+                  <span className="settings-readonly">{user.userName}</span>
                 </div>
-                <div className="settings-item">
-                  <strong>Middle Names:</strong>
-                  <input type="text" value={user.middleNames} onChange={e => handleChange("middleNames", e.target.value)} />
+                <div className="form-row">
+                  <b>Email:</b>
+                  <input
+                      type="email"
+                      value={user.email}
+                      onChange={e => handleChange("email", e.target.value)}
+                      placeholder="Email"
+                  />
                 </div>
-                <div className="settings-item">
-                  <strong>Last Name:</strong>
-                  <input type="text" value={user.lastName} onChange={e => handleChange("lastName", e.target.value)} />
-                </div>
-                <div className="settings-item"><strong>Username:</strong> {user.userName}</div>
-                <div className="settings-item">
-                  <strong>Email:</strong>
-                  <input type="email" value={user.email} onChange={e => handleChange("email", e.target.value)} />
+                <div className="form-row">
+                  <b>User ID:</b>
+                  <span className="settings-readonly">{user.userId}</span>
                 </div>
               </section>
-              <section className="settings-section">
-                <h2>Region and Language</h2>
-                <div className="settings-item">
-                  <strong>Region:</strong>
-                  <select value={user.region} onChange={e => handleChange("region", e.target.value)}>
+              {/* Preferences */}
+              <section className="settings-section-sleek">
+                <h2>Preferences</h2>
+                <div className="form-row">
+                  <b>Region:</b>
+                  <select
+                      value={user.region}
+                      onChange={e => handleChange("region", e.target.value)}
+                  >
                     <option>United States (English)</option>
                     <option>United Kingdom (English)</option>
                     <option>Canada (English)</option>
@@ -154,8 +198,10 @@ const SettingsPage = () => {
                 </div>
               </section>
               {unsavedChanges && (
-                  <div className="save-button-container">
-                    <button className="auth-button" onClick={handleSaveChanges}>Save Changes</button>
+                  <div className="settings-actions">
+                    <button className="auth-button" onClick={handleSaveChanges}>
+                      Save Changes
+                    </button>
                   </div>
               )}
             </main>
