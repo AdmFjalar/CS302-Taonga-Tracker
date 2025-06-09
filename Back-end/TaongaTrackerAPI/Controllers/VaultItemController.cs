@@ -49,6 +49,25 @@ public class VaultItemController : ControllerBase
         Console.WriteLine(url);
         return Ok(new { url });
     }
+    
+    [HttpPut("{vaultItemId}")]
+    public async Task<IActionResult> UpdateVaultItem(string vaultItemId, [FromBody] VaultItemDto item)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return Unauthorized();
+        item.VaultItemId = vaultItemId;
+        await _neo4jService.UpdateVaultItemAsync(item, userId);
+        return Ok(item);
+    }
+
+    [HttpDelete("{vaultItemId}")]
+    public async Task<IActionResult> DeleteVaultItem(string vaultItemId)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return Unauthorized();
+        await _neo4jService.DeleteVaultItemAsync(vaultItemId, userId);
+        return NoContent();
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetUserVaultItems()

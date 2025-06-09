@@ -26,6 +26,8 @@ namespace TaongaTrackerAPI.Services
         
         // Vault item methods
         Task CreateVaultItemAsync(VaultItemDto item, string vaultId, string ownerId);
+        Task UpdateVaultItemAsync(VaultItemDto item, string userId);
+        Task DeleteVaultItemAsync(string vaultItemId, string userId);
         Task<List<VaultItemDto>> GetUserVaultItemsAsync(string userId);
         
         Task<bool> HasUserAccessToResourceAsync(string userId, string resourceId, string resourceType);

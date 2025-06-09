@@ -947,6 +947,54 @@ public async Task CreateVaultItemAsync(VaultItemDto item, string vaultId, string
     item.CurrentOwnerUserId = ownerId;
 }
 
+public async Task UpdateVaultItemAsync(VaultItemDto item, string userId)
+{
+    await using var session = Driver.AsyncSession();
+    var query = @"
+        MATCH (i:VaultItem {VaultItemId: $vaultItemId, CurrentOwnerId: $userId})
+        SET i.Title = $title,
+            i.Description = $description,
+            i.CreationDate = $creationDate,
+            i.CreationPlace = $creationPlace,
+            i.CreatorId = $creatorId,
+            i.Materials = $materials,
+            i.CraftType = $craftType,
+            i.ItemType = $itemType,
+            i.EstimatedValue = $estimatedValue,
+            i.DateAcquired = $dateAcquired,
+            i.PhotoUrl = $photoUrl,
+            i.PreviousOwnerIds = $previousOwnerIds
+        RETURN i";
+    var result = await session.RunAsync(query, new
+    {
+        vaultItemId = item.VaultItemId,
+        userId,
+        title = item.Title,
+        description = item.Description,
+        creationDate = item.CreationDate,
+        creationPlace = item.CreationPlace,
+        creatorId = item.CreatorId,
+        materials = item.Materials ?? new List<string>(),
+        craftType = item.CraftType ?? new List<string>(),
+        itemType = item.ItemType,
+        estimatedValue = item.EstimatedValue,
+        dateAcquired = item.DateAcquired,
+        photoUrl = item.PhotoUrl,
+        previousOwnerIds = item.PreviousOwnerIds ?? new List<string>()
+    });
+    if (!await result.FetchAsync())
+        throw new Exception("Vault item not found or update failed.");
+}
+
+public async Task DeleteVaultItemAsync(string vaultItemId, string userId)
+{
+    await using var session = Driver.AsyncSession();
+    var query = @"
+        MATCH (i:VaultItem {VaultItemId: $vaultItemId, CurrentOwnerId: $userId})
+        DETACH DELETE i";
+    await session.RunAsync(query, new { vaultItemId, userId });
+}
+
 public async Task<List<VaultItemDto>> GetUserVaultItemsAsync(string userId)
 {
     await using var session = Driver.AsyncSession();
@@ -983,6 +1031,28 @@ public async Task<List<VaultItemDto>> GetUserVaultItemsAsync(string userId)
     });
 
     return items;
+}
+
+private static DateTime? GetDateTimeFromNode(INode node, string propertyName)
+{
+    if (!node.Properties.ContainsKey(propertyName) || node[propertyName] == null)
+        return null;
+
+    var value = node[propertyName];
+    // Neo4j temporal types are returned as boxed objects
+    if (value is DateTime dt)
+        return dt;
+    if (value is DateTimeOffset dto)
+        return dto.UtcDateTime;
+    // Neo4j.Driver returns ZonedDateTime as an internal type, so use ToString and parse if needed
+    if (value.GetType().Name == "ZonedDateTime")
+    {
+        // Use ToString() and DateTimeOffset.Parse if needed
+        var str = value.ToString(); // e.g. "2024-06-07T12:34:56.789+00:00[UTC]"
+        if (DateTimeOffset.TryParse(str.Split('[')[0], out var parsed))
+            return parsed.UtcDateTime;
+    }
+    return null;
 }
 
     private static void ValidateFamilyMemberData(FamilyMemberDto familyMember)
