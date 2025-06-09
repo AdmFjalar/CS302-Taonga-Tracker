@@ -30,21 +30,25 @@ const getFullImageUrl = (relativePath) => {
 
 function toDateInputValue(dateString) {
   if (!dateString) return "";
-  // Handles both ISO and YYYY-MM-DD
   const d = new Date(dateString);
   if (isNaN(d.getTime())) return "";
-  // Return as YYYY-MM-DD for input type="date"
   return d.toISOString().slice(0, 10);
 }
 
-// Helper: returns null or YYYY-MM-DD string
 const toYMD = (d) => (!d ? null : d);
+
+// Helper to auto-insert a space after comma
+const autoSpaceComma = (value) => value.replace(/,([^ ])/g, ", $1");
 
 export function CreateItemPage({ onSave, initialItem, navigateTo }) {
   const [item, setItem] = useState({ ...defaultItem });
   const [activeTab, setActiveTab] = useState("general");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+
+  const [materialsInput, setMaterialsInput] = useState("");
+  const [craftTypeInput, setCraftTypeInput] = useState("");
+  const [sharedWithIdsInput, setSharedWithIdsInput] = useState("");
 
   useEffect(() => {
     if (initialItem && initialItem.vaultItemId && initialItem.vaultItemId !== "0") {
@@ -54,8 +58,14 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
         creationDate: toDateInputValue(initialItem.creationDate),
         dateAcquired: toDateInputValue(initialItem.dateAcquired),
       });
+      setMaterialsInput((initialItem.materials || []).join(", "));
+      setCraftTypeInput((initialItem.craftType || []).join(", "));
+      setSharedWithIdsInput((initialItem.sharedWithIds || []).join(", "));
     } else {
       setItem({ ...defaultItem });
+      setMaterialsInput("");
+      setCraftTypeInput("");
+      setSharedWithIdsInput("");
     }
   }, [initialItem]);
 
@@ -63,7 +73,7 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
     setItem((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleArrayChange = (field, value) => {
+  const handleArrayBlur = (field, value) => {
     const arrayValue = value.split(",").map((v) => v.trim()).filter(Boolean);
     setItem((prev) => ({ ...prev, [field]: arrayValue }));
   };
@@ -102,22 +112,28 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
   };
 
   const handleSave = async () => {
+    const updatedItem = {
+      ...item,
+      materials: materialsInput.split(",").map((v) => v.trim()).filter(Boolean),
+      craftType: craftTypeInput.split(",").map((v) => v.trim()).filter(Boolean),
+      sharedWithIds: sharedWithIdsInput.split(",").map((v) => v.trim()).filter(Boolean),
+    };
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
         alert("You must be logged in to save the heirloom.");
         return;
       }
-      const isNew = item.vaultItemId === "0";
+      const isNew = updatedItem.vaultItemId === "0";
       const url = isNew
           ? "http://localhost:5240/api/vaultitem"
-          : `http://localhost:5240/api/vaultitem/${item.vaultItemId}`;
+          : `http://localhost:5240/api/vaultitem/${updatedItem.vaultItemId}`;
       const method = isNew ? "POST" : "PUT";
 
       const payload = {
-        ...item,
-        creationDate: toYMD(item.creationDate),
-        dateAcquired: toYMD(item.dateAcquired),
+        ...updatedItem,
+        creationDate: toYMD(updatedItem.creationDate),
+        dateAcquired: toYMD(updatedItem.dateAcquired),
       };
 
       const response = await fetch(url, {
@@ -257,26 +273,27 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
                 <b>Materials (comma-separated):</b>
                 <input
                     placeholder="e.g., wood, metal"
-                    value={item.materials.join(", ")}
-                    onChange={(e) => handleArrayChange("materials", e.target.value)}
+                    value={materialsInput}
+                    onChange={(e) => setMaterialsInput(autoSpaceComma(e.target.value))}
+                    onBlur={(e) => handleArrayBlur("materials", e.target.value)}
                 />
               </div>
               <div className="form-row">
                 <b>Craft Type (comma-separated):</b>
                 <input
                     placeholder="e.g., handmade, machine-crafted"
-                    value={item.craftType.join(", ")}
-                    onChange={(e) => handleArrayChange("craftType", e.target.value)}
+                    value={craftTypeInput}
+                    onChange={(e) => setCraftTypeInput(autoSpaceComma(e.target.value))}
+                    onBlur={(e) => handleArrayBlur("craftType", e.target.value)}
                 />
               </div>
               <div className="form-row">
                 <b>Shared With IDs (comma-separated):</b>
                 <input
                     placeholder="e.g., user1, user2"
-                    value={item.sharedWithIds.join(", ")}
-                    onChange={(e) =>
-                        handleArrayChange("sharedWithIds", e.target.value)
-                    }
+                    value={sharedWithIdsInput}
+                    onChange={(e) => setSharedWithIdsInput(autoSpaceComma(e.target.value))}
+                    onBlur={(e) => handleArrayBlur("sharedWithIds", e.target.value)}
                 />
               </div>
             </div>
@@ -325,7 +342,6 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
   );
 }
 
-// ViewItemPage remains unchanged
 export function ViewItemPage({ item, onBack, onEdit }) {
   return (
       <div className="item-layout top-aligned">
