@@ -1,18 +1,46 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./Header.css";
 
-const Header = ({ userImage }) => (
-  <header className="header">
-    <button className="trial-button">Start Free Trial</button>
-    <div className="header-icons">
-      <span className="icon">💬</span>
-      <span className="icon">🔔</span>
-      <img
-        src={userImage || "https://placehold.co/32x32"}
-        alt="User Avatar"
-        className="avatar"
-      />
-    </div>
-  </header>
-);
+const getFullImageUrl = (relativePath) => {
+    const backendUrl = "http://localhost:5240";
+    if (!relativePath) return "https://placehold.co/32x32";
+    return `${backendUrl}${relativePath}`;
+};
+
+const Header = () => {
+    const [profilePictureUrl, setProfilePictureUrl] = useState("");
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const token = localStorage.getItem("authToken");
+                if (!token) return;
+                const res = await fetch("http://localhost:5240/api/Auth/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setProfilePictureUrl(data.profilePictureUrl || "");
+                }
+            } catch {}
+        };
+        fetchUser();
+    }, []);
+
+    return (
+        <header className="header">
+            <button className="trial-button">Start Free Trial</button>
+            <div className="header-icons">
+                <span className="icon">💬</span>
+                <span className="icon">🔔</span>
+                <img
+                    src={getFullImageUrl(profilePictureUrl)}
+                    alt="User Avatar"
+                    className="avatar"
+                />
+            </div>
+        </header>
+    );
+};
+
 export default Header;

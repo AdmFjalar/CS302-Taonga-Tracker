@@ -63,3 +63,13 @@
   padding-bottom: 0.5rem;
   margin-bottom: 1rem;
 }
+
+.settings-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  background: #e3e7d3;
+  display: block;
+}

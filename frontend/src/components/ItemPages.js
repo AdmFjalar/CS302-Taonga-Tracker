@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./ItemPages.css";
 import "./CreateItemPage.css";
 
@@ -48,7 +48,13 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
 
   const [materialsInput, setMaterialsInput] = useState("");
   const [craftTypeInput, setCraftTypeInput] = useState("");
-  const [sharedWithIdsInput, setSharedWithIdsInput] = useState("");
+  const [sharedWithInput, setSharedWithInput] = useState("");
+
+  // User suggestion state for "Share with"
+  const [userSuggestions, setUserSuggestions] = useState([]);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionBoxRef = useRef(null);
 
   useEffect(() => {
     if (initialItem && initialItem.vaultItemId && initialItem.vaultItemId !== "0") {
@@ -60,12 +66,12 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
       });
       setMaterialsInput((initialItem.materials || []).join(", "));
       setCraftTypeInput((initialItem.craftType || []).join(", "));
-      setSharedWithIdsInput((initialItem.sharedWithIds || []).join(", "));
+      setSharedWithInput((initialItem.sharedWithIds || []).join(", "));
     } else {
       setItem({ ...defaultItem });
       setMaterialsInput("");
       setCraftTypeInput("");
-      setSharedWithIdsInput("");
+      setSharedWithInput("");
     }
   }, [initialItem]);
 
@@ -77,6 +83,76 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
     const arrayValue = value.split(",").map((v) => v.trim()).filter(Boolean);
     setItem((prev) => ({ ...prev, [field]: arrayValue }));
   };
+
+  // --- Share with: user search/autocomplete logic ---
+
+  // Helper: get last email being typed
+  const getLastEntry = (input) => {
+    const parts = input.split(",");
+    return parts[parts.length - 1].trim();
+  };
+
+  // Fetch user suggestions by email
+  const fetchUserSuggestions = async (query) => {
+    if (!query) {
+      setUserSuggestions([]);
+      return;
+    }
+    setSuggestionLoading(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(`http://localhost:5240/api/auth/search-users?q=${encodeURIComponent(query)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      if (res.ok) {
+        const users = await res.json();
+        setUserSuggestions(users);
+      } else {
+        setUserSuggestions([]);
+      }
+    } catch {
+      setUserSuggestions([]);
+    }
+    setSuggestionLoading(false);
+  };
+
+  // Handle input change for Share with
+  const handleSharedWithInputChange = (e) => {
+    const value = autoSpaceComma(e.target.value);
+    setSharedWithInput(value);
+    const last = getLastEntry(value);
+    if (last.length > 4) {
+      fetchUserSuggestions(last);
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+      setUserSuggestions([]);
+    }
+  };
+
+  // Handle suggestion click (insert email)
+  const handleSuggestionClick = (email) => {
+    const parts = sharedWithInput.split(",");
+    parts[parts.length - 1] = ` ${email}`;
+    const newValue = parts.join(",").replace(/^ /, "");
+    setSharedWithInput(autoSpaceComma(newValue));
+    setShowSuggestions(false);
+    setUserSuggestions([]);
+  };
+
+  // Hide suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (suggestionBoxRef.current && !suggestionBoxRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -116,7 +192,7 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
       ...item,
       materials: materialsInput.split(",").map((v) => v.trim()).filter(Boolean),
       craftType: craftTypeInput.split(",").map((v) => v.trim()).filter(Boolean),
-      sharedWithIds: sharedWithIdsInput.split(",").map((v) => v.trim()).filter(Boolean),
+      sharedWithIds: sharedWithInput.split(",").map((v) => v.trim()).filter(Boolean),
     };
     try {
       const token = localStorage.getItem("authToken");
@@ -287,14 +363,68 @@ export function CreateItemPage({ onSave, initialItem, navigateTo }) {
                     onBlur={(e) => handleArrayBlur("craftType", e.target.value)}
                 />
               </div>
-              <div className="form-row">
-                <b>Shared With IDs (comma-separated):</b>
+              <div className="form-row" style={{ position: "relative" }}>
+                <b>Share with (comma-separated):</b>
                 <input
-                    placeholder="e.g., user1, user2"
-                    value={sharedWithIdsInput}
-                    onChange={(e) => setSharedWithIdsInput(autoSpaceComma(e.target.value))}
+                    placeholder="e.g., alice@example.com, bob@example.com"
+                    value={sharedWithInput}
+                    onChange={handleSharedWithInputChange}
                     onBlur={(e) => handleArrayBlur("sharedWithIds", e.target.value)}
+                    autoComplete="off"
                 />
+                {showSuggestions && userSuggestions.length > 0 && (
+                    <div
+                        className="suggestion-box"
+                        ref={suggestionBoxRef}
+                        style={{
+                          position: "absolute",
+                          background: "#fff",
+                          border: "1px solid #ccc",
+                          zIndex: 10,
+                          left: 0,
+                          right: 0,
+                          top: "100%",
+                        }}
+                    >
+                      {suggestionLoading ? (
+                          <div className="suggestion-item">Loading...</div>
+                      ) : (
+                          userSuggestions.map((user) => (
+                              <div
+                                  key={user.email}
+                                  className="suggestion-item"
+                                  style={{
+                                    padding: "4px 8px",
+                                    cursor: "pointer",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 8,
+                                  }}
+                                  onMouseDown={() => handleSuggestionClick(user.email)}
+                              >
+                                <img
+                                    src={user.profilePictureUrl ? getFullImageUrl(user.profilePictureUrl) : "https://placehold.co/24x24"}
+                                    alt="profile"
+                                    style={{
+                                      width: 24,
+                                      height: 24,
+                                      borderRadius: "50%",
+                                      objectFit: "cover",
+                                      objectPosition: "center",
+                                      background: "#e3e7d3",
+                                      flexShrink: 0,
+                                    }}
+                                />
+                                <span>{user.email}</span>
+                                {user.username && (
+                                    <span style={{ color: "#888", marginLeft: 8 }}>
+        ({user.username})
+      </span>
+                                )}
+                              </div>
+                          ))                      )}
+                    </div>
+                )}
               </div>
             </div>
         );

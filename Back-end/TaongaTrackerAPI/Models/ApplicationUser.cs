@@ -14,6 +14,7 @@ public class ApplicationUser : IdentityUser
     public string NormalizedUserName { get; set; }
     public string UserName { get; set; }
     public string PasswordHash { get; set; }
+    public string ProfilePictureUrl { get; set; }
     public bool EmailConfirmed { get; set; }
     public string SecurityStamp { get; set; } = Guid.NewGuid().ToString();
     public string ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();

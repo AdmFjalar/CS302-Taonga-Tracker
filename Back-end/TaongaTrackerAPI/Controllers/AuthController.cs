@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -9,6 +10,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using TaongaTrackerAPI.Models;
+using TaongaTrackerAPI.Services;
 
 namespace TaongaTrackerAPI.Controllers;
 
@@ -19,15 +21,18 @@ public class AuthController : ControllerBase
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _configuration;
+    private readonly INeo4jService _neo4jService;
 
     public AuthController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        INeo4jService neo4jService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _configuration = configuration;
+        _neo4jService = neo4jService;
     }
 
     // Register method remains unchanged...
@@ -81,6 +86,39 @@ public class AuthController : ControllerBase
         return BadRequest(result.Errors);
     }
     
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return Unauthorized();
+
+        var user = await _neo4jService.FindUserByIdAsync(userId, cancellationToken);
+        Console.WriteLine(user);
+
+        if (user == null) return NotFound();
+        
+        return Ok(new
+        {
+            user.UserName,
+            user.FirstName,
+            user.MiddleNames,
+            user.LastName,
+            user.Email,
+            user.ProfilePictureUrl
+        });
+    }
+    
+    [HttpGet("search-users")]
+    public async Task<IActionResult> SearchUsers([FromQuery] string q)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+            return BadRequest("Query is required.");
+
+        var users = await _neo4jService.SearchUsersAsync(q, 10);
+        return Ok(users.Select(u => new { u.UserName, u.FirstName, u.Email, u.ProfilePictureUrl }));
+    }
+    
     private string GenerateJwtToken(ApplicationUser user)
     {
         var claims = new List<Claim>
@@ -103,5 +141,35 @@ public class AuthController : ControllerBase
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    [HttpPut("me")]
+    [Authorize]
+    public async Task<IActionResult> UpdateCurrentUser([FromBody] UpdateProfileDto model, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null) return Unauthorized();
+
+        var user = await _neo4jService.FindUserByIdAsync(userId, cancellationToken);
+        if (user == null) return NotFound();
+
+        user.FirstName = model.FirstName ?? user.FirstName;
+        user.MiddleNames = model.MiddleNames ?? user.MiddleNames;
+        user.LastName = model.LastName ?? user.LastName;
+        user.Email = model.Email ?? user.Email;
+        user.ProfilePictureUrl = model.ProfilePictureUrl ?? user.ProfilePictureUrl;
+
+        var result = await _neo4jService.UpdateUserAsync(user, cancellationToken);
+        if (!result.Succeeded) return BadRequest(result.Errors);
+
+        return Ok(new
+        {
+            user.UserName,
+            user.FirstName,
+            user.MiddleNames,
+            user.LastName,
+            user.Email,
+            user.ProfilePictureUrl
+        });
     }
 }

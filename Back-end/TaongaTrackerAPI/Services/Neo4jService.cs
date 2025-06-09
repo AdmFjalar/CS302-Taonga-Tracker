@@ -16,11 +16,8 @@ public class Neo4jService : INeo4jService, IDisposable
     {
         var host = config["Neo4j:Host"] ?? "localhost";
         var boltPort = config["Neo4j:BoltPort"] ?? "7687";
-
-        var username = config["Neo4j:Username"] ??
-                       throw new ArgumentNullException("Neo4j:Username is missing in configuration.");
-        var password = config["Neo4j:Password"] ??
-                       throw new ArgumentNullException("Neo4j:Password is missing in configuration.");
+        var username = config["Neo4j:Username"] ?? throw new ArgumentNullException("Neo4j:Username is missing in configuration.");
+        var password = config["Neo4j:Password"] ?? throw new ArgumentNullException("Neo4j:Password is missing in configuration.");
 
         Driver = GraphDatabase.Driver(
             $"bolt://{host}:{boltPort}",
@@ -31,6 +28,195 @@ public class Neo4jService : INeo4jService, IDisposable
     {
         Driver?.Dispose();
     }
+
+    public async Task<IdentityResult> UpdateUserAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+                MATCH (u:User {Id: $Id})
+                SET u.UserName = $UserName,
+                    u.NormalizedUserName = $NormalizedUserName,
+                    u.Email = $Email,
+                    u.NormalizedEmail = $NormalizedEmail,
+                    u.PasswordHash = $PasswordHash,
+                    u.SecurityStamp = $SecurityStamp,
+                    u.FirstName = $FirstName,
+                    u.MiddleNames = $MiddleNames,
+                    u.LastName = $LastName,
+                    u.ProfilePictureUrl = $ProfilePictureUrl,
+                    u.EmailConfirmed = $EmailConfirmed,
+                    u.ConcurrencyStamp = $ConcurrencyStamp
+                RETURN u";
+
+            var result = await session.RunAsync(query, new
+            {
+                user.Id,
+                user.UserName,
+                user.NormalizedUserName,
+                user.Email,
+                user.NormalizedEmail,
+                user.PasswordHash,
+                user.SecurityStamp,
+                user.FirstName,
+                user.MiddleNames,
+                user.LastName,
+                user.ProfilePictureUrl,
+                user.EmailConfirmed,
+                user.ConcurrencyStamp
+            });
+
+            if (!await result.FetchAsync())
+                return IdentityResult.Failed(new IdentityError { Description = "User not found or update failed." });
+
+            return IdentityResult.Success;
+        }
+        catch (Exception e)
+        {
+            return IdentityResult.Failed(new IdentityError { Description = e.Message });
+        }
+    }
+
+    public async Task<IdentityResult> CreateUserAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+                CREATE (u:User {Id: $Id, UserName: $UserName, NormalizedUserName: $NormalizedUserName,
+                                Email: $Email, NormalizedEmail: $NormalizedEmail,
+                                PasswordHash: $PasswordHash, SecurityStamp: $SecurityStamp,
+                                FirstName: $FirstName, MiddleNames: $MiddleNames, LastName: $LastName,
+                                EmailConfirmed: $EmailConfirmed, ConcurrencyStamp: $ConcurrencyStamp,
+                                ProfilePictureUrl: $ProfilePictureUrl})
+                RETURN u";
+
+            await session.RunAsync(query, new
+            {
+                user.Id,
+                user.UserName,
+                user.NormalizedUserName,
+                user.Email,
+                user.NormalizedEmail,
+                user.PasswordHash,
+                user.SecurityStamp,
+                user.FirstName,
+                user.MiddleNames,
+                user.LastName,
+                user.EmailConfirmed,
+                user.ConcurrencyStamp,
+                user.ProfilePictureUrl
+            });
+
+            return IdentityResult.Success;
+        }
+        catch (Exception e)
+        {
+            return IdentityResult.Failed(new IdentityError { Description = e.Message });
+        }
+    }
+
+    public async Task<ApplicationUser?> FindUserByIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+                MATCH (u:User)
+                WHERE u.Id = $Id
+                RETURN u";
+
+            var result = await session.RunAsync(query, new { Id = userId });
+            var records = await result.ToListAsync();
+            var record = records.SingleOrDefault();
+            if (record == null) return null;
+
+            var node = record["u"].As<INode>();
+            return MapUser(node);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<ApplicationUser?> FindUserByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+                MATCH (u:User)
+                WHERE u.NormalizedUserName = $NormalizedUserName
+                RETURN u";
+            var result = await session.RunAsync(query, new { NormalizedUserName = normalizedUserName });
+            var records = await result.ToListAsync();
+            var record = records.SingleOrDefault();
+            if (record == null) return null;
+
+            var node = record["u"].As<INode>();
+            return MapUser(node);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<ApplicationUser> FindUserByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+                MATCH (u:User)
+                WHERE u.NormalizedEmail = $NormalizedEmail
+                RETURN u";
+            var result = await session.RunAsync(query, new { NormalizedEmail = normalizedEmail });
+            var records = await result.ToListAsync();
+            var record = records.SingleOrDefault();
+            if (record == null) return null;
+
+            var node = record["u"].As<INode>();
+            return MapUser(node);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<IdentityResult> DeleteUserAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await using var session = Driver.AsyncSession();
+
+        try
+        {
+            var query = @"
+                MATCH (u:User {Id: $Id})
+                DELETE u";
+            await session.RunAsync(query, new { user.Id });
+            return IdentityResult.Success;
+        }
+        catch (Exception e)
+        {
+            return IdentityResult.Failed(new IdentityError { Description = e.Message });
+        }
+    }
+
+    // --- Family Member and Family Tree methods (unchanged) ---
 
     public async Task CreateFamilyMemberFromJsonAsync(string jsonRequest)
     {
@@ -58,7 +244,7 @@ public class Neo4jService : INeo4jService, IDisposable
     public async Task CreateFamilyMemberAsync(FamilyMemberDto familyMember)
     {
         ValidateFamilyMemberData(familyMember);
-        
+
         await using var session = Driver.AsyncSession();
         try
         {
@@ -163,9 +349,9 @@ public class Neo4jService : INeo4jService, IDisposable
 
         if (familyTreeDto == null)
             throw new ArgumentException("Failed to deserialize JSON into FamilyTreeDto.");
-        
+
         familyTreeDto.OwnerUserId = userId;
-        
+
         await using var session = Driver.AsyncSession();
 
         var createTreeQuery = @"
@@ -266,10 +452,10 @@ public class Neo4jService : INeo4jService, IDisposable
         var query = @"
         MATCH (t:FamilyTree)
         OPTIONAL MATCH (m:FamilyMember)-[:BELONGS_TO]->(t)
-        RETURN elementId(t) AS FamilyTreeId, 
-               t.OwnerUserId AS OwnerUserId, 
+        RETURN elementId(t) AS FamilyTreeId,
+               t.OwnerUserId AS OwnerUserId,
                COLLECT({
-                   FamilyMemberId: elementId(m), 
+                   FamilyMemberId: elementId(m),
                    UserId: m.UserId,
                    FirstName: m.FirstName,
                    MiddleNames: m.MiddleNames,
@@ -329,738 +515,258 @@ public class Neo4jService : INeo4jService, IDisposable
         return familyTrees;
     }
 
-    public async Task<IdentityResult> CreateUserAsync(ApplicationUser user, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = Driver.AsyncSession();
+    // --- Vault and VaultItem methods (unchanged, as in your context) ---
 
-        try
-        {
-            var query = @"
-                CREATE (u:User {Id: $Id, UserName: $UserName, NormalizedUserName: $NormalizedUserName, 
-                                Email: $Email, NormalizedEmail: $NormalizedEmail, 
-                                PasswordHash: $PasswordHash, SecurityStamp: $SecurityStamp,
-                                FirstName: $FirstName, MiddleNames: $MiddleNames, LastName: $LastName,
-                                EmailConfirmed: $EmailConfirmed, ConcurrencyStamp: $ConcurrencyStamp})
-                RETURN u";
-
-            await session.RunAsync(query, new
-            {
-                user.Id,
-                user.UserName,
-                user.NormalizedUserName,
-                user.Email,
-                user.NormalizedEmail,
-                user.PasswordHash,
-                user.SecurityStamp,
-                user.FirstName,
-                user.MiddleNames,
-                user.LastName,
-                user.EmailConfirmed,
-                user.ConcurrencyStamp
-            });
-
-            return IdentityResult.Success;
-        }
-        catch (Exception e)
-        {
-            return IdentityResult.Failed(new IdentityError { Description = e.Message });
-        }
-    }
-
-    public async Task<ApplicationUser> FindUserByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = Driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-                MATCH (u:User)
-                WHERE u.NormalizedEmail = $NormalizedEmail
-                RETURN u";
-            var result = await session.RunAsync(query, new { normalizedEmail });
-
-            try
-            {
-                var record = await result.SingleAsync();
-                if (record == null) return null;
-
-                var node = record["u"].As<INode>();
-                return new ApplicationUser
-                {
-                    Id = node.ElementId,
-                    Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
-                    FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : null,
-                    MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : null,
-                    LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : null,
-                    NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail")
-                        ? node["NormalizedEmail"].As<string>()
-                        : null,
-                    UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
-                    NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName")
-                        ? node["NormalizedUserName"].As<string>()
-                        : null,
-                    PasswordHash = node.Properties.ContainsKey("PasswordHash")
-                        ? node["PasswordHash"].As<string>()
-                        : null,
-                    SecurityStamp = node.Properties.ContainsKey("SecurityStamp")
-                        ? node["SecurityStamp"].As<string>()
-                        : null
-                };
-            }
-            catch (Exception e)
-            {
-                return null;
-            }
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-
-    public async Task<IdentityResult> UpdateUserAsync(ApplicationUser user, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = Driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-            MATCH (u:User {Id: $Id})
-            SET u.UserName = $UserName,
-                u.NormalizedUserName = $NormalizedUserName,
-                u.Email = $Email,
-                u.NormalizedEmail = $NormalizedEmail,
-                u.PasswordHash = $PasswordHash,
-                u.SecurityStamp = $SecurityStamp,
-                u.FirstName = $FirstName,
-                u.MiddleNames = $MiddleNames,
-                u.LastName = $LastName
-            RETURN u";
-
-            var result = await session.RunAsync(query, new
-            {
-                user.Id,
-                user.UserName,
-                user.NormalizedUserName,
-                user.Email,
-                user.NormalizedEmail,
-                user.PasswordHash,
-                user.SecurityStamp,
-                user.FirstName,
-                user.MiddleNames,
-                user.LastName
-            });
-
-            if (!await result.FetchAsync())
-                return IdentityResult.Failed(new IdentityError { Description = "User not found or update failed." });
-
-            return IdentityResult.Success;
-        }
-        catch (Exception e)
-        {
-            return IdentityResult.Failed(new IdentityError { Description = e.Message });
-        }
-    }
-
-    public async Task<IdentityResult> DeleteUserAsync(ApplicationUser user, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = Driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-            MATCH (u:User {Id: $Id})
-            DELETE u";
-
-            await session.RunAsync(query, new
-            {
-                user.Id
-            });
-
-            return IdentityResult.Success;
-        }
-        catch (Exception e)
-        {
-            return IdentityResult.Failed(new IdentityError { Description = e.Message });
-        }
-    }
-
-    public async Task<ApplicationUser?> FindUserByIdAsync(string userId, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = Driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-            MATCH (u:User)
-            WHERE u.Id = $Id
-            RETURN u";
-
-            var result = await session.RunAsync(query, new { Id = userId });
-            try
-            {
-                var record = await result.SingleAsync();
-
-                if (record == null) return null;
-
-                var node = record["u"].As<INode>();
-                return new ApplicationUser
-                {
-                    Id = node.Properties.ContainsKey("Id") ? node["Id"].As<string>() : null,
-                    FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : string.Empty,
-                    MiddleNames = node.Properties.ContainsKey("MiddleNames")
-                        ? node["MiddleNames"].As<string>()
-                        : string.Empty,
-                    LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : string.Empty,
-                    Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
-                    NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail")
-                        ? node["NormalizedEmail"].As<string>()
-                        : null,
-                    UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
-                    NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName")
-                        ? node["NormalizedUserName"].As<string>()
-                        : null,
-                    PasswordHash = node.Properties.ContainsKey("PasswordHash") ? node["PasswordHash"].As<string>() : null,
-                    SecurityStamp =
-                        node.Properties.ContainsKey("SecurityStamp") ? node["SecurityStamp"].As<string>() : null,
-                    EmailConfirmed = node.Properties.ContainsKey("EmailConfirmed")
-                        ? node["EmailConfirmed"].As<bool>()
-                        : false,
-                    ConcurrencyStamp = node.Properties.ContainsKey("ConcurrencyStamp")
-                        ? node["ConcurrencyStamp"].As<string>()
-                        : null
-                };    
-            }
-            catch (Exception e)
-            {
-                return null;
-            }
-            
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Error occurred while finding user by ID: {ex.Message}", ex);
-        }
-    }
-
-    public async Task<ApplicationUser?> FindUserByNameAsync(string normalizedUserName,
-        CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = Driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-                MATCH (u:User)
-                WHERE u.NormalizedUserName = $NormalizedUserName
-                RETURN u";
-            var result = await session.RunAsync(query, new { NormalizedUserName = normalizedUserName });
-
-            try
-            {
-                var record = await result.SingleAsync();
-                if (record == null) return null;
-
-                var node = record["u"].As<INode>();
-                return new ApplicationUser
-                {
-                    Id = node.ElementId,
-                    Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
-                    FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : null,
-                    MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : null,
-                    LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : null,
-                    NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail")
-                        ? node["NormalizedEmail"].As<string>()
-                        : null,
-                    UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
-                    NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName")
-                        ? node["NormalizedUserName"].As<string>()
-                        : null,
-                    PasswordHash = node.Properties.ContainsKey("PasswordHash")
-                        ? node["PasswordHash"].As<string>()
-                        : null,
-                    SecurityStamp = node.Properties.ContainsKey("SecurityStamp")
-                        ? node["SecurityStamp"].As<string>()
-                        : null
-                };
-            }
-            catch (Exception e)
-            {
-                return null;
-            }
-            
-        }
-        catch (Exception e)
-        {
-            throw new Exception(e.Message);
-        }
-    }
-
-    public async Task<IdentityResult> CreateRoleAsync(ApplicationRole role, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var session = Driver.AsyncSession();
-
-        try
-        {
-            var query = @"
-                CREATE (r:Role {Id: $Id, Name: $Name, NormalizedName: $NormalizedName})
-                RETURN r";
-
-            await session.RunAsync(query, new
-            {
-                role.Id,
-                role.Name,
-                role.NormalizedName
-            });
-
-            return IdentityResult.Success;
-        }
-        catch (Exception e)
-        {
-            return IdentityResult.Failed(new IdentityError { Description = e.Message });
-        }
-    }
-
-    public async Task<bool> HasUserAccessToResourceAsync(string userId, string resourceId, string resourceType)
-    {
-        await using var session = Driver.AsyncSession();
-
-        var query = resourceType.ToLower() switch
-        {
-            "familytree" => @"
-            MATCH (t:FamilyTree)
-            WHERE elementId(t) = $resourceId
-            AND (t.OwnerUserId = $userId OR $userId IN COALESCE(t.SharedWithIds, []))
-            RETURN COUNT(t) > 0 AS hasAccess",
-            "familymember" => @"
-            MATCH (m:FamilyMember)
-            WHERE elementId(m) = $resourceId
-            AND (m.OwnerUserId = $userId OR $userId IN COALESCE(m.SharedWithIds, []))
-            RETURN COUNT(m) > 0 AS hasAccess",
-            _ => throw new ArgumentException($"Unknown resource type: {resourceType}")
-        };
-
-        var result = await session.RunAsync(query, new { resourceId, userId });
-        var record = await result.SingleAsync();
-
-        return record?["hasAccess"]?.As<bool>() ?? false;
-    }
-
-    public async Task<List<FamilyTreeDto>> GetUserFamilyTreesAsync(string userId)
+    public async Task CreateVaultAsync(VaultDto vault, string ownerId)
     {
         await using var session = Driver.AsyncSession();
 
         var query = @"
-        MATCH (t:FamilyTree)
-        WHERE t.OwnerUserId = $userId OR $userId IN COALESCE(t.SharedWithIds, [])
-        OPTIONAL MATCH (m:FamilyMember)-[:BELONGS_TO]->(t)
-        RETURN elementId(t) AS FamilyTreeId, 
-               t.OwnerUserId AS OwnerUserId,
-               COALESCE(t.SharedWithIds, []) AS SharedWithIds,
-               COLLECT({
-                   FamilyMemberId: elementId(m), 
-                   UserId: m.UserId,
-                   FirstName: m.FirstName,
-                   LastName: m.LastName
-               }) AS FamilyMembers";
+            CREATE (v:Vault {
+                VaultId: randomUUID(),
+                OwnerId: $ownerId,
+                SharedWithIds: $sharedWithIds
+            })
+            RETURN v.VaultId AS VaultId";
+
+        var result = await session.RunAsync(query, new
+        {
+            ownerId,
+            sharedWithIds = vault.SharedWithIds ?? new List<string>()
+        });
+
+        var record = await result.SingleAsync();
+        vault.VaultId = record["VaultId"].As<string>();
+        vault.OwnerId = ownerId;
+    }
+
+    public async Task<List<VaultDto>> GetUserVaultsAsync(string userId)
+    {
+        await using var session = Driver.AsyncSession();
+
+        var query = @"
+            MATCH (v:Vault)
+            WHERE v.OwnerId = $userId OR $userId IN COALESCE(v.SharedWithIds, [])
+            RETURN v";
 
         var result = await session.RunAsync(query, new { userId });
-        var familyTrees = new List<FamilyTreeDto>();
-
-        await foreach (var record in result)
+        var vaults = await result.ToListAsync(record =>
         {
-            var familyTree = new FamilyTreeDto
+            var node = record["v"].As<INode>();
+            return new VaultDto
             {
-                FamilyTreeId = record["FamilyTreeId"].As<string>(),
-                OwnerUserId = record["OwnerUserId"].As<string>(),
-                SharedWithIds = record["SharedWithIds"].As<List<string>>()
-                // Map family members...
+                VaultId = node.Properties.ContainsKey("VaultId") ? node["VaultId"].As<string>() : node.ElementId,
+                OwnerId = node.Properties.ContainsKey("OwnerId") ? node["OwnerId"].As<string>() : null,
+                SharedWithIds = node.Properties.ContainsKey("SharedWithIds") ? node["SharedWithIds"].As<List<string>>() : new List<string>()
             };
-            familyTrees.Add(familyTree);
-        }
+        });
 
-        return familyTrees;
+        return vaults;
     }
 
-    public async Task<List<FamilyMemberDto>> GetUserFamilyMembersAsync(string userId, int skip = 0, int limit = 100)
+    public async Task<VaultDto> GetOrCreateUserVaultAsync(string userId)
+    {
+        var vaults = await GetUserVaultsAsync(userId);
+        var userVault = vaults.FirstOrDefault(v => v.OwnerId == userId);
+
+        if (userVault != null)
+            return userVault;
+
+        var defaultVault = new VaultDto
+        {
+            OwnerId = userId,
+            SharedWithIds = new List<string>()
+        };
+        await CreateVaultAsync(defaultVault, userId);
+        return defaultVault;
+    }
+
+    public async Task CreateVaultItemAsync(VaultItemDto item, string vaultId, string ownerId)
     {
         await using var session = Driver.AsyncSession();
 
         var query = @"
-        MATCH (m:FamilyMember)
-        WHERE m.OwnerUserId = $userId OR $userId IN COALESCE(m.SharedWithIds, [])
-        RETURN m 
-        SKIP $skip LIMIT $limit";
+            MATCH (v:Vault) WHERE v.VaultId = $vaultId AND v.OwnerId = $ownerId
+            CREATE (i:VaultItem {
+                VaultItemId: randomUUID(),
+                Title: $title,
+                Description: $description,
+                CreationDate: $creationDate,
+                CreationPlace: $creationPlace,
+                CreatorId: $creatorId,
+                Materials: $materials,
+                CraftType: $craftType,
+                ItemType: $itemType,
+                EstimatedValue: $estimatedValue,
+                DateAcquired: $dateAcquired,
+                PhotoUrl: $photoUrl,
+                PreviousOwnerIds: $previousOwnerIds,
+                SharedWithIds: $sharedWithIds,
+                CurrentOwnerId: $ownerId,
+                CurrentOwnerUserId: $ownerId
+            })
+            CREATE (v)-[:HAS_ITEM]->(i)
+            RETURN i.VaultItemId AS VaultItemId";
 
-        var result = await session.RunAsync(query, new { userId, skip, limit });
+        var result = await session.RunAsync(query, new
+        {
+            vaultId,
+            ownerId,
+            sharedWithIds = item.SharedWithIds ?? new List<string>(),
+            title = item.Title,
+            description = item.Description,
+            creationDate = item.CreationDate,
+            creationPlace = item.CreationPlace,
+            creatorId = item.CreatorId,
+            materials = item.Materials ?? new List<string>(),
+            craftType = item.CraftType ?? new List<string>(),
+            itemType = item.ItemType,
+            estimatedValue = item.EstimatedValue,
+            dateAcquired = item.DateAcquired,
+            photoUrl = item.PhotoUrl,
+            previousOwnerIds = item.PreviousOwnerIds ?? new List<string>()
+        });
 
+        var record = await result.SingleAsync();
+        item.VaultItemId = record["VaultItemId"].As<string>();
+        item.CurrentOwnerId = ownerId;
+        item.CurrentOwnerUserId = ownerId;
+    }
+
+    public async Task UpdateVaultItemAsync(VaultItemDto item, string userId)
+    {
+        await using var session = Driver.AsyncSession();
+        var query = @"
+            MATCH (i:VaultItem {VaultItemId: $vaultItemId, CurrentOwnerId: $userId})
+            SET i.Title = $title,
+                i.Description = $description,
+                i.CreationDate = $creationDate,
+                i.CreationPlace = $creationPlace,
+                i.CreatorId = $creatorId,
+                i.Materials = $materials,
+                i.CraftType = $craftType,
+                i.ItemType = $itemType,
+                i.EstimatedValue = $estimatedValue,
+                i.DateAcquired = $dateAcquired,
+                i.PhotoUrl = $photoUrl,
+                i.PreviousOwnerIds = $previousOwnerIds
+            RETURN i";
+        var result = await session.RunAsync(query, new
+        {
+            vaultItemId = item.VaultItemId,
+            userId,
+            title = item.Title,
+            description = item.Description,
+            creationDate = item.CreationDate,
+            creationPlace = item.CreationPlace,
+            creatorId = item.CreatorId,
+            materials = item.Materials ?? new List<string>(),
+            craftType = item.CraftType ?? new List<string>(),
+            itemType = item.ItemType,
+            estimatedValue = item.EstimatedValue,
+            dateAcquired = item.DateAcquired,
+            photoUrl = item.PhotoUrl,
+            previousOwnerIds = item.PreviousOwnerIds ?? new List<string>()
+        });
+        if (!await result.FetchAsync())
+            throw new Exception("Vault item not found or update failed.");
+    }
+
+    public async Task DeleteVaultItemAsync(string vaultItemId, string userId)
+    {
+        await using var session = Driver.AsyncSession();
+        var query = @"
+            MATCH (i:VaultItem {VaultItemId: $vaultItemId, CurrentOwnerId: $userId})
+            DETACH DELETE i";
+        await session.RunAsync(query, new { vaultItemId, userId });
+    }
+
+    public async Task<List<VaultItemDto>> GetUserVaultItemsAsync(string userId)
+    {
+        await using var session = Driver.AsyncSession();
+
+        var query = @"
+            MATCH (v:Vault)-[:HAS_ITEM]->(i:VaultItem)
+            WHERE v.OwnerId = $userId OR $userId IN COALESCE(v.SharedWithIds, [])
+            RETURN i";
+
+        var result = await session.RunAsync(query, new { userId });
+        var items = await result.ToListAsync(record =>
+        {
+            var node = record["i"].As<INode>();
+            return new VaultItemDto
+            {
+                VaultItemId = node.Properties.ContainsKey("VaultItemId") ? node["VaultItemId"].As<string>() : node.ElementId,
+                Title = node.Properties.ContainsKey("Title") ? node["Title"].As<string>() : null,
+                Description = node.Properties.ContainsKey("Description") ? node["Description"].As<string>() : null,
+                CreationDate = node.Properties.ContainsKey("CreationDate") ? node["CreationDate"].As<DateTime?>() : null,
+                CreationPlace = node.Properties.ContainsKey("CreationPlace") ? node["CreationPlace"].As<string>() : null,
+                CreatorId = node.Properties.ContainsKey("CreatorId") ? node["CreatorId"].As<string>() : null,
+                Materials = node.Properties.ContainsKey("Materials") ? node["Materials"].As<List<string>>() : new List<string>(),
+                CraftType = node.Properties.ContainsKey("CraftType") ? node["CraftType"].As<List<string>>() : new List<string>(),
+                ItemType = node.Properties.ContainsKey("ItemType") ? node["ItemType"].As<string>() : null,
+                EstimatedValue = node.Properties.ContainsKey("EstimatedValue") ? node["EstimatedValue"].As<decimal?>() ?? 0 : 0,
+                DateAcquired = node.Properties.ContainsKey("DateAcquired") ? node["DateAcquired"].As<DateTime?>() : null,
+                PhotoUrl = node.Properties.ContainsKey("PhotoUrl") ? node["PhotoUrl"].As<string>() : null,
+                PreviousOwnerIds = node.Properties.ContainsKey("PreviousOwnerIds") ? node["PreviousOwnerIds"].As<List<string>>() : new List<string>(),
+                SharedWithIds = node.Properties.ContainsKey("SharedWithIds") ? node["SharedWithIds"].As<List<string>>() : new List<string>(),
+                CurrentOwnerId = node.Properties.ContainsKey("CurrentOwnerId") ? node["CurrentOwnerId"].As<string>() : null,
+                CurrentOwnerUserId = node.Properties.ContainsKey("CurrentOwnerUserId") ? node["CurrentOwnerUserId"].As<string>() : null
+            };
+        });
+
+        return items;
+    }
+
+    // --- Search users ---
+
+    public async Task<List<ApplicationUser>> SearchUsersAsync(string query, int limit = 10)
+    {
+        await using var session = Driver.AsyncSession();
+        var cypher = @"
+            MATCH (u:User)
+            WHERE toLower(u.UserName) CONTAINS toLower($query)
+               OR toLower(u.Email) CONTAINS toLower($query)
+               OR toLower(u.FirstName) CONTAINS toLower($query)
+               OR toLower(u.LastName) CONTAINS toLower($query)
+            RETURN u
+            LIMIT $limit";
+        var result = await session.RunAsync(cypher, new { query, limit });
         return await result.ToListAsync(record =>
         {
-            var node = record["m"].As<INode>();
-            return new FamilyMemberDto
-            {
-                FamilyMemberId = node.ElementId,
-                UserId = node.Properties.ContainsKey("userId") ? node["userId"]?.As<string>() : null,
-                FirstName = node.Properties.ContainsKey("firstName") ? node["firstName"]?.As<string>() : null,
-                LastName = node.Properties.ContainsKey("lastName") ? node["lastName"]?.As<string>() : null,
-                MiddleNames = node.Properties.ContainsKey("middleNames")
-                    ? node["middleNames"]?.As<List<string>>()
-                    : null,
-                DateOfBirth = node.Properties.ContainsKey("dateOfBirth") ? node["dateOfBirth"]?.As<DateTime?>() : null,
-                DateOfDeath = node.Properties.ContainsKey("dateOfDeath") ? node["dateOfDeath"]?.As<DateTime?>() : null,
-                Gender = node.Properties.ContainsKey("gender") ? node["gender"]?.As<string>() : null,
-                Occupation = node.Properties.ContainsKey("occupation") ? node["occupation"]?.As<string>() : null,
-                PlaceOfBirth = node.Properties.ContainsKey("placeOfBirth") ? node["placeOfBirth"]?.As<string>() : null,
-                PlaceOfDeath = node.Properties.ContainsKey("placeOfDeath") ? node["placeOfDeath"]?.As<string>() : null,
-                Nationality = node.Properties.ContainsKey("nationality") ? node["nationality"]?.As<string>() : null,
-                Religion = node.Properties.ContainsKey("religion") ? node["religion"]?.As<string>() : null,
-                MaritalStatus = node.Properties.ContainsKey("maritalStatus")
-                    ? node["maritalStatus"]?.As<string>()
-                    : null,
-                RelationshipType = node.Properties.ContainsKey("relationshipType")
-                    ? node["relationshipType"]?.As<string>()
-                    : null
-            };
+            var node = record["u"].As<INode>();
+            return MapUser(node);
         });
     }
 
-    public async Task CreateFamilyTreeAsync(FamilyTreeDto familyTree, string ownerId)
+    // --- Helper methods ---
+
+    private static ApplicationUser MapUser(INode node)
     {
-        await using var session = Driver.AsyncSession();
-
-        var query = @"
-        CREATE (t:FamilyTree {
-            OwnerUserId: $ownerId, 
-            SharedWithIds: $sharedWithIds,
-            CreatedAt: datetime()
-        })
-        RETURN elementId(t) AS FamilyTreeId";
-
-        var result = await session.RunAsync(query, new
+        return new ApplicationUser
         {
-            ownerId,
-            sharedWithIds = familyTree.SharedWithIds ?? new List<string>()
-        });
-
-        var record = await result.SingleAsync();
-        familyTree.FamilyTreeId = record["FamilyTreeId"].As<string>();
-        familyTree.OwnerUserId = ownerId;
-    }
-
-    public async Task CreateFamilyMemberAsync(FamilyMemberDto familyMember, string ownerId)
-    {
-        ValidateFamilyMemberData(familyMember);
-
-        await using var session = Driver.AsyncSession();
-
-        var query = @"
-        CREATE (m:FamilyMember {
-            OwnerUserId: $ownerId,
-            SharedWithIds: $sharedWithIds,
-            firstName: $firstName, 
-            lastName: $lastName,
-            middleNames: $middleNames,
-            dateOfBirth: $dateOfBirth,
-            dateOfDeath: $dateOfDeath,
-            gender: $gender,
-            occupation: $occupation,
-            placeOfBirth: $placeOfBirth,
-            placeOfDeath: $placeOfDeath,
-            nationality: $nationality,
-            religion: $religion,
-            maritalStatus: $maritalStatus,
-            relationshipType: $relationshipType,
-            CreatedAt: datetime()
-        })
-        RETURN elementId(m) AS FamilyMemberId";
-
-        var result = await session.RunAsync(query, new
-        {
-            ownerId,
-            sharedWithIds = new List<string>(),
-            firstName = familyMember.FirstName,
-            lastName = familyMember.LastName,
-            middleNames = familyMember.MiddleNames,
-            dateOfBirth = familyMember.DateOfBirth,
-            dateOfDeath = familyMember.DateOfDeath,
-            gender = familyMember.Gender,
-            occupation = familyMember.Occupation,
-            placeOfBirth = familyMember.PlaceOfBirth,
-            placeOfDeath = familyMember.PlaceOfDeath,
-            nationality = familyMember.Nationality,
-            religion = familyMember.Religion,
-            maritalStatus = familyMember.MaritalStatus,
-            relationshipType = familyMember.RelationshipType
-        });
-
-        var record = await result.SingleAsync();
-        familyMember.FamilyMemberId = record["FamilyMemberId"].As<string>();
-    }
-
-    public async Task ShareResourceAsync(string resourceId, string resourceType, string ownerId, string targetUserId)
-    {
-        await using var session = Driver.AsyncSession();
-
-        var query = resourceType.ToLower() switch
-        {
-            "familytree" => @"
-            MATCH (t:FamilyTree)
-            WHERE elementId(t) = $resourceId AND t.OwnerUserId = $ownerId
-            SET t.SharedWithIds = CASE 
-                WHEN $targetUserId IN COALESCE(t.SharedWithIds, []) THEN t.SharedWithIds
-                ELSE COALESCE(t.SharedWithIds, []) + [$targetUserId]
-            END",
-            "familymember" => @"
-            MATCH (m:FamilyMember)
-            WHERE elementId(m) = $resourceId AND m.OwnerUserId = $ownerId
-            SET m.SharedWithIds = CASE 
-                WHEN $targetUserId IN COALESCE(m.SharedWithIds, []) THEN m.SharedWithIds
-                ELSE COALESCE(m.SharedWithIds, []) + [$targetUserId]
-            END",
-            _ => throw new ArgumentException($"Unknown resource type: {resourceType}")
+            Id = node.Properties.ContainsKey("Id") ? node["Id"].As<string>() : node.ElementId,
+            UserName = node.Properties.ContainsKey("UserName") ? node["UserName"].As<string>() : null,
+            NormalizedUserName = node.Properties.ContainsKey("NormalizedUserName") ? node["NormalizedUserName"].As<string>() : null,
+            Email = node.Properties.ContainsKey("Email") ? node["Email"].As<string>() : null,
+            NormalizedEmail = node.Properties.ContainsKey("NormalizedEmail") ? node["NormalizedEmail"].As<string>() : null,
+            PasswordHash = node.Properties.ContainsKey("PasswordHash") ? node["PasswordHash"].As<string>() : null,
+            SecurityStamp = node.Properties.ContainsKey("SecurityStamp") ? node["SecurityStamp"].As<string>() : null,
+            FirstName = node.Properties.ContainsKey("FirstName") ? node["FirstName"].As<string>() : string.Empty,
+            MiddleNames = node.Properties.ContainsKey("MiddleNames") ? node["MiddleNames"].As<string>() : string.Empty,
+            LastName = node.Properties.ContainsKey("LastName") ? node["LastName"].As<string>() : string.Empty,
+            EmailConfirmed = node.Properties.ContainsKey("EmailConfirmed") && node["EmailConfirmed"].As<bool>(),
+            ConcurrencyStamp = node.Properties.ContainsKey("ConcurrencyStamp") ? node["ConcurrencyStamp"].As<string>() : null,
+            ProfilePictureUrl = node.Properties.ContainsKey("ProfilePictureUrl") ? node["ProfilePictureUrl"].As<string>() : string.Empty
         };
-
-        await session.RunAsync(query, new { resourceId, ownerId, targetUserId });
     }
-    
-    public async Task CreateVaultAsync(VaultDto vault, string ownerId)
-{
-    await using var session = Driver.AsyncSession();
-
-    var query = @"
-        CREATE (v:Vault {
-            VaultId: randomUUID(),
-            OwnerId: $ownerId,
-            SharedWithIds: $sharedWithIds,
-            CreatedAt: datetime()
-        })
-        RETURN v.VaultId AS VaultId";
-
-    var result = await session.RunAsync(query, new
-    {
-        ownerId,
-        sharedWithIds = vault.SharedWithIds ?? new List<string>()
-    });
-
-    var record = await result.SingleAsync();
-    vault.VaultId = record["VaultId"].As<string>();
-    vault.OwnerId = ownerId;
-}
-
-public async Task<List<VaultDto>> GetUserVaultsAsync(string userId)
-{
-    await using var session = Driver.AsyncSession();
-
-    var query = @"
-        MATCH (v:Vault)
-        WHERE v.OwnerId = $userId OR $userId IN COALESCE(v.SharedWithIds, [])
-        RETURN v";
-
-    var result = await session.RunAsync(query, new { userId });
-    var vaults = await result.ToListAsync(record =>
-    {
-        var node = record["v"].As<INode>();
-        return new VaultDto
-        {
-            VaultId = node.Properties.ContainsKey("VaultId") ? node["VaultId"].As<string>() : node.ElementId,
-            OwnerId = node.Properties.ContainsKey("OwnerId") ? node["OwnerId"].As<string>() : null,
-            SharedWithIds = node.Properties.ContainsKey("SharedWithIds") ? node["SharedWithIds"].As<List<string>>() : new List<string>()
-        };
-    });
-
-    return vaults;
-}
-
-public async Task<VaultDto> GetOrCreateUserVaultAsync(string userId)
-{
-    var vaults = await GetUserVaultsAsync(userId);
-    var userVault = vaults.FirstOrDefault(v => v.OwnerId == userId);
-
-    if (userVault != null)
-        return userVault;
-
-    var defaultVault = new VaultDto
-    {
-        OwnerId = userId,
-        SharedWithIds = new List<string>()
-    };
-    await CreateVaultAsync(defaultVault, userId);
-    return defaultVault;
-}
-
-public async Task CreateVaultItemAsync(VaultItemDto item, string vaultId, string ownerId)
-{
-    await using var session = Driver.AsyncSession();
-
-    var query = @"
-        MATCH (v:Vault) WHERE v.VaultId = $vaultId AND v.OwnerId = $ownerId
-        CREATE (i:VaultItem {
-            VaultItemId: randomUUID(),
-            CurrentOwnerId: $ownerId,
-            CurrentOwnerUserId: $ownerId,
-            SharedWithIds: $sharedWithIds,
-            Title: $title,
-            Description: $description,
-            CreationDate: $creationDate,
-            CreationPlace: $creationPlace,
-            CreatorId: $creatorId,
-            Materials: $materials,
-            CraftType: $craftType,
-            ItemType: $itemType,
-            EstimatedValue: $estimatedValue,
-            DateAcquired: $dateAcquired,
-            PhotoUrl: $photoUrl,
-            PreviousOwnerIds: $previousOwnerIds
-        })
-        CREATE (v)-[:HAS_ITEM]->(i)
-        RETURN i.VaultItemId AS VaultItemId";
-
-    var result = await session.RunAsync(query, new
-    {
-        vaultId,
-        ownerId,
-        sharedWithIds = item.SharedWithIds ?? new List<string>(),
-        title = item.Title,
-        description = item.Description,
-        creationDate = item.CreationDate,
-        creationPlace = item.CreationPlace,
-        creatorId = item.CreatorId,
-        materials = item.Materials ?? new List<string>(),
-        craftType = item.CraftType ?? new List<string>(),
-        itemType = item.ItemType,
-        estimatedValue = item.EstimatedValue,
-        dateAcquired = item.DateAcquired,
-        photoUrl = item.PhotoUrl,
-        previousOwnerIds = item.PreviousOwnerIds ?? new List<string>()
-    });
-
-    var record = await result.SingleAsync();
-    item.VaultItemId = record["VaultItemId"].As<string>();
-    item.CurrentOwnerId = ownerId;
-    item.CurrentOwnerUserId = ownerId;
-}
-
-public async Task UpdateVaultItemAsync(VaultItemDto item, string userId)
-{
-    await using var session = Driver.AsyncSession();
-    var query = @"
-        MATCH (i:VaultItem {VaultItemId: $vaultItemId, CurrentOwnerId: $userId})
-        SET i.Title = $title,
-            i.Description = $description,
-            i.CreationDate = $creationDate,
-            i.CreationPlace = $creationPlace,
-            i.CreatorId = $creatorId,
-            i.Materials = $materials,
-            i.CraftType = $craftType,
-            i.ItemType = $itemType,
-            i.EstimatedValue = $estimatedValue,
-            i.DateAcquired = $dateAcquired,
-            i.PhotoUrl = $photoUrl,
-            i.PreviousOwnerIds = $previousOwnerIds
-        RETURN i";
-    var result = await session.RunAsync(query, new
-    {
-        vaultItemId = item.VaultItemId,
-        userId,
-        title = item.Title,
-        description = item.Description,
-        creationDate = item.CreationDate,
-        creationPlace = item.CreationPlace,
-        creatorId = item.CreatorId,
-        materials = item.Materials ?? new List<string>(),
-        craftType = item.CraftType ?? new List<string>(),
-        itemType = item.ItemType,
-        estimatedValue = item.EstimatedValue,
-        dateAcquired = item.DateAcquired,
-        photoUrl = item.PhotoUrl,
-        previousOwnerIds = item.PreviousOwnerIds ?? new List<string>()
-    });
-    if (!await result.FetchAsync())
-        throw new Exception("Vault item not found or update failed.");
-}
-
-public async Task DeleteVaultItemAsync(string vaultItemId, string userId)
-{
-    await using var session = Driver.AsyncSession();
-    var query = @"
-        MATCH (i:VaultItem {VaultItemId: $vaultItemId, CurrentOwnerId: $userId})
-        DETACH DELETE i";
-    await session.RunAsync(query, new { vaultItemId, userId });
-}
-
-public async Task<List<VaultItemDto>> GetUserVaultItemsAsync(string userId)
-{
-    await using var session = Driver.AsyncSession();
-
-    var query = @"
-        MATCH (v:Vault)-[:HAS_ITEM]->(i:VaultItem)
-        WHERE v.OwnerId = $userId OR $userId IN COALESCE(v.SharedWithIds, [])
-           OR i.CurrentOwnerId = $userId OR $userId IN COALESCE(i.SharedWithIds, [])
-        RETURN i";
-
-    var result = await session.RunAsync(query, new { userId });
-    var items = await result.ToListAsync(record =>
-    {
-        var node = record["i"].As<INode>();
-        return new VaultItemDto
-        {
-            VaultItemId = node.Properties.ContainsKey("VaultItemId") ? node["VaultItemId"].As<string>() : node.ElementId,
-            CurrentOwnerId = node.Properties.ContainsKey("CurrentOwnerId") ? node["CurrentOwnerId"].As<string>() : null,
-            CurrentOwnerUserId = node.Properties.ContainsKey("CurrentOwnerUserId") ? node["CurrentOwnerUserId"].As<string>() : null,
-            SharedWithIds = node.Properties.ContainsKey("SharedWithIds") ? node["SharedWithIds"].As<List<string>>() : new List<string>(),
-            Title = node.Properties.ContainsKey("Title") ? node["Title"].As<string>() : null,
-            Description = node.Properties.ContainsKey("Description") ? node["Description"].As<string>() : null,
-            CreationDate = node.Properties.ContainsKey("CreationDate") ? node["CreationDate"].As<DateTime?>() : null,
-            CreationPlace = node.Properties.ContainsKey("CreationPlace") ? node["CreationPlace"].As<string>() : null,
-            CreatorId = node.Properties.ContainsKey("CreatorId") ? node["CreatorId"].As<string>() : null,
-            Materials = node.Properties.ContainsKey("Materials") ? node["Materials"].As<List<string>>() : new List<string>(),
-            CraftType = node.Properties.ContainsKey("CraftType") ? node["CraftType"].As<List<string>>() : new List<string>(),
-            ItemType = node.Properties.ContainsKey("ItemType") ? node["ItemType"].As<string>() : null,
-            EstimatedValue = node.Properties.ContainsKey("EstimatedValue") ? node["EstimatedValue"].As<decimal?>() ?? 0 : 0,
-            DateAcquired = node.Properties.ContainsKey("DateAcquired") ? node["DateAcquired"].As<DateTime?>() : null,
-            PhotoUrl = node.Properties.ContainsKey("PhotoUrl") ? node["PhotoUrl"].As<string>() : null,
-            PreviousOwnerIds = node.Properties.ContainsKey("PreviousOwnerIds") ? node["PreviousOwnerIds"].As<List<string>>() : new List<string>()
-        };
-    });
-
-    return items;
-}
-
-private static DateTime? GetDateTimeFromNode(INode node, string propertyName)
-{
-    if (!node.Properties.ContainsKey(propertyName) || node[propertyName] == null)
-        return null;
-
-    var value = node[propertyName];
-    // Neo4j temporal types are returned as boxed objects
-    if (value is DateTime dt)
-        return dt;
-    if (value is DateTimeOffset dto)
-        return dto.UtcDateTime;
-    // Neo4j.Driver returns ZonedDateTime as an internal type, so use ToString and parse if needed
-    if (value.GetType().Name == "ZonedDateTime")
-    {
-        // Use ToString() and DateTimeOffset.Parse if needed
-        var str = value.ToString(); // e.g. "2024-06-07T12:34:56.789+00:00[UTC]"
-        if (DateTimeOffset.TryParse(str.Split('[')[0], out var parsed))
-            return parsed.UtcDateTime;
-    }
-    return null;
-}
 
     private static void ValidateFamilyMemberData(FamilyMemberDto familyMember)
     {
         Console.WriteLine(familyMember);
         if (string.IsNullOrEmpty(familyMember.FirstName))
-            throw new ArgumentException("FirstName is required.");
+            throw new ArgumentException("First name is required.");
         if (string.IsNullOrEmpty(familyMember.LastName))
-            throw new ArgumentException("LastName is required.");
+            throw new ArgumentException("Last name is required.");
     }
 }
