@@ -57,6 +57,13 @@ const HomePage = () => {
     fetchItems();
   }, []);
 
+  const getFullImageUrl = (relativePath) => {
+    const backendUrl = "http://localhost:5240"; // Replace with your actual address if it changes
+    if (!relativePath) return null; // If no path is provided, return null
+    return `${backendUrl}${relativePath}`; // Append path to backend URL
+  };
+
+
   // Calculate the oldest heirloom
   const findOldestHeirloom = (items) => {
     return items.reduce((oldest, item) => {
@@ -107,7 +114,7 @@ const HomePage = () => {
                 >
                   <h2>Oldest Heirloom</h2>
                   <img
-                    src={highlightedItems.oldest.photoUrl || "https://placehold.co/275"}
+                    src={getFullImageUrl(highlightedItems.oldest.photoUrl) || "https://placehold.co/275"}
                     alt={highlightedItems.oldest.title || "Oldest Heirloom"}
                   />
                   <p><b>Title:</b> {highlightedItems.oldest.title || "Unknown"}</p>
@@ -123,7 +130,7 @@ const HomePage = () => {
                 >
                   <h2>Most Valuable Heirloom</h2>
                   <img
-                    src={highlightedItems.mostValuable.photoUrl || "https://placehold.co/275"}
+                    src={getFullImageUrl(highlightedItems.mostValuable.photoUrl) || "https://placehold.co/275"}
                     alt={highlightedItems.mostValuable.title || "Most Valuable Heirloom"}
                   />
                   <p><b>Title:</b> {highlightedItems.mostValuable.title || "Unknown"}</p>

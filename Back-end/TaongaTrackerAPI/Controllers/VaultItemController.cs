@@ -29,6 +29,26 @@ public class VaultItemController : ControllerBase
         Console.WriteLine("Vault ID: " + vault.VaultId + " Item ID: " + item.VaultItemId + " Item Title: " + item.Title + " Owner ID: " + userId);
         return Ok(item);
     }
+    
+    [HttpPost("upload-image")]
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        Directory.CreateDirectory(uploadsFolder);
+        var filePath = Path.Combine(uploadsFolder, Guid.NewGuid() + Path.GetExtension(file.FileName));
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        var url = $"/uploads/{Path.GetFileName(filePath)}";
+        Console.WriteLine(url);
+        return Ok(new { url });
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetUserVaultItems()

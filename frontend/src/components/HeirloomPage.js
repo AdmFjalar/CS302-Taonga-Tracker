@@ -80,6 +80,11 @@ export default function HeirloomPage() {
       </div>
     );
   }
+  const getFullImageUrl = (relativePath) => {
+    const backendUrl = "http://localhost:5240"; // Replace with your actual address if it changes
+    if (!relativePath) return null; // If no path is provided, return null
+    return `${backendUrl}${relativePath}`; // Append path to backend URL
+  };
 
   return (
     <div className="layout">
@@ -110,7 +115,7 @@ export default function HeirloomPage() {
                       onClick={() => setViewIndex(index)} // Make card clickable
                     >
                       <img
-                        src={item.photoUrl || "https://placehold.co/300x300"}
+                        src={getFullImageUrl(item.photoUrl) || "https://placehold.co/300x300"}
                         alt={item.title || "Heirloom"}
                         className="heirloom-img"
                       />
