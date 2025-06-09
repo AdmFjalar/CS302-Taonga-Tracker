@@ -19,12 +19,14 @@ public class VaultItemController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateVaultItem([FromBody] VaultItemDto item)
     {
+        Console.WriteLine(item.Title);
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null) return Unauthorized();
 
         // Find or create a vault for the user
         var vault = await _neo4jService.GetOrCreateUserVaultAsync(userId);
         await _neo4jService.CreateVaultItemAsync(item, vault.VaultId, userId);
+        Console.WriteLine("Vault ID: " + vault.VaultId + " Item ID: " + item.VaultItemId + " Item Title: " + item.Title + " Owner ID: " + userId);
         return Ok(item);
     }
 

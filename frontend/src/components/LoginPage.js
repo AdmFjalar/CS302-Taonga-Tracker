@@ -8,7 +8,7 @@ const LoginPage = () => {
   const handleLogin = async () => {
   try {
     const payload = {
-      userName: document.getElementById("username").value,
+      emailOrUserName: document.getElementById("username").value,
       password: document.getElementById("password").value,
     };
 

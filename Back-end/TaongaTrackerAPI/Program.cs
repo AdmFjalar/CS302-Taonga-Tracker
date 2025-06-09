@@ -11,6 +11,16 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin() //WithOrigins("http://localhost:3000") // React app origin
+            .AllowAnyHeader() // Allow any headers (e.g., Content-Type)
+            .AllowAnyMethod(); // Allow any HTTP method (POST, GET, etc.)
+    });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -64,6 +74,7 @@ builder.Services.AddScoped<INeo4jService, Neo4jService>();
 
 var app = builder.Build();
 
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -69,15 +69,15 @@ public class AuthController : ControllerBase
             Email = model.Email,
             NormalizedEmail = model.Email.ToUpper(),
             FirstName = model.FirstName ?? string.Empty,
-            MiddleNames = model.MiddleNames ?? string.Empty,
+            //MiddleNames = model.MiddleNames ?? string.Empty,
             LastName = model.LastName ?? string.Empty
         };
-        Console.WriteLine(user.NormalizedUserName);
 
         var result = await _userManager.CreateAsync(user, model.Password);
 
         if (result.Succeeded) return Ok(new { Message = "User created successfully", UserId = user.Id });
-
+        
+        Console.WriteLine(result.Errors);
         return BadRequest(result.Errors);
     }
     
