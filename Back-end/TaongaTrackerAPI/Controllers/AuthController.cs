@@ -105,7 +105,8 @@ public class AuthController : ControllerBase
             user.MiddleNames,
             user.LastName,
             user.Email,
-            user.ProfilePictureUrl
+            user.ProfilePictureUrl,
+            user.Id
         });
     }
     

@@ -1,10 +1,13 @@
+// src/components/HeirloomPage.js
 import React, { useState, useEffect } from "react";
-import { CreateItemPage, ViewItemPage } from "./ItemPages";
+import { ItemView, ItemEdit } from "./ItemPages";
+import AddItem from "./AddItem";
 import Sidebar from "./SideBar";
 import Header from "./Header";
+import { getFullImageUrl } from "./utils";
 import "./HeirloomPage.css";
 
-export default function HeirloomPage() {
+const HeirloomPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,37 +38,24 @@ export default function HeirloomPage() {
     fetchItems();
   }, []);
 
+  // Called after successful POST (add)
   const handleAdd = (newItemData) => {
-    // If editing, update the item in the list
-    if (editingItem) {
-      setItems((prev) =>
-          prev.map((item) =>
-              item.vaultItemId === newItemData.vaultItemId ? newItemData : item
-          )
-      );
-    } else {
-      setItems([...items, newItemData]);
-    }
+    setItems((prev) => [...prev, newItemData]);
     setAdding(false);
     setEditingItem(null);
     setViewIndex(null);
   };
 
-  const handleDelete = () => {
-    if (editingItem) {
-      setItems((prev) =>
-          prev.filter((item) => item.vaultItemId !== editingItem.vaultItemId)
-      );
-    }
+  // Called after successful PUT (edit)
+  const handleEdit = (updatedItem) => {
+    setItems((prev) =>
+        prev.map((item) =>
+            item.vaultItemId === updatedItem.vaultItemId ? updatedItem : item
+        )
+    );
     setAdding(false);
     setEditingItem(null);
     setViewIndex(null);
-  };
-
-  const getFullImageUrl = (relativePath) => {
-    const backendUrl = "http://localhost:5240";
-    if (!relativePath) return null;
-    return `${backendUrl}${relativePath}`;
   };
 
   if (loading) {
@@ -110,7 +100,7 @@ export default function HeirloomPage() {
                                 onClick={() => setViewIndex(index)}
                             >
                               <img
-                                  src={getFullImageUrl(item.photoUrl) || "https://placehold.co/300x300"}
+                                  src={getFullImageUrl(item.photoUrl)}
                                   alt={item.title || "Heirloom"}
                                   className="heirloom-img"
                               />
@@ -125,9 +115,22 @@ export default function HeirloomPage() {
                 </>
             )}
 
-            {adding && (
-                <CreateItemPage
+            {/* Use AddItem for adding */}
+            {adding && !editingItem && (
+                <AddItem
+                    navigateTo={() => {
+                      setAdding(false);
+                      setEditingItem(null);
+                      setViewIndex(null);
+                    }}
                     onSave={handleAdd}
+                />
+            )}
+
+            {/* Use ItemEdit for editing */}
+            {adding && editingItem && (
+                <ItemEdit
+                    onSave={handleEdit}
                     initialItem={editingItem}
                     navigateTo={() => {
                       setAdding(false);
@@ -138,7 +141,7 @@ export default function HeirloomPage() {
             )}
 
             {viewIndex !== null && !adding && items[viewIndex] && (
-                <ViewItemPage
+                <ItemView
                     item={items[viewIndex]}
                     onBack={() => setViewIndex(null)}
                     onEdit={() => {
@@ -151,4 +154,6 @@ export default function HeirloomPage() {
         </div>
       </div>
   );
-}
+};
+
+export default HeirloomPage;
