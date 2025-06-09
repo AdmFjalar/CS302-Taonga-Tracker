@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Header.css";
 
 const getFullImageUrl = (relativePath) => {
@@ -9,6 +10,7 @@ const getFullImageUrl = (relativePath) => {
 
 const Header = () => {
     const [profilePictureUrl, setProfilePictureUrl] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -37,6 +39,8 @@ const Header = () => {
                     src={getFullImageUrl(profilePictureUrl)}
                     alt="User Avatar"
                     className="avatar"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => navigate("/settings")}
                 />
             </div>
         </header>
