@@ -14,7 +14,7 @@
   align-items: center;
   background-color: #bcb88a;
   padding: 1rem 2rem;
-  border-bottom: 1px solid #1e321c;
+  /*border-bottom: 1px solid #1e321c;*/
 }
 
 .logo {
@@ -23,7 +23,7 @@
   font-weight: bold;
   margin-top: auto;
   margin-bottom: auto;
-  color: #1e321c;
+  color: #273520;
 }
 
 .auth-links {

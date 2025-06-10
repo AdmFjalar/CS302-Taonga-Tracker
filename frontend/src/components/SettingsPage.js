@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "./SettingsPage.css";
-import Header from "./Header";
-import Sidebar from "./SideBar";
 
 const getFullImageUrl = (relativePath) => {
   const backendUrl = "http://localhost:5240";
@@ -102,9 +100,7 @@ const SettingsPage = () => {
 
   return (
       <div className="layout">
-        <Sidebar />
         <div className="content-wrapper">
-          <Header />
           <div className="settings-layout-sleek">
             <main className="settings-main-sleek">
               <h1>Account Settings</h1>

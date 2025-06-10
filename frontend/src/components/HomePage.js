@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./SideBar";
-import Header from "./Header";
 import { ItemView, ItemEdit } from "./ItemPages";
 import { getFullImageUrl } from "./utils";
 import "./HomePage.css";
@@ -99,9 +97,7 @@ const HomePage = () => {
 
   return (
       <div className="layout">
-        <Sidebar />
         <div className="content-wrapper">
-          <Header />
           {!selectedItem && !editing ? (
               <div className="home-container">
                 <h1 className="home-title">Heirloom Highlights</h1>

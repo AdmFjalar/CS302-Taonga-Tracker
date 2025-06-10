@@ -1,12 +1,12 @@
-// src/components/HeirloomPage.js
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ItemView, ItemEdit } from "./ItemPages";
 import AddItem from "./AddItem";
-import Sidebar from "./SideBar";
-import Header from "./Header";
 import { getFullImageUrl } from "./utils";
 import "./HeirloomPage.css";
 
+/**
+ * HeirloomPage displays a grid of heirloom items and allows adding, viewing, and editing.
+ */
 const HeirloomPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,23 @@ const HeirloomPage = () => {
   const [adding, setAdding] = useState(false);
   const [viewIndex, setViewIndex] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
+  const [wiggle, setWiggle] = useState(false);
+  const wiggleTimeout = useRef();
 
+  // Wiggle effect every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWiggle(true);
+      wiggleTimeout.current = setTimeout(() => setWiggle(false), 800); // match animation duration
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(wiggleTimeout.current);
+    };
+  }, []);
+
+  // Fetch heirloom items on mount
   useEffect(() => {
     const fetchItems = async () => {
       setLoading(true);
@@ -38,7 +54,7 @@ const HeirloomPage = () => {
     fetchItems();
   }, []);
 
-  // Called after successful POST (add)
+  // Handle successful add
   const handleAdd = (newItemData) => {
     setItems((prev) => [...prev, newItemData]);
     setAdding(false);
@@ -46,7 +62,7 @@ const HeirloomPage = () => {
     setViewIndex(null);
   };
 
-  // Called after successful PUT (edit)
+  // Handle successful edit
   const handleEdit = (updatedItem) => {
     setItems((prev) =>
         prev.map((item) =>
@@ -72,50 +88,70 @@ const HeirloomPage = () => {
 
   return (
       <div className="layout">
-        <Sidebar />
         <div className="content-wrapper">
-          <Header />
           <div className="heirloom-container">
+            {/* Main grid view */}
             {!adding && viewIndex === null && (
-                <>
-                  <div className="add-heirloom-header">
-                    <button
-                        onClick={() => {
+                <div className="heirloom-grid">
+                  {/* Heirloom Cards */}
+                  {items.length === 0 ? (
+                      <p className="no-heirlooms-msg">
+                        No heirlooms found. Click "Add an Heirloom" to create one.
+                      </p>
+                  ) : (
+                      items.map((item, index) => (
+                          <div
+                              key={item.vaultItemId || index}
+                              className="heirloom-card"
+                              onClick={() => setViewIndex(index)}
+                              tabIndex={0}
+                              role="button"
+                              aria-label={`View ${item.title || "Heirloom"}`}
+                              onKeyPress={e => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  setViewIndex(index);
+                                }
+                              }}
+                          >
+                            <img
+                                src={getFullImageUrl(item.photoUrl)}
+                                alt={item.title || "Heirloom"}
+                                className="heirloom-img"
+                            />
+                            <div className="heirloom-card-content">
+                              <h2>{item.title}</h2>
+                              <p>{item.description || "No description available"}</p>
+                            </div>
+                          </div>
+                      ))
+                  )}
+                  {/* Add Heirloom Card at the end */}
+                  <div
+                      className={`heirloom-card add-heirloom-card${wiggle ? " wiggle" : ""}`}
+                      onClick={() => {
+                        setAdding(true);
+                        setEditingItem(null);
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label="Add Heirloom"
+                      onKeyPress={e => {
+                        if (e.key === "Enter" || e.key === " ") {
                           setAdding(true);
                           setEditingItem(null);
-                        }}
-                        className="heirloom-button"
-                    >
-                      Add Heirloom
-                    </button>
+                        }
+                      }}
+                  >
+                    <div className="add-heirloom-plus" aria-hidden="true">+</div>
+                    <div className="heirloom-card-content">
+                      <h2>Add an Heirloom</h2>
+                      <p>Click to add a new heirloom to your collection.</p>
+                    </div>
                   </div>
-                  <div className="heirloom-grid">
-                    {items.length === 0 ? (
-                        <p>No heirlooms found. Click "Add Heirloom" to create one.</p>
-                    ) : (
-                        items.map((item, index) => (
-                            <div
-                                key={index}
-                                className="heirloom-card"
-                                onClick={() => setViewIndex(index)}
-                            >
-                              <img
-                                  src={getFullImageUrl(item.photoUrl)}
-                                  alt={item.title || "Heirloom"}
-                                  className="heirloom-img"
-                              />
-                              <div className="heirloom-card-content">
-                                <h2>{item.title}</h2>
-                                <p>{item.description || "No description available"}</p>
-                              </div>
-                            </div>
-                        ))
-                    )}
-                  </div>
-                </>
+                </div>
             )}
 
-            {/* Use AddItem for adding */}
+            {/* Add Item Form */}
             {adding && !editingItem && (
                 <AddItem
                     navigateTo={() => {
@@ -127,7 +163,7 @@ const HeirloomPage = () => {
                 />
             )}
 
-            {/* Use ItemEdit for editing */}
+            {/* Edit Item Form */}
             {adding && editingItem && (
                 <ItemEdit
                     onSave={handleEdit}
@@ -140,6 +176,7 @@ const HeirloomPage = () => {
                 />
             )}
 
+            {/* Item View Modal */}
             {viewIndex !== null && !adding && items[viewIndex] && (
                 <ItemView
                     item={items[viewIndex]}

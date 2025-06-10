@@ -65,12 +65,6 @@ const ItemView = ({ item, onBack, onEdit }) => (
             </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="item-edit-actions">
-            <button onClick={onEdit} className="auth-button">Edit</button>
-            <button onClick={onBack} className="auth-button">Back</button>
-        </div>
-
         {/* Metadata Tooltip */}
         <div className="metadata-tooltip">
             <span className="metadata-link">Metadata</span>
@@ -81,6 +75,12 @@ const ItemView = ({ item, onBack, onEdit }) => (
                 <p><b>Previous Owner IDs:</b> {item.previousOwnerIds?.length ? item.previousOwnerIds.join(", ") : "N/A"}</p>
                 <p><b>Shared With IDs:</b> {item.sharedWithIds?.length ? item.sharedWithIds.join(", ") : "N/A"}</p>
             </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="item-edit-actions">
+            <button onClick={onEdit} className="auth-button">Edit</button>
+            <button onClick={onBack} className="auth-button">Back</button>
         </div>
     </div>
 );
