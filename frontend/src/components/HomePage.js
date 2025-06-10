@@ -8,12 +8,15 @@ import "./HomePage.css";
  * @param {Array} items - List of items.
  * @returns {object|null} The oldest item or null.
  */
-const findOldestHeirloom = (items) =>
-    items.reduce((oldest, item) =>
-        !oldest || new Date(item.creationDate) < new Date(oldest.creationDate)
-            ? item
-            : oldest, null
-    );
+const findOldestHeirloom = (items) => {
+  const withDate = items.filter(
+      (item) => item.creationDate && !isNaN(new Date(item.creationDate))
+  );
+  if (withDate.length === 0) return null;
+  return withDate.reduce((oldest, item) =>
+      new Date(item.creationDate) < new Date(oldest.creationDate) ? item : oldest
+  );
+};
 
 /**
  * Finds the most valuable heirloom in the list.

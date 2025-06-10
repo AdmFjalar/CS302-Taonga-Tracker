@@ -94,37 +94,31 @@ const HeirloomPage = () => {
             {!adding && viewIndex === null && (
                 <div className="heirloom-grid">
                   {/* Heirloom Cards */}
-                  {items.length === 0 ? (
-                      <p className="no-heirlooms-msg">
-                        No heirlooms found. Click "Add an Heirloom" to create one.
-                      </p>
-                  ) : (
-                      items.map((item, index) => (
-                          <div
-                              key={item.vaultItemId || index}
-                              className="heirloom-card"
-                              onClick={() => setViewIndex(index)}
-                              tabIndex={0}
-                              role="button"
-                              aria-label={`View ${item.title || "Heirloom"}`}
-                              onKeyPress={e => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  setViewIndex(index);
-                                }
-                              }}
-                          >
-                            <img
-                                src={getFullImageUrl(item.photoUrl)}
-                                alt={item.title || "Heirloom"}
-                                className="heirloom-img"
-                            />
-                            <div className="heirloom-card-content">
-                              <h2>{item.title}</h2>
-                              <p>{item.description || "No description available"}</p>
-                            </div>
-                          </div>
-                      ))
-                  )}
+                  {items.map((item, index) => (
+                      <div
+                          key={item.vaultItemId || index}
+                          className="heirloom-card"
+                          onClick={() => setViewIndex(index)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label={`View ${item.title || "Heirloom"}`}
+                          onKeyPress={e => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              setViewIndex(index);
+                            }
+                          }}
+                      >
+                        <img
+                            src={getFullImageUrl(item.photoUrl)}
+                            alt={item.title || "Heirloom"}
+                            className="heirloom-img"
+                        />
+                        <div className="heirloom-card-content">
+                          <h2>{item.title}</h2>
+                          <p>{item.description || "No description available"}</p>
+                        </div>
+                      </div>
+                  ))}
                   {/* Add Heirloom Card at the end */}
                   <div
                       className={`heirloom-card add-heirloom-card${wiggle ? " wiggle" : ""}`}

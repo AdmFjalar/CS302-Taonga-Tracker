@@ -14,9 +14,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2.5rem;
-  justify-items: center;
+  justify-items: flex-start;
   width: 100%;
-  padding: 2.5rem 1.5rem;
+  padding: 1.5rem 1.5rem;
   box-sizing: border-box;
 }
 
