@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
+
 .sidebar {
   width: 17rem;
   background-color: #f6f9f3;
@@ -9,6 +11,7 @@
 }
 
 .sidebar-title {
+  font-family: "Young Serif", serif;
   font-size: 1.9rem;
   font-weight: bold;
   color: #273520;

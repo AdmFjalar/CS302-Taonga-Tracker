@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
+
+h1 {
+  font-family: "Young Serif", serif;
+}
+
 .sidebar {
     width: 200px;
     background-color: #f3f4ec;
