@@ -1,11 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Young+Serif&display=swap');
 
 h1 {
   font-family: "Young Serif", serif;
 }
+body {
+  font-family: "Georgia", sans-serif;
+  background-color: #f6f9f3;
+  margin: 0;
+  padding: 0;
+}
 
 .sidebar {
-    width: 200px;
     background-color: #f3f4ec;
     padding: 1rem;
   }

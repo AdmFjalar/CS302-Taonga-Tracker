@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
 
 .sidebar {
-  width: 17rem;
+  width: fit-content;
   background-color: #f6f9f3;
   padding: 1.5rem;
   display: flex;
@@ -16,6 +16,7 @@
   font-weight: bold;
   color: #273520;
   margin-bottom: 11.8rem;
+  width: auto;
 }
 
 .sidebar-nav {
