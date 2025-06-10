@@ -18,8 +18,11 @@
 }
 
 .logo {
+  font-family: "Young Serif", serif;
   font-size: 1.8rem;
   font-weight: bold;
+  margin-top: auto;
+  margin-bottom: auto;
   color: #1e321c;
 }
 
