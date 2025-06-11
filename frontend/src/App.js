@@ -8,6 +8,7 @@ import HeirloomPage from "./components/HeirloomPage";
 import SettingsPage from "./components/SettingsPage";
 import Sidebar from "./components/SideBar";
 import Header from "./components/Header";
+import FamilyTreePage from "./components/FamilyTreePage"; // Import the FamilyTreePage
 import "./App.css";
 
 /**
@@ -39,6 +40,7 @@ function App() {
                 <Routes>
                     <Route path="/home" element={<HomePage />} />
                     <Route path="/heirlooms" element={<HeirloomPage />} />
+                    <Route path="/family" element={<FamilyTreePage />} /> {/* Add this line */}
                     <Route path="/settings" element={<SettingsPage />} />
                 </Routes>
             </div>

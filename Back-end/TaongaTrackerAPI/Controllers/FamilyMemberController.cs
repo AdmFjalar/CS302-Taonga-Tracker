@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using TaongaTrackerAPI.Models;
 using TaongaTrackerAPI.Services;
 
@@ -10,30 +11,60 @@ namespace TaongaTrackerAPI.Controllers
     [Authorize]
     public class FamilyMemberController : ControllerBase
     {
-        private readonly INeo4jService Neo4jService;
-        
+        private readonly INeo4jService _neo4jService;
+
         public FamilyMemberController(INeo4jService neo4jService)
         {
-            Neo4jService = neo4jService;
+            _neo4jService = neo4jService;
         }
 
+        /// <summary>
+        /// Adds a family member to the user's family tree, creating the tree if needed.
+        /// </summary>
         [HttpPost]
-        public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember([FromBody] string jsonRequest)
+        public async Task<ActionResult<FamilyMemberDto>> AddFamilyMember([FromBody] FamilyMemberDto member)
         {
-            await Neo4jService.CreateFamilyMemberFromJsonAsync(jsonRequest);
-            return Ok();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var createdMember = await _neo4jService.AddFamilyMemberToUserTreeAsync(userId, member);
+            return Ok(createdMember);
         }
-        // public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember(FamilyMemberDto familyMember)
-        // {
-        //     await Neo4jService.CreateFamilyMemberAsync(familyMember);
-        //     return Ok(familyMember);
-        // }
-        
+
+        [HttpPut("{familyMemberId}")]
+        public async Task<ActionResult<FamilyMemberDto>> UpdateFamilyMember(string familyMemberId, [FromBody] FamilyMemberDto member)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var updated = await _neo4jService.UpdateFamilyMemberAsync(userId, familyMemberId, member);
+            return Ok(updated);
+        }
+
+        [HttpDelete("{familyMemberId}")]
+        public async Task<IActionResult> DeleteFamilyMember(string familyMemberId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            await _neo4jService.DeleteFamilyMemberAsync(userId, familyMemberId);
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Gets all family members in the user's family tree.
+        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<FamilyMemberDto>>> GetAllFamilyMembers()
+        public async Task<ActionResult<List<FamilyMemberDto>>> GetFamilyMembers()
         {
-            var familyMembers = await Neo4jService.GetAllFamilyMembersAsync();
-            return Ok(familyMembers);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            // Ensure the family tree and user node exist
+            await _neo4jService.GetOrCreateUserFamilyTreeAsync(userId);
+
+            var members = await _neo4jService.GetUserFamilyMembersAsync(userId);
+            return Ok(members);
         }
-    }   
+    }
 }
