@@ -11,15 +11,16 @@ import "./FamilyTreeMenu.css";
 const nodeWidth = 180;
 const nodeHeight = 150;
 
-// Assigns relative generations for layout
 function assignRelativeGenerations(nodes, edges, userId) {
     const idToNode = Object.fromEntries(nodes.map(n => [n.id, n]));
     const parentToChildren = {};
     const childToParents = {};
+
     nodes.forEach(node => {
         parentToChildren[node.id] = [];
         childToParents[node.id] = [];
     });
+
     edges.forEach(edge => {
         if (!edge.id.startsWith("spouse-")) {
             parentToChildren[edge.source].push(edge.target);
@@ -72,28 +73,79 @@ function assignRelativeGenerations(nodes, edges, userId) {
     return generation;
 }
 
-// Helper: Find all spouse groups (connected components via spouse links)
-function findSpouseGroups(nodes) {
+function findFamilyGroups(nodes) {
     const groups = [];
     const visited = new Set();
     const idToNode = Object.fromEntries(nodes.map(n => [n.id, n]));
+
     nodes.forEach(node => {
         if (visited.has(node.id)) return;
+
         const group = new Set([node.id]);
         const queue = [node.id];
+
         while (queue.length) {
             const id = queue.pop();
             visited.add(id);
+
             const spouseIds = (idToNode[id]?.data?.spouseIds || []).map(String);
             spouseIds.forEach(sid => {
-                if (!visited.has(sid)) {
+                if (!visited.has(sid) && !group.has(sid)) {
                     group.add(sid);
                     queue.push(sid);
                 }
             });
+
+            const siblingIds = (idToNode[id]?.data?.siblingIds || []).map(String);
+            siblingIds.forEach(siblingId => {
+                if (!visited.has(siblingId) && !group.has(siblingId)) {
+                    group.add(siblingId);
+                    queue.push(siblingId);
+                }
+            });
         }
+
         if (group.size > 0) groups.push(Array.from(group));
     });
+
+    return groups;
+}
+
+function findEnhancedFamilyGroups(nodes, edges) {
+    const groups = [];
+    const visited = new Set();
+    const idToNode = Object.fromEntries(nodes.map(n => [n.id, n]));
+
+    nodes.forEach(node => {
+        if (visited.has(node.id)) return;
+
+        const group = new Set([node.id]);
+        const queue = [node.id];
+
+        while (queue.length) {
+            const id = queue.pop();
+            visited.add(id);
+
+            const spouseIds = (idToNode[id]?.data?.spouseIds || []).map(String);
+            spouseIds.forEach(sid => {
+                if (!visited.has(sid) && !group.has(sid)) {
+                    group.add(sid);
+                    queue.push(sid);
+                }
+            });
+
+            const siblingIds = (idToNode[id]?.data?.siblingIds || []).map(String);
+            siblingIds.forEach(siblingId => {
+                if (!visited.has(siblingId) && !group.has(siblingId)) {
+                    group.add(siblingId);
+                    queue.push(siblingId);
+                }
+            });
+        }
+
+        if (group.size > 0) groups.push(Array.from(group));
+    });
+
     return groups;
 }
 
@@ -101,10 +153,12 @@ function getLayoutedElementsRelative(nodes, edges, referenceUserId, direction = 
     const idToNode = Object.fromEntries(nodes.map(n => [n.id, n]));
     const parentToChildren = {};
     const childToParents = {};
+
     nodes.forEach(node => {
         parentToChildren[node.id] = [];
         childToParents[node.id] = [];
     });
+
     edges.forEach(edge => {
         if (!edge.id.startsWith("spouse-")) {
             parentToChildren[edge.source].push(edge.target);
@@ -112,166 +166,156 @@ function getLayoutedElementsRelative(nodes, edges, referenceUserId, direction = 
         }
     });
 
+    function buildSpouseBlocks(nodes) {
+        const visited = new Set();
+        const blocks = [];
+        const idToBlock = {};
+        nodes.forEach(node => {
+            if (visited.has(node.id)) return;
+            const block = new Set();
+            const queue = [node.id];
+            while (queue.length) {
+                const id = queue.pop();
+                if (visited.has(id)) continue;
+                visited.add(id);
+                block.add(id);
+                const spouses = (idToNode[id]?.data?.spouseIds || []).map(String);
+                spouses.forEach(sid => {
+                    if (!visited.has(sid)) queue.push(sid);
+                });
+            }
+            const blockArr = Array.from(block);
+            blockArr.forEach(id => idToBlock[id] = blockArr);
+            blocks.push(blockArr);
+        });
+        return { blocks, idToBlock };
+    }
+
     const nodeGeneration = assignRelativeGenerations(nodes, edges, referenceUserId);
     const minGen = Math.min(...Object.values(nodeGeneration));
     const verticalSpacing = nodeHeight + 120;
-    const horizontalSpacing = nodeWidth + 60;
+    const horizontalSpacing = nodeWidth + 130;
     const nodePositions = {};
     const visited = new Set();
 
-    // Find all spouse groups
-    const spouseGroups = findSpouseGroups(nodes);
-    const nodeToGroup = {};
-    spouseGroups.forEach(group => group.forEach(id => nodeToGroup[id] = group));
+    const { blocks: spouseBlocks, idToBlock } = buildSpouseBlocks(nodes);
 
-    // Helper: get all children of a group (with at least one parent in group)
-    function getChildrenOfGroup(group) {
-        const childrenSet = new Set();
+    function getChildrenSpouseBlocks(group) {
+        const children = new Set();
         group.forEach(id => {
-            (parentToChildren[id] || []).forEach(childId => {
-                childrenSet.add(childId);
-            });
+            (parentToChildren[id] || []).forEach(childId => children.add(childId));
         });
-        return Array.from(childrenSet);
-    }
 
-    // Helper: get all parents of a group (with at least one child in group)
-    function getParentsOfGroup(group) {
-        const parentsSet = new Set();
-        group.forEach(id => {
-            (childToParents[id] || []).forEach(parentId => {
-                parentsSet.add(parentId);
-            });
-        });
-        return Array.from(parentsSet);
-    }
-
-    // Find the direct ancestor chain (spouse groups) from referenceUserId up
-    function getAncestorChain(nodeId) {
-        const chain = [];
-        let currentGroup = nodeToGroup[nodeId] || [nodeId];
-        while (true) {
-            const parents = getParentsOfGroup(currentGroup);
-            if (parents.length === 0) break;
-            let parentGroup = null;
-            for (const p of parents) {
-                const group = nodeToGroup[p] || [p];
-                if (parents.every(pid => group.includes(pid))) {
-                    parentGroup = group;
-                    break;
-                }
+        const childBlocks = [];
+        const used = new Set();
+        Array.from(children).forEach(childId => {
+            const block = idToBlock[childId] || [childId];
+            if (!block.some(bid => used.has(bid))) {
+                childBlocks.push(block);
+                block.forEach(bid => used.add(bid));
             }
-            if (!parentGroup) parentGroup = [parents[0]];
-            chain.unshift(parentGroup);
-            currentGroup = parentGroup;
-        }
-        return chain;
+        });
+        return childBlocks;
     }
 
-    // Recursive layout: returns [minX, maxX] for the block
     let nextX = 0;
-    function layoutBlock(group, gen, mainChildId = null) {
+    function layoutFamilyBlock(group, gen) {
         if (group.some(id => visited.has(id))) return [null, null];
         group.forEach(id => visited.add(id));
 
-        // --- 1. Group children by their spouse group (sibling sets) ---
-        let children = getChildrenOfGroup(group);
-        let childGroups = [];
-        const childVisited = new Set();
-        children.forEach(childId => {
-            if (childVisited.has(childId)) return;
-            const cg = nodeToGroup[childId] || [childId];
-            cg.forEach(cid => childVisited.add(cid));
-            childGroups.push(cg);
+        const groupBlocks = [];
+        const usedIds = new Set();
+        group.forEach(id => {
+            const block = idToBlock[id] || [id];
+            if (!block.some(bid => usedIds.has(bid))) {
+                groupBlocks.push(block);
+                block.forEach(bid => usedIds.add(bid));
+            }
         });
 
-        // --- 2. If this is an ancestor group, center the main child group, others to sides ---
-        let childSpans = [];
-        if (mainChildId) {
-            // Find the main child group (the one leading to the reference user)
-            const mainGroup = nodeToGroup[mainChildId] || [mainChildId];
-            const sideGroups = childGroups.filter(g => !g.every(id => mainGroup.includes(id)));
-            // Layout side groups to left/right
-            let leftX = nextX;
-            sideGroups.forEach(cg => {
-                const [minX, maxX] = layoutBlock(cg, gen + 1);
-                if (minX !== null && maxX !== null) {
-                    childSpans.push([minX, maxX]);
-                    leftX = maxX + horizontalSpacing;
+        let minX = null, maxX = null;
+
+        groupBlocks.forEach(block => {
+            const children = new Set();
+            block.forEach(id => {
+                (parentToChildren[id] || []).forEach(childId => children.add(childId));
+            });
+
+            const parentSetToChildren = {};
+            Array.from(children).forEach(childId => {
+                const parents = (childToParents[childId] || []).slice().sort();
+                const key = parents.join(",");
+                if (!parentSetToChildren[key]) parentSetToChildren[key] = [];
+                parentSetToChildren[key].push(childId);
+            });
+
+            const childBlocks = [];
+            const used = new Set();
+            Object.values(parentSetToChildren).forEach(childGroup => {
+                childGroup.forEach(childId => {
+                    const childSpouseBlock = idToBlock[childId];
+                    if (childSpouseBlock && childSpouseBlock.length > 1 && !childSpouseBlock.some(bid => used.has(bid))) {
+                        childBlocks.push(childSpouseBlock);
+                        childSpouseBlock.forEach(bid => used.add(bid));
+                    }
+                });
+                const singles = childGroup.filter(childId => !used.has(childId));
+                if (singles.length > 0) {
+                    childBlocks.push(singles);
+                    singles.forEach(id => used.add(id));
                 }
             });
-            // Layout main group last, so it's centered
-            const [mainMin, mainMax] = layoutBlock(mainGroup, gen + 1, null);
-            if (mainMin !== null && mainMax !== null) childSpans.push([mainMin, mainMax]);
-        } else {
-            // Not an ancestor group, just layout all children in order
-            childGroups.forEach(cg => {
-                const [minX, maxX] = layoutBlock(cg, gen + 1);
-                if (minX !== null && maxX !== null) childSpans.push([minX, maxX]);
+
+            let childrenSpans = [];
+            let localNextX = nextX;
+            childBlocks.forEach(cb => {
+                const [cbMinX, cbMaxX] = layoutFamilyBlock(cb, gen + 1);
+                if (cbMinX !== null && cbMaxX !== null) {
+                    childrenSpans.push([cbMinX, cbMaxX]);
+                    localNextX = cbMaxX + horizontalSpacing;
+                }
             });
-        }
 
-        // --- 3. Compute width of this block ---
-        let minX, maxX;
-        if (childSpans.length > 0) {
-            minX = childSpans[0][0];
-            maxX = childSpans[childSpans.length - 1][1];
-        } else {
-            minX = nextX;
-            maxX = nextX + (group.length - 1) * horizontalSpacing;
-        }
+            let childMinX = null, childMaxX = null;
+            if (childrenSpans.length > 0) {
+                childMinX = Math.min(...childrenSpans.map(s => s[0]));
+                childMaxX = Math.max(...childrenSpans.map(s => s[1]));
+            }
 
-        // --- 4. Center this group above its children, or just lay them out in a row ---
-        let centerX = (minX + maxX) / 2;
-        const totalWidth = (group.length - 1) * horizontalSpacing;
-        group.forEach((id, i) => {
-            nodePositions[id] = {
-                x: centerX - totalWidth / 2 + i * horizontalSpacing,
-                y: (gen - minGen) * verticalSpacing + 60
-            };
+            const blockWidth = (block.length - 1) * (horizontalSpacing * 0.7);
+            let blockStartX;
+            if (childMinX !== null && childMaxX !== null) {
+                const childrenCenter = (childMinX + childMaxX) / 2;
+                blockStartX = childrenCenter - blockWidth / 2;
+            } else {
+                blockStartX = nextX;
+            }
+            block.forEach((id, i) => {
+                nodePositions[id] = {
+                    x: blockStartX + i * (horizontalSpacing * 0.7),
+                    y: (gen - minGen) * verticalSpacing + 60
+                };
+            });
+
+            const blockMinX = blockStartX;
+            const blockMaxX = blockStartX + blockWidth;
+            if (minX === null || blockMinX < minX) minX = blockMinX;
+            if (maxX === null || blockMaxX > maxX) maxX = blockMaxX;
+            nextX = Math.max(nextX, blockMaxX + horizontalSpacing);
         });
-
-        // --- 5. If no children, move nextX forward ---
-        if (childSpans.length === 0) {
-            nextX = maxX + horizontalSpacing;
-        }
 
         return [minX, maxX];
     }
 
-    // 1. Layout the ancestor chain, always centering the direct line
-    const ancestorChain = getAncestorChain(referenceUserId);
-    let mainChildId = referenceUserId;
-    ancestorChain.forEach((group, i) => {
-        layoutBlock(group, nodeGeneration[group[0]] ?? 0, mainChildId);
-        // The main child for the next ancestor up is the first member of the current group
-        mainChildId = group[0];
-    });
+    const refBlock = idToBlock[referenceUserId] || [referenceUserId];
+    layoutFamilyBlock(refBlock, nodeGeneration[referenceUserId] ?? 0);
 
-    // 2. Layout the reference user's sibling group (if not already visited)
-    const refGroup = nodeToGroup[referenceUserId] || [referenceUserId];
-    if (!refGroup.some(id => visited.has(id))) {
-        layoutBlock(refGroup, nodeGeneration[refGroup[0]] ?? 0);
-    }
-
-    // 3. Layout all other root groups (unrelated trees) further out to the right
-    const roots = nodes.filter(n => (childToParents[n.id] || []).length === 0);
-    const rootGroups = [];
-    const rootVisited = new Set();
-    roots.forEach(root => {
-        const group = nodeToGroup[root.id] || [root.id];
-        const groupKey = group.slice().sort().join("-");
-        if (!rootVisited.has(groupKey)) {
-            rootGroups.push(group);
-            rootVisited.add(groupKey);
+    spouseBlocks.forEach(block => {
+        if (!block.some(id => visited.has(id))) {
+            layoutFamilyBlock(block, nodeGeneration[block[0]] ?? 0);
         }
     });
-    rootGroups.forEach(group => {
-        if (group.some(id => visited.has(id))) return;
-        layoutBlock(group, nodeGeneration[group[0]] ?? 0);
-    });
 
-    // Assign positions to nodes
     const layoutedNodes = nodes.map(node => {
         const pos = nodePositions[node.id] || { x: 0, y: 0 };
         return {
@@ -283,6 +327,66 @@ function getLayoutedElementsRelative(nodes, edges, referenceUserId, direction = 
     });
 
     return { nodes: layoutedNodes, edges };
+}
+
+function getAncestorChainEnhanced(nodeId, nodeToGroup, parentToChildren, childToParents) {
+    const chain = [];
+    let currentGroup = nodeToGroup[nodeId] || [nodeId];
+
+    while (true) {
+        const parents = getParentsOfGroup(currentGroup, childToParents);
+        if (parents.length === 0) break;
+
+        let parentGroup = nodeToGroup[parents[0]] || [parents[0]];
+
+        for (const p of parents) {
+            const group = nodeToGroup[p] || [p];
+            if (parents.every(pid => group.includes(pid))) {
+                parentGroup = group;
+                break;
+            }
+        }
+
+        chain.unshift(parentGroup);
+        currentGroup = parentGroup;
+    }
+
+    return chain;
+}
+
+function getParentsOfGroup(group, childToParents) {
+    const parentsSet = new Set();
+    group.forEach(id => {
+        (childToParents[id] || []).forEach(parentId => {
+            parentsSet.add(parentId);
+        });
+    });
+    return Array.from(parentsSet);
+}
+
+function getUniqueRootGroups(roots, nodeToGroup) {
+    const rootGroups = [];
+    const processedGroups = new Set();
+
+    roots.forEach(root => {
+        const group = nodeToGroup[root.id] || [root.id];
+        const groupKey = group.slice().sort().join("-");
+
+        if (!processedGroups.has(groupKey)) {
+            rootGroups.push(group);
+            processedGroups.add(groupKey);
+        }
+    });
+
+    return rootGroups;
+}
+
+function arraysEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 }
 
 function updateSpouseEdgeHandles(nodes, edges) {
@@ -308,7 +412,6 @@ function updateSpouseEdgeHandles(nodes, edges) {
     });
 }
 
-// --- Helper functions for lineage highlighting ---
 function getAncestorIds(nodeId, childToParents) {
     const ancestors = new Set();
     const stack = [nodeId];
@@ -409,6 +512,7 @@ function buildFamilyGraph(members, onView, onAddParent, onAddChild, referenceUse
             onAddChild: () => onAddChild(member),
             spouseIds: member.spouseIds || [],
             setHoveredNodeId,
+            siblingIds: member.siblingIds || [],
         },
         position: { x: 0, y: 0 },
         style: { width: nodeWidth, background: "#fffbe9", border: "1px solid #bcb88a", borderRadius: 12 },
@@ -416,6 +520,7 @@ function buildFamilyGraph(members, onView, onAddParent, onAddChild, referenceUse
 
     const nodeIdSet = new Set(nodes.map(n => n.id));
     const edges = [];
+
     members.forEach(child => {
         (child.parentsIds || []).forEach(parentId => {
             const parentIdStr = String(parentId);
@@ -468,8 +573,6 @@ const FamilyTreePage = () => {
     const [addContext, setAddContext] = useState(null);
     const [referenceUserId, setReferenceUserId] = useState(null);
     const [hoveredNodeId, setHoveredNodeId] = useState(null);
-
-    // For lineage highlighting
     const [lineageIds, setLineageIds] = useState({ ancestors: new Set(), descendants: new Set() });
 
     const fetchMembers = useCallback(async () => {
@@ -488,13 +591,12 @@ const FamilyTreePage = () => {
 
     useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
-    // Compute lineage ids for highlighting
     useEffect(() => {
         if (!hoveredNodeId || nodes.length === 0) {
             setLineageIds({ ancestors: new Set(), descendants: new Set() });
             return;
         }
-        // Build parent/child maps
+
         const parentToChildren = {};
         const childToParents = {};
         nodes.forEach(node => {
@@ -567,7 +669,6 @@ const FamilyTreePage = () => {
         setEdges(edges);
     }, [familyMembers, referenceUserId, setHoveredNodeId]);
 
-    // Highlight edges if connected to hovered node or in lineage
     const highlightedEdges = edges.map(edge => {
         const isDirect = hoveredNodeId && (edge.source === hoveredNodeId || edge.target === hoveredNodeId);
         const isAncestorLine = hoveredNodeId && (
