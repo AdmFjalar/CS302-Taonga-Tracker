@@ -238,3 +238,8 @@
 .family-node-plus-bottom {
     bottom: -24px;
 }
+
+.highlighted-edge path {
+    stroke: #2e4d2a !important;
+    stroke-width: 4 !important;
+}
