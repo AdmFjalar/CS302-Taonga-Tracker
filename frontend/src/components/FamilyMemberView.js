@@ -1,6 +1,6 @@
 import React from "react";
 import { getFullImageUrl } from "./utils";
-import "./CreateItemPage.css"; // Reuse the sleek styles
+import "./CreateItemPage.css";
 
 const FamilyMemberView = ({ member, onBack, onEdit }) => (
     <div className="item-layout item-edit-sleek">

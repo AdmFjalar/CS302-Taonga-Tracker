@@ -66,5 +66,24 @@ namespace TaongaTrackerAPI.Controllers
             var members = await _neo4jService.GetUserFamilyMembersAsync(userId);
             return Ok(members);
         }
+        
+        [HttpPost("upload-image")]
+        public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            Directory.CreateDirectory(uploadsFolder);
+            var filePath = Path.Combine(uploadsFolder, Guid.NewGuid() + Path.GetExtension(file.FileName));
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var url = $"/uploads/{Path.GetFileName(filePath)}";
+            return Ok(new { url });
+        }
     }
 }

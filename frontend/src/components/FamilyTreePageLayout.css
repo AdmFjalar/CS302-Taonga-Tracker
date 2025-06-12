@@ -1,18 +1,17 @@
 .familytree-container {
     background: #f6f9f3;
-    min-height: 100vh;
+    min-height: 92vh;
     width: 100%;
     font-family: Georgia, serif;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0;
 }
 
 .familytree-treearea {
     width: 100%;
-    max-width: 1200px;
     min-height: 600px;
+    height: 100%;
     background: #fffbe9;
     border-radius: 18px;
     box-shadow: 0 4px 24px 0 rgba(30,50,28,0.10), 0 1.5px 4px 0 rgba(30,50,28,0.08);
@@ -21,15 +20,16 @@
     align-items: center;
     justify-content: flex-start;
     margin: 0 auto;
-    padding: 2rem 0 2rem 0;
+    padding: 2rem;
 }
 
 .familytree-treeheader {
-    max-width: 900px;
+    /*max-width: 900px;*/
+    width: 90%;
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     margin-bottom: 1.5rem;
     padding: 0;
     gap: 1rem;
@@ -179,4 +179,45 @@
 
 .familytree-treearea svg .node {
     margin: 1.5rem;
+}
+
+/* --- Family Node Card and Plus Buttons --- */
+.family-node-card {
+    position: relative;
+    width: 180px;
+    height: 150px; /* Increased height */
+    padding: 1.5rem 1rem 1rem 1rem; /* More padding */
+    background: #fffbe9;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px 0 rgba(30,50,28,0.10);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.family-node-plus {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    background: #bcb88a;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px 0 rgba(30,50,28,0.10);
+}
+
+.family-node-plus-top {
+    top: -24px;
+}
+
+.family-node-plus-bottom {
+    bottom: -24px;
 }

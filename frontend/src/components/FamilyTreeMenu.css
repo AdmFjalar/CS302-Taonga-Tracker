@@ -1,0 +1,70 @@
+.family-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(30,50,28,0.18);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.family-modal {
+    background: #fffbe9;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 rgba(30,50,28,0.16), 0 2px 8px 0 rgba(30,50,28,0.10);
+    padding: 2.5rem 2.2rem 2rem 2.2rem;
+    min-width: 370px;
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.family-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.family-modal-img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #e3e7d3;
+    border: 1.5px solid #bcb88a;
+}
+
+.family-modal-rel {
+    font-size: 1.1rem;
+    color: #7c9a7a;
+    margin-top: 0.2rem;
+}
+
+.family-modal-dob {
+    font-size: 1rem;
+    color: #bcb88a;
+    margin-top: 0.1rem;
+}
+
+.family-modal-details {
+    font-size: 1.05rem;
+    color: #273520;
+    background: #f6f9f3;
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.family-modal-actions {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: flex-end;
+    margin-top: 1.2rem;
+}

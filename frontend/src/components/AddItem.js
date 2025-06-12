@@ -1,8 +1,22 @@
-// src/components/AddItem.js
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ItemEdit from "./ItemEdit";
 
 const AddItem = ({ navigateTo, onSave }) => {
+    const [familyMembers, setFamilyMembers] = useState([]);
+
+    useEffect(() => {
+        const fetchFamilyMembers = async () => {
+            const token = localStorage.getItem("authToken");
+            const res = await fetch("http://localhost:5240/api/familymember", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+                setFamilyMembers(await res.json());
+            }
+        };
+        fetchFamilyMembers();
+    }, []);
+
     const handleSave = async (item) => {
         const token = localStorage.getItem("authToken");
         const res = await fetch("http://localhost:5240/api/vaultitem", {
@@ -22,7 +36,13 @@ const AddItem = ({ navigateTo, onSave }) => {
         if (navigateTo) navigateTo();
     };
 
-    return <ItemEdit onSave={handleSave} navigateTo={navigateTo} />;
+    return (
+        <ItemEdit
+            onSave={handleSave}
+            navigateTo={navigateTo}
+            familyMembers={familyMembers}
+        />
+    );
 };
 
 export default AddItem;

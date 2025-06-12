@@ -1,226 +1,262 @@
-import React, { useEffect, useState } from "react";
-import Tree from "react-d3-tree";
+import React, { useEffect, useState, useCallback } from "react";
+import ReactFlow, { Background, Controls, useNodesState, useEdgesState, Handle, Position } from "reactflow";
+import "reactflow/dist/style.css";
+import dagre from "dagre";
+import { getFullImageUrl, toDateInputValue } from "./utils";
 import FamilyMemberView from "./FamilyMemberView";
 import FamilyMemberEdit from "./FamilyMemberEdit";
 import FamilyMemberAdd from "./FamilyMemberAdd";
-import { getFullImageUrl } from "./utils";
-import "./FamilyTreePage.css";
+import "./FamilyTreePageLayout.css";
+import "./FamilyTreeMenu.css";
 
-const CARD_WIDTH = 260;
-const CARD_HEIGHT = 190;
-const IMAGE_SIZE = 90;
+const nodeWidth = 180;
+const nodeHeight = 150;
 
-// Build a tree with only parent-child edges
-function buildFamilyTree(members) {
-    if (!members || members.length === 0) return null;
-    const idToNode = {};
-    members.forEach(member => {
-        idToNode[member.familyMemberId] = {
-            ...member,
-            name: `${member.firstName || ""} ${member.lastName || ""}`,
-            children: [],
-        };
+function getLayoutedElements(nodes, edges, direction = "TB") {
+    const dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setDefaultEdgeLabel(() => ({}));
+    dagreGraph.setGraph({ rankdir: direction });
+
+    nodes.forEach((node) => {
+        dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+    });
+    edges.forEach((edge) => {
+        dagreGraph.setEdge(edge.source, edge.target);
     });
 
-    // Track which nodes have been attached as children
-    const attached = new Set();
+    dagre.layout(dagreGraph);
 
-    // Attach each child only once (under the first parent found)
-    members.forEach(parent => {
-        (parent.childrenIds || []).forEach(cid => {
-            if (idToNode[cid] && !attached.has(cid)) {
-                idToNode[parent.familyMemberId].children.push(idToNode[cid]);
-                attached.add(cid);
+    return {
+        nodes: nodes.map((node) => {
+            const pos = dagreGraph.node(node.id);
+            return {
+                ...node,
+                position: { x: pos.x - nodeWidth / 2, y: pos.y - nodeHeight / 2 },
+                targetPosition: "top",
+                sourcePosition: "bottom",
+            };
+        }),
+        edges,
+    };
+}
+
+function FamilyNode({ data }) {
+    return (
+        <div
+            className="family-node-card"
+            style={{ textAlign: "center", cursor: "pointer", position: "relative" }}
+            onClick={data.onView}
+            tabIndex={0}
+            role="button"
+            aria-label={`View ${data.label}`}
+            onKeyPress={e => {
+                if (e.key === "Enter" || e.key === " ") data.onView();
+            }}
+        >
+            {/* Add Parent (+) Button */}
+            <button
+                className="family-node-plus family-node-plus-top"
+                title="Add Parent"
+                onClick={e => { e.stopPropagation(); data.onAddParent(); }}
+            >+</button>
+            <Handle type="target" position={Position.Top} style={{ background: "#bcb88a" }} />
+            <Handle type="source" position={Position.Bottom} style={{ background: "#bcb88a" }} />
+            <img
+                src={getFullImageUrl(data.photoUrl)}
+                alt={data.label}
+                style={{
+                    width: 64,
+                    height: 64,
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                    marginBottom: 8,
+                    border: "2px solid #bcb88a",
+                    background: "#fff"
+                }}
+            />
+            <div style={{ fontWeight: "bold" }}>{data.label}</div>
+            <div style={{ fontSize: 12, color: "#888" }}>{data.dates}</div>
+            {/* Add Child (+) Button */}
+            <button
+                className="family-node-plus family-node-plus-bottom"
+                title="Add Child"
+                onClick={e => { e.stopPropagation(); data.onAddChild(); }}
+            >+</button>
+        </div>
+    );
+}
+
+const nodeTypes = { family: FamilyNode };
+
+function buildFamilyGraph(members, onView, onAddParent, onAddChild) {
+    if (!members || members.length === 0) return { nodes: [], edges: [] };
+
+    const nodes = members.map((member) => ({
+        id: String(member.familyMemberId),
+        type: "family",
+        data: {
+            label: `${member.firstName || ""} ${member.lastName || ""}`,
+            photoUrl: member.profilePictureUrl,
+            dates: [member.dateOfBirth, member.dateOfDeath]
+                .map(toDateInputValue)
+                .filter(Boolean)
+                .join(" - "),
+            onView: () => onView(member),
+            onAddParent: () => onAddParent(member),
+            onAddChild: () => onAddChild(member),
+        },
+        position: { x: 0, y: 0 },
+        style: { width: nodeWidth, background: "#fffbe9", border: "1px solid #bcb88a", borderRadius: 12 },
+    }));
+
+    const edges = [];
+    members.forEach(child => {
+        (child.parentsIds || []).forEach(parentId => {
+            const parentIdStr = String(parentId);
+            const childIdStr = String(child.familyMemberId);
+            if (
+                nodes.find(n => n.id === parentIdStr) &&
+                nodes.find(n => n.id === childIdStr)
+            ) {
+                edges.push({
+                    id: `${parentIdStr}->${childIdStr}`,
+                    source: parentIdStr,
+                    target: childIdStr,
+                    animated: false,
+                    style: { stroke: "#bcb88a", strokeWidth: 2 }
+                });
             }
         });
     });
 
-    // Roots: nodes not attached as children
-    const roots = members
-        .filter(m => !attached.has(m.familyMemberId))
-        .map(m => idToNode[m.familyMemberId]);
-
-    // If only one root, return it; else, return all roots (no dummy node)
-    if (roots.length === 1) return roots[0];
-    if (roots.length > 1) return { name: "Family", children: roots };
-    return null;
+    return getLayoutedElements(nodes, edges);
 }
 
 const FamilyTreePage = () => {
-    const [treeData, setTreeData] = useState(null);
-    const [user, setUser] = useState(null);
     const [familyMembers, setFamilyMembers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [showAdd, setShowAdd] = useState(false);
-    const [error, setError] = useState(null);
-    const [selectedMember, setSelectedMember] = useState(null);
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [viewingMember, setViewingMember] = useState(null);
     const [editingMember, setEditingMember] = useState(null);
+    const [adding, setAdding] = useState(false);
+    const [addContext, setAddContext] = useState(null);
 
-    useEffect(() => {
-        const fetchAll = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const token = localStorage.getItem("authToken");
-                const userRes = await fetch("http://localhost:5240/api/Auth/me", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (!userRes.ok) throw new Error("Failed to fetch user");
-                const userData = await userRes.json();
-                setUser({ ...userData, id: userData.id });
-                const famRes = await fetch("http://localhost:5240/api/familymember", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (!famRes.ok) throw new Error("Failed to fetch family members");
-                const famData = await famRes.json();
-                setFamilyMembers(famData);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchAll();
+    const fetchMembers = useCallback(async () => {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch("http://localhost:5240/api/familymember", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+            const data = await res.json();
+            setFamilyMembers(data);
+        }
     }, []);
 
-    useEffect(() => {
-        if (user) {
-            setTreeData(buildFamilyTree(familyMembers, user));
-        }
-    }, [user, familyMembers]);
+    useEffect(() => { fetchMembers(); }, [fetchMembers]);
 
-    const refreshFamily = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const token = localStorage.getItem("authToken");
-            const famRes = await fetch("http://localhost:5240/api/familymember", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!famRes.ok) throw new Error("Failed to fetch family members");
-            const famData = await famRes.json();
-            setFamilyMembers(famData);
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
+    const handleAdd = () => {
+        setAdding(true);
+        setViewingMember(null);
+        setEditingMember(null);
+        setAddContext(null);
     };
 
-    if (loading) return <div className="familytree-container">Loading family tree...</div>;
-    if (error) return <div className="familytree-container">Error: {error}</div>;
-    if (!treeData) return <div className="familytree-container">No family data found.</div>;
+    const handleEdit = (member) => {
+        setEditingMember(member);
+        setViewingMember(null);
+        setAdding(false);
+        setAddContext(null);
+    };
 
-    // Custom node rendering for cards
-    const renderNodeLabel = ({ nodeDatum }) => (
-        <g
-            style={{ cursor: "pointer" }}
-            onClick={e => {
-                e.stopPropagation();
-                setSelectedMember(nodeDatum);
-                setEditingMember(null);
-            }}
-        >
-            <rect
-                x={-CARD_WIDTH / 2}
-                y={-CARD_HEIGHT / 2}
-                width={CARD_WIDTH}
-                height={CARD_HEIGHT}
-                rx={18}
-                fill="#fffbe9"
-                stroke="#bcb88a"
-                strokeWidth={2}
-                style={{
-                    filter: "drop-shadow(0 4px 24px rgba(30,50,28,0.10))",
-                }}
-            />
-            <image
-                href={getFullImageUrl(nodeDatum.profilePictureUrl)}
-                x={-IMAGE_SIZE / 2}
-                y={-CARD_HEIGHT / 2 + 16}
-                width={IMAGE_SIZE}
-                height={IMAGE_SIZE}
-                style={{ borderRadius: "50%" }}
-            />
-            <text
-                x={0}
-                y={-CARD_HEIGHT / 2 + IMAGE_SIZE + 40}
-                textAnchor="middle"
-                fontSize="1.1rem"
-                fontWeight="bold"
-                fill="#1e321c"
-            >
-                {nodeDatum.firstName} {nodeDatum.lastName}
-            </text>
-            <text
-                x={0}
-                y={-CARD_HEIGHT / 2 + IMAGE_SIZE + 65}
-                textAnchor="middle"
-                fontSize="0.95rem"
-                fill="#3a4a2b"
-            >
-                {nodeDatum.relationshipType || ""}
-            </text>
-            <text
-                x={0}
-                y={-CARD_HEIGHT / 2 + IMAGE_SIZE + 90}
-                textAnchor="middle"
-                fontSize="0.85rem"
-                fill="#7c9a7a"
-            >
-                {nodeDatum.dateOfBirth ? `Born: ${nodeDatum.dateOfBirth}` : ""}
-            </text>
-        </g>
-    );
+    const handleAddParent = (member) => {
+        setAddContext({ type: "parent", member });
+        setAdding(true);
+        setViewingMember(null);
+        setEditingMember(null);
+    };
+
+    const handleAddChild = (member) => {
+        setAddContext({ type: "child", member });
+        setAdding(true);
+        setViewingMember(null);
+        setEditingMember(null);
+    };
+
+    const handleSaved = () => {
+        setAdding(false);
+        setEditingMember(null);
+        setViewingMember(null);
+        setAddContext(null);
+        fetchMembers();
+    };
+
+    useEffect(() => {
+        const { nodes, edges } = buildFamilyGraph(
+            familyMembers,
+            setViewingMember,
+            handleAddParent,
+            handleAddChild
+        );
+        setNodes(nodes);
+        setEdges(edges);
+    }, [familyMembers]);
 
     return (
         <div className="familytree-container">
-            <div className="familytree-header">
-                <h1>Family Tree</h1>
-                <button className="auth-button" onClick={() => setShowAdd(true)}>
-                    Add Family Member
-                </button>
-            </div>
+            {/*<div className="familytree-treeheader">*/}
+            {/*    <h1>Family Tree</h1>*/}
+            {/*    <button className="auth-button" onClick={handleAdd}>Add Family Member</button>*/}
+            {/*</div>*/}
             <div className="familytree-treearea">
-                <Tree
-                    data={treeData}
-                    orientation="vertical"
-                    translate={{ x: 600, y: 120 }}
-                    renderCustomNodeElement={renderNodeLabel}
-                    zoomable
-                    collapsible
-                    separation={{ siblings: 2.5, nonSiblings: 3.5 }}
-                    pathFunc="elbow"
-                />
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    nodesDraggable
+                    nodesConnectable={false}
+                    elementsSelectable
+                >
+                    <Background />
+                    <Controls />
+                </ReactFlow>
             </div>
-            {showAdd && (
-                <FamilyMemberAdd
-                    familyMembers={familyMembers}
-                    onSave={async () => {
-                        setShowAdd(false);
-                        await refreshFamily();
-                    }}
-                    onCancel={() => setShowAdd(false)}
-                />
+            {viewingMember && (
+                <div className="family-modal-overlay">
+                    <div className="family-modal">
+                        <FamilyMemberView
+                            member={viewingMember}
+                            onEdit={() => handleEdit(viewingMember)}
+                            onBack={() => setViewingMember(null)}
+                        />
+                    </div>
+                </div>
             )}
             {editingMember && (
-                <FamilyMemberEdit
-                    initialMember={editingMember}
-                    familyMembers={familyMembers}
-                    onSave={async () => {
-                        setEditingMember(null);
-                        setSelectedMember(null);
-                        await refreshFamily();
-                    }}
-                    onCancel={() => setEditingMember(null)}
-                />
+                <div className="family-modal-overlay">
+                    <div className="family-modal">
+                        <FamilyMemberEdit
+                            initialMember={editingMember}
+                            familyMembers={familyMembers}
+                            onSave={handleSaved}
+                            onCancel={() => setEditingMember(null)}
+                        />
+                    </div>
+                </div>
             )}
-            {selectedMember && !editingMember && (
-                <FamilyMemberView
-                    member={selectedMember}
-                    onBack={() => setSelectedMember(null)}
-                    onEdit={() => setEditingMember(selectedMember)}
-                />
+            {adding && (
+                <div className="family-modal-overlay">
+                    <div className="family-modal">
+                        <FamilyMemberAdd
+                            familyMembers={familyMembers}
+                            onSave={handleSaved}
+                            onCancel={() => { setAdding(false); setAddContext(null); }}
+                            addContext={addContext}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );

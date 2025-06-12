@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { getFullImageUrl, toDateInputValue, autoSpaceComma } from "./utils";
 import "./CreateItemPage.css";
 
+const placeholderImg = "https://placehold.co/40x40";
+
 const defaultItem = {
     vaultItemId: "0",
     currentOwnerId: localStorage.getItem("userId") || "",
@@ -21,7 +23,70 @@ const defaultItem = {
     sharedWithIds: [],
 };
 
-const ItemEdit = ({ onSave, initialItem, navigateTo }) => {
+function CreatorSelector({ familyMembers, selectedId, onSelect }) {
+    const [search, setSearch] = useState("");
+    const filtered = familyMembers
+        ? familyMembers.filter(fm =>
+            `${fm.firstName} ${fm.lastName}`.toLowerCase().includes(search.toLowerCase())
+        )
+        : [];
+
+    return (
+        <div className="form-row" style={{ flexDirection: "column", alignItems: "flex-start", width: "100%" }}>
+            <b style={{ marginBottom: 4 }}>Creator:</b>
+            <input
+                type="text"
+                placeholder="Search creator..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ marginBottom: 8, width: "100%", maxWidth: 320 }}
+            />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {filtered.length === 0 && <span style={{ color: "#888" }}>No matches</span>}
+                {filtered.map(fm => (
+                    <label
+                        key={fm.familyMemberId}
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            background: selectedId === fm.familyMemberId ? "#bcb88a33" : "#fff",
+                            border: "1px solid #bcb88a",
+                            borderRadius: 8,
+                            padding: "2px 8px 2px 2px",
+                            cursor: "pointer",
+                            minWidth: 0,
+                        }}
+                    >
+                        <input
+                            type="radio"
+                            checked={selectedId === fm.familyMemberId}
+                            onChange={() => onSelect(fm.familyMemberId)}
+                            style={{ marginRight: 4 }}
+                        />
+                        <img
+                            src={fm.profilePictureUrl ? getFullImageUrl(fm.profilePictureUrl) : placeholderImg}
+                            alt={`${fm.firstName} ${fm.lastName}`}
+                            style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                                border: "1px solid #bcb88a",
+                                background: "#fffbe9",
+                            }}
+                        />
+                        <span style={{ fontSize: 15, fontWeight: 500, whiteSpace: "nowrap" }}>
+                            {fm.firstName} {fm.lastName}
+                        </span>
+                    </label>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
     const [item, setItem] = useState(initialItem || defaultItem);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState("");
@@ -134,6 +199,10 @@ const ItemEdit = ({ onSave, initialItem, navigateTo }) => {
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleCreatorSelect = (familyMemberId) => {
+        setItem(prev => ({ ...prev, creatorId: familyMemberId }));
     };
 
     const handleSubmit = async (e) => {
@@ -364,6 +433,11 @@ const ItemEdit = ({ onSave, initialItem, navigateTo }) => {
                                 </div>
                             )}
                         </div>
+                        <CreatorSelector
+                            familyMembers={familyMembers}
+                            selectedId={item.creatorId}
+                            onSelect={handleCreatorSelect}
+                        />
                     </div>
                 </div>
 

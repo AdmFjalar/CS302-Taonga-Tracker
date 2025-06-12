@@ -316,9 +316,21 @@ public async Task<FamilyMemberDto> AddFamilyMemberToUserTreeAsync(string userId,
 
     var record = result.Current;
     var node = record["m"].As<INode>();
+    var newMemberId = node.Properties.ContainsKey("FamilyMemberId") ? node["FamilyMemberId"].As<string>() : node.ElementId;
+
+    // --- Bidirectional update logic for parents and children ---
+    foreach (var parentId in member.ParentsIds ?? new List<string>())
+    {
+        await UpdateChildIdsOnParent(parentId, newMemberId, add: true);
+    }
+    foreach (var childId in member.ChildrenIds ?? new List<string>())
+    {
+        await UpdateParentIdsOnChild(childId, newMemberId, add: true);
+    }
+
     return new FamilyMemberDto
     {
-        FamilyMemberId = node.Properties.ContainsKey("FamilyMemberId") ? node["FamilyMemberId"].As<string>() : node.ElementId,
+        FamilyMemberId = newMemberId,
         UserId = node.Properties.ContainsKey("UserId") ? node["UserId"].As<string>() : null,
         FirstName = member.FirstName,
         MiddleNames = member.MiddleNames,
@@ -346,6 +358,46 @@ public async Task<FamilyMemberDto> AddFamilyMemberToUserTreeAsync(string userId,
     if (familyMemberId == userId)
     {
         await EnsureUserFamilyMemberNodeAsync(userId);
+    }
+    
+    // Fetch the current state
+    var currentMembers = await GetUserFamilyMembersAsync(userId);
+    var current = currentMembers.FirstOrDefault(m => m.FamilyMemberId == familyMemberId);
+
+    // Update the member node as before...
+
+    // --- Bidirectional update logic ---
+
+    // Handle ParentsIds
+    var oldParents = current?.ParentsIds ?? new List<string>();
+    var newParents = member.ParentsIds ?? new List<string>();
+
+    var addedParents = newParents.Except(oldParents).ToList();
+    var removedParents = oldParents.Except(newParents).ToList();
+
+    foreach (var parentId in addedParents)
+    {
+        await UpdateChildIdsOnParent(parentId, familyMemberId, add: true);
+    }
+    foreach (var parentId in removedParents)
+    {
+        await UpdateChildIdsOnParent(parentId, familyMemberId, add: false);
+    }
+
+    // Handle ChildrenIds
+    var oldChildren = current?.ChildrenIds ?? new List<string>();
+    var newChildren = member.ChildrenIds ?? new List<string>();
+
+    var addedChildren = newChildren.Except(oldChildren).ToList();
+    var removedChildren = oldChildren.Except(newChildren).ToList();
+
+    foreach (var childId in addedChildren)
+    {
+        await UpdateParentIdsOnChild(childId, familyMemberId, add: true);
+    }
+    foreach (var childId in removedChildren)
+    {
+        await UpdateParentIdsOnChild(childId, familyMemberId, add: false);
     }
 
     await using var session = Driver.AsyncSession();
@@ -425,10 +477,27 @@ public async Task<FamilyMemberDto> AddFamilyMemberToUserTreeAsync(string userId,
 
     public async Task DeleteFamilyMemberAsync(string userId, string familyMemberId)
     {
+        // Fetch the member to get current parents and children
+        var members = await GetUserFamilyMembersAsync(userId);
+        var member = members.FirstOrDefault(m => m.FamilyMemberId == familyMemberId);
+        if (member == null) return;
+
+        // Remove this member from parents' ChildrenIds
+        foreach (var parentId in member.ParentsIds ?? new List<string>())
+        {
+            await UpdateChildIdsOnParent(parentId, familyMemberId, add: false);
+        }
+        // Remove this member from children's ParentsIds
+        foreach (var childId in member.ChildrenIds ?? new List<string>())
+        {
+            await UpdateParentIdsOnChild(childId, familyMemberId, add: false);
+        }
+
+        // Now delete the member node
         await using var session = Driver.AsyncSession();
         var query = @"
-            MATCH (m:FamilyMember {FamilyMemberId: $familyMemberId})
-            DETACH DELETE m";
+        MATCH (m:FamilyMember {FamilyMemberId: $familyMemberId})
+        DETACH DELETE m";
         await session.RunAsync(query, new { familyMemberId });
     }
 
@@ -756,6 +825,28 @@ public async Task<FamilyMemberDto> AddFamilyMemberToUserTreeAsync(string userId,
             ConcurrencyStamp = node.Properties.ContainsKey("ConcurrencyStamp") ? node["ConcurrencyStamp"].As<string>() : null,
             ProfilePictureUrl = node.Properties.ContainsKey("ProfilePictureUrl") ? node["ProfilePictureUrl"].As<string>() : string.Empty
         };
+    }
+    
+    private async Task UpdateChildIdsOnParent(string parentId, string childId, bool add)
+    {
+        var query = add
+            ? @"MATCH (p:FamilyMember {FamilyMemberId: $parentId})
+            SET p.ChildrenIds = coalesce(p.ChildrenIds, []) + $childId"
+            : @"MATCH (p:FamilyMember {FamilyMemberId: $parentId})
+            SET p.ChildrenIds = [x IN coalesce(p.ChildrenIds, []) WHERE x <> $childId]";
+        await using var session = Driver.AsyncSession();
+        await session.RunAsync(query, new { parentId, childId });
+    }
+
+    private async Task UpdateParentIdsOnChild(string childId, string parentId, bool add)
+    {
+        var query = add
+            ? @"MATCH (c:FamilyMember {FamilyMemberId: $childId})
+            SET c.ParentsIds = coalesce(c.ParentsIds, []) + $parentId"
+            : @"MATCH (c:FamilyMember {FamilyMemberId: $childId})
+            SET c.ParentsIds = [x IN coalesce(c.ParentsIds, []) WHERE x <> $parentId]";
+        await using var session = Driver.AsyncSession();
+        await session.RunAsync(query, new { childId, parentId });
     }
 
     private static void ValidateFamilyMemberData(FamilyMemberDto familyMember)
