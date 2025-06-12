@@ -98,6 +98,25 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const suggestionBoxRef = useRef(null);
 
+    const [localFamilyMembers, setLocalFamilyMembers] = useState(familyMembers);
+
+    useEffect(() => {
+        if (!familyMembers || familyMembers.length === 0) {
+            const fetchFamilyMembers = async () => {
+                const token = localStorage.getItem("authToken");
+                const res = await fetch("http://localhost:5240/api/familymember", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    setLocalFamilyMembers(await res.json());
+                }
+            };
+            fetchFamilyMembers();
+        } else {
+            setLocalFamilyMembers(familyMembers);
+        }
+    }, [familyMembers]);
+
     useEffect(() => {
         if (initialItem) {
             setItem({ ...defaultItem, ...initialItem });
@@ -116,7 +135,6 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         setItem((prev) => ({ ...prev, [field]: arrayValue }));
     };
 
-    // --- Share with: user search/autocomplete logic ---
     const getLastEntry = (input) => {
         const parts = input.split(",");
         return parts[parts.length - 1].trim();
@@ -134,8 +152,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                 headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
             });
             if (res.ok) {
-                const users = await res.json();
-                setUserSuggestions(users);
+                setUserSuggestions(await res.json());
             } else {
                 setUserSuggestions([]);
             }
@@ -272,7 +289,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                         <label style={{ cursor: "pointer" }} title="Click to upload a new image">
                             <img
                                 src={getFullImageUrl(item.photoUrl)}
-                                alt="Preview"
+                                alt="Heirloom"
                                 className="item-edit-img-preview"
                             />
                             <input
@@ -292,8 +309,8 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                                 type="text"
                                 className="item-edit-title"
                                 value={item.title}
-                                onChange={(e) => handleChange("title", e.target.value)}
-                                placeholder="Title"
+                                onChange={e => handleChange("title", e.target.value)}
+                                placeholder="Heirloom Title"
                                 required
                             />
                         </div>
@@ -301,9 +318,9 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                             <textarea
                                 className="item-edit-description"
                                 value={item.description}
-                                onChange={(e) => handleChange("description", e.target.value)}
+                                onChange={e => handleChange("description", e.target.value)}
                                 placeholder="Description"
-                                rows={6}
+                                rows={3}
                             />
                         </div>
                     </div>
@@ -317,7 +334,9 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                             <input
                                 type="number"
                                 value={item.estimatedValue || ""}
-                                onChange={(e) => handleChange("estimatedValue", e.target.value)}
+                                onChange={e => handleChange("estimatedValue", e.target.value)}
+                                min={0}
+                                step={0.01}
                                 placeholder="e.g. 1000"
                             />
                         </div>
@@ -326,7 +345,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                             <input
                                 type="date"
                                 value={toDateInputValue(item.creationDate)}
-                                onChange={(e) => handleChange("creationDate", e.target.value)}
+                                onChange={e => handleChange("creationDate", e.target.value)}
                             />
                         </div>
                         <div className="form-row">
@@ -334,7 +353,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                             <input
                                 type="date"
                                 value={toDateInputValue(item.dateAcquired)}
-                                onChange={(e) => handleChange("dateAcquired", e.target.value)}
+                                onChange={e => handleChange("dateAcquired", e.target.value)}
                             />
                         </div>
                         <div className="form-row">
@@ -342,8 +361,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                             <input
                                 type="text"
                                 value={item.creationPlace}
-                                onChange={(e) => handleChange("creationPlace", e.target.value)}
-                                placeholder="e.g. Paris"
+                                onChange={e => handleChange("creationPlace", e.target.value)}
                             />
                         </div>
                         <div className="form-row">
@@ -351,82 +369,69 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                             <input
                                 type="text"
                                 value={item.itemType}
-                                onChange={(e) => handleChange("itemType", e.target.value)}
-                                placeholder="e.g. Painting"
+                                onChange={e => handleChange("itemType", e.target.value)}
                             />
                         </div>
                         <div className="form-row">
                             <b>Materials:</b>
                             <input
+                                type="text"
                                 value={materialsInput}
-                                onChange={(e) => setMaterialsInput(autoSpaceComma(e.target.value))}
-                                onBlur={(e) => handleArrayBlur("materials", e.target.value)}
-                                placeholder="e.g. wood, metal"
+                                onChange={e => setMaterialsInput(e.target.value)}
+                                onBlur={e => handleArrayBlur("materials", e.target.value)}
+                                placeholder="e.g. Gold, Silver"
                             />
                         </div>
                         <div className="form-row">
                             <b>Craft Type:</b>
                             <input
+                                type="text"
                                 value={craftTypeInput}
-                                onChange={(e) => setCraftTypeInput(autoSpaceComma(e.target.value))}
-                                onBlur={(e) => handleArrayBlur("craftType", e.target.value)}
-                                placeholder="e.g. handmade, machine-crafted"
+                                onChange={e => setCraftTypeInput(e.target.value)}
+                                onBlur={e => handleArrayBlur("craftType", e.target.value)}
+                                placeholder="e.g. Engraving, Weaving"
                             />
                         </div>
                         <div className="form-row" style={{ position: "relative" }}>
-                            <b>Share with:</b>
+                            <b>Share With (emails):</b>
                             <input
+                                type="text"
                                 value={sharedWithInput}
                                 onChange={handleSharedWithInputChange}
-                                onBlur={(e) => handleArrayBlur("sharedWithIds", e.target.value)}
+                                onBlur={e => handleArrayBlur("sharedWithIds", e.target.value)}
+                                placeholder="Type email and comma to add"
                                 autoComplete="off"
-                                placeholder="e.g. alice@example.com, bob@example.com"
                             />
                             {showSuggestions && userSuggestions.length > 0 && (
-                                <div className="suggestion-box" ref={suggestionBoxRef} style={{
-                                    position: "absolute",
-                                    background: "#fff",
-                                    border: "1px solid #ccc",
-                                    zIndex: 10,
-                                    left: 0,
-                                    right: 0,
-                                    top: "100%",
-                                }}>
+                                <div
+                                    ref={suggestionBoxRef}
+                                    style={{
+                                        position: "absolute",
+                                        top: "100%",
+                                        left: 0,
+                                        background: "#fff",
+                                        border: "1px solid #bcb88a",
+                                        borderRadius: 6,
+                                        zIndex: 10,
+                                        width: "100%",
+                                        maxHeight: 120,
+                                        overflowY: "auto",
+                                    }}
+                                >
                                     {suggestionLoading ? (
-                                        <div className="suggestion-item">Loading...</div>
+                                        <div style={{ padding: 8 }}>Loading...</div>
                                     ) : (
-                                        userSuggestions.map((user) => (
+                                        userSuggestions.map(user => (
                                             <div
                                                 key={user.email}
-                                                className="suggestion-item"
                                                 style={{
-                                                    padding: "4px 8px",
+                                                    padding: 8,
                                                     cursor: "pointer",
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: 8,
+                                                    borderBottom: "1px solid #eee",
                                                 }}
                                                 onMouseDown={() => handleSuggestionClick(user.email)}
                                             >
-                                                <img
-                                                    src={user.profilePictureUrl ? getFullImageUrl(user.profilePictureUrl) : "https://placehold.co/24x24"}
-                                                    alt="profile"
-                                                    style={{
-                                                        width: 24,
-                                                        height: 24,
-                                                        borderRadius: "50%",
-                                                        objectFit: "cover",
-                                                        objectPosition: "center",
-                                                        background: "#e3e7d3",
-                                                        flexShrink: 0,
-                                                    }}
-                                                />
-                                                <span>{user.email}</span>
-                                                {user.username && (
-                                                    <span style={{ color: "#888", marginLeft: 8 }}>
-                                                        ({user.username})
-                                                    </span>
-                                                )}
+                                                {user.email}
                                             </div>
                                         ))
                                     )}
@@ -434,7 +439,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                             )}
                         </div>
                         <CreatorSelector
-                            familyMembers={familyMembers}
+                            familyMembers={localFamilyMembers || []}
                             selectedId={item.creatorId}
                             onSelect={handleCreatorSelect}
                         />
