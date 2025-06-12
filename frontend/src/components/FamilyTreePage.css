@@ -180,3 +180,46 @@
 .familytree-treearea svg .node {
     margin: 1.5rem;
 }
+
+.react-flow__handle {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Hide plus buttons by default */
+.family-node-plus {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    background: #bcb88a;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px 0 rgba(30,50,28,0.10);
+}
+
+/* Show plus buttons on hover or focus */
+.family-node-card:hover .family-node-plus,
+.family-node-card:focus .family-node-plus,
+.family-node-card:focus-within .family-node-plus {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.family-node-plus-top {
+    top: -24px;
+}
+
+.family-node-plus-bottom {
+    bottom: -24px;
+}

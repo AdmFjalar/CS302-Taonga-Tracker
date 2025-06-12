@@ -280,6 +280,7 @@ const HomePage = () => {
           ) : selectedMember ? (
               <FamilyMemberView
                   member={selectedMember}
+                  familyMembers={familyMembers}
                   onBack={() => setSelectedMember(null)}
                   onEdit={() => setEditingMember(selectedMember)}
               />
