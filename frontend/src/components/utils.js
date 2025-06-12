@@ -14,12 +14,18 @@ export const getFullImageUrl = (relativePath) => {
  * @param {string} dateString
  * @returns {string}
  */
-export const toDateInputValue = (dateString) => {
-    if (!dateString) return "";
-    const d = new Date(dateString);
-    if (isNaN(d.getTime())) return "";
-    return d.toISOString().slice(0, 10);
-};
+// src/components/utils.js
+export function toDateInputValue(date) {
+    if (!date) return "";
+    // If date is already in YYYY-MM-DD or starts with it, return the first 10 chars
+    if (/^\d{4}-\d{2}-\d{2}/.test(date)) return date.slice(0, 10);
+    // Otherwise, parse and format as UTC (fallback)
+    const d = new Date(date);
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
 
 /**
  * Ensures a string has a space after each comma.
