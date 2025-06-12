@@ -12,9 +12,7 @@ import "./FamilyTreeMenu.css";
 const nodeWidth = 180;
 const nodeHeight = 150;
 
-// Assigns generations relative to a reference userId
 function assignRelativeGenerations(nodes, edges, userId) {
-    // Build parent<->child maps
     const idToNode = Object.fromEntries(nodes.map(n => [n.id, n]));
     const parentToChildren = {};
     const childToParents = {};
@@ -29,7 +27,6 @@ function assignRelativeGenerations(nodes, edges, userId) {
         }
     });
 
-    // BFS from userId, assign generation
     const generation = {};
     const queue = [[userId, 0]];
     generation[userId] = 0;
@@ -37,9 +34,8 @@ function assignRelativeGenerations(nodes, edges, userId) {
     while (queue.length > 0) {
         const [currentId, gen] = queue.shift();
 
-        // Siblings (share at least one parent)
-        childToParents[currentId].forEach(parentId => {
-            parentToChildren[parentId].forEach(siblingId => {
+        (childToParents[currentId] || []).forEach(parentId => {
+            (parentToChildren[parentId] || []).forEach(siblingId => {
                 if (generation[siblingId] === undefined) {
                     generation[siblingId] = gen;
                     queue.push([siblingId, gen]);
@@ -47,26 +43,23 @@ function assignRelativeGenerations(nodes, edges, userId) {
             });
         });
 
-        // Parents
-        childToParents[currentId].forEach(parentId => {
+        (childToParents[currentId] || []).forEach(parentId => {
             if (generation[parentId] === undefined) {
                 generation[parentId] = gen - 1;
                 queue.push([parentId, gen - 1]);
             }
         });
 
-        // Children
-        parentToChildren[currentId].forEach(childId => {
+        (parentToChildren[currentId] || []).forEach(childId => {
             if (generation[childId] === undefined) {
                 generation[childId] = gen + 1;
                 queue.push([childId, gen + 1]);
             }
         });
 
-        // Spouses (same generation)
         const node = idToNode[currentId];
         if (node && node.data && node.data.spouseIds) {
-            node.data.spouseIds.forEach(spouseId => {
+            (node.data.spouseIds || []).forEach(spouseId => {
                 spouseId = String(spouseId);
                 if (generation[spouseId] === undefined) {
                     generation[spouseId] = gen;
@@ -79,82 +72,147 @@ function assignRelativeGenerations(nodes, edges, userId) {
     return generation;
 }
 
-// Layout nodes by relative generation
 function getLayoutedElementsRelative(nodes, edges, referenceUserId, direction = "TB") {
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: direction, ranksep: 120 });
-
-    nodes.forEach((node) => {
-        dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+    const idToNode = Object.fromEntries(nodes.map(n => [n.id, n]));
+    const parentToChildren = {};
+    const childToParents = {};
+    nodes.forEach(node => {
+        parentToChildren[node.id] = [];
+        childToParents[node.id] = [];
     });
-    edges.forEach((edge) => {
-        dagreGraph.setEdge(edge.source, edge.target);
+    edges.forEach(edge => {
+        if (!edge.id.startsWith("spouse-")) {
+            parentToChildren[edge.source].push(edge.target);
+            childToParents[edge.target].push(edge.source);
+        }
     });
 
-    dagre.layout(dagreGraph);
-
-    // Assign relative generations
     const nodeGeneration = assignRelativeGenerations(nodes, edges, referenceUserId);
-
-    // Group nodes by generation
-    const genToIds = {};
-    Object.entries(nodeGeneration).forEach(([id, gen]) => {
-        genToIds[gen] = genToIds[gen] || new Set();
-        genToIds[gen].add(id);
-    });
-
-    // For each generation, set all y to a fixed interval (user = 0 in the middle)
-    const allGens = Object.keys(genToIds).map(Number);
-    const minGen = Math.min(...allGens);
-    const maxGen = Math.max(...allGens);
+    const minGen = Math.min(...Object.values(nodeGeneration));
     const verticalSpacing = nodeHeight + 80;
-    Object.entries(genToIds).forEach(([genStr, idSet]) => {
-        const gen = parseInt(genStr, 10);
-        // Center user at y=middle, parents above, children below
-        const y = (gen - minGen) * verticalSpacing + 60;
-        Array.from(idSet).forEach(id => {
-            if (dagreGraph.node(id)) dagreGraph.node(id).y = y;
-        });
-    });
+    const horizontalSpacing = nodeWidth + 60;
+    let nextX = 0;
+    const nodePositions = {};
+    const visited = new Set();
 
-    // For each spouse pair, space horizontally
-    const spousePairs = [];
-    nodes.forEach((node) => {
-        if (node.data && node.data.spouseIds) {
-            node.data.spouseIds.forEach((spouseId) => {
-                const pair = [node.id, String(spouseId)].sort();
-                if (!spousePairs.find(([a, b]) => a === pair[0] && b === pair[1])) {
-                    spousePairs.push(pair);
+    // Helper: get all children for a spouse pair (union of both)
+    function getSpouseChildren(id, spouseId) {
+        const childrenA = parentToChildren[id] || [];
+        const childrenB = spouseId ? (parentToChildren[spouseId] || []) : [];
+        // Union, unique
+        return Array.from(new Set([...childrenA, ...childrenB]));
+    }
+
+    // Returns [minX, maxX] of the subtree
+    function layoutSubtree(nodeId, gen) {
+        if (visited.has(nodeId)) return [null, null];
+        visited.add(nodeId);
+
+        const node = idToNode[nodeId];
+        let spouseId = null;
+        if (node && node.data && node.data.spouseIds && node.data.spouseIds.length > 0) {
+            spouseId = String(node.data.spouseIds[0]);
+        }
+        // Avoid double layout for spouse pairs
+        if (spouseId && nodeId > spouseId) return [null, null];
+
+        // Get all children for this family unit
+        const children = getSpouseChildren(nodeId, spouseId);
+        let minX, maxX;
+
+        if (children.length === 0) {
+            // Leaf: assign next available slot
+            if (spouseId) {
+                nodePositions[nodeId] = { x: nextX - horizontalSpacing / 2, y: (gen - minGen) * verticalSpacing + 60 };
+                nodePositions[spouseId] = { x: nextX + horizontalSpacing / 2, y: (gen - minGen) * verticalSpacing + 60 };
+                minX = nextX - horizontalSpacing / 2;
+                maxX = nextX + horizontalSpacing / 2;
+                nextX += horizontalSpacing * 2;
+            } else {
+                nodePositions[nodeId] = { x: nextX, y: (gen - minGen) * verticalSpacing + 60 };
+                minX = maxX = nextX;
+                nextX += horizontalSpacing;
+            }
+        } else {
+            // Layout all children first, collect their x positions
+            let childSpans = [];
+            children.forEach(childId => {
+                const [childMinX, childMaxX] = layoutSubtree(childId, gen + 1);
+                if (childMinX !== null && childMaxX !== null) {
+                    childSpans.push([childMinX, childMaxX]);
                 }
             });
-        }
-    });
-    spousePairs.forEach(([id1, id2]) => {
-        const n1 = dagreGraph.node(id1);
-        const n2 = dagreGraph.node(id2);
-        if (n1 && n2) {
-            const dist = nodeWidth + 40;
-            if (n1.x < n2.x) {
-                n2.x = n1.x + dist;
+            if (childSpans.length > 0) {
+                minX = childSpans[0][0];
+                maxX = childSpans[childSpans.length - 1][1];
+                const centerX = (minX + maxX) / 2;
+                if (spouseId) {
+                    nodePositions[nodeId] = { x: centerX - horizontalSpacing / 2, y: (gen - minGen) * verticalSpacing + 60 };
+                    nodePositions[spouseId] = { x: centerX + horizontalSpacing / 2, y: (gen - minGen) * verticalSpacing + 60 };
+                } else {
+                    nodePositions[nodeId] = { x: centerX, y: (gen - minGen) * verticalSpacing + 60 };
+                }
             } else {
-                n1.x = n2.x + dist;
+                // No valid children, treat as leaf
+                if (spouseId) {
+                    nodePositions[nodeId] = { x: nextX - horizontalSpacing / 2, y: (gen - minGen) * verticalSpacing + 60 };
+                    nodePositions[spouseId] = { x: nextX + horizontalSpacing / 2, y: (gen - minGen) * verticalSpacing + 60 };
+                    minX = nextX - horizontalSpacing / 2;
+                    maxX = nextX + horizontalSpacing / 2;
+                    nextX += horizontalSpacing * 2;
+                } else {
+                    nodePositions[nodeId] = { x: nextX, y: (gen - minGen) * verticalSpacing + 60 };
+                    minX = maxX = nextX;
+                    nextX += horizontalSpacing;
+                }
             }
         }
+        return [minX, maxX];
+    }
+
+    // Find all roots (no parents)
+    const roots = nodes.filter(n => (childToParents[n.id] || []).length === 0);
+    // Sort roots by generation to keep order stable
+    roots.sort((a, b) => (nodeGeneration[a.id] ?? 0) - (nodeGeneration[b.id] ?? 0));
+    roots.forEach(root => layoutSubtree(root.id, nodeGeneration[root.id]));
+
+    // Assign positions to nodes
+    const layoutedNodes = nodes.map(node => {
+        const pos = nodePositions[node.id] || { x: 0, y: 0 };
+        return {
+            ...node,
+            position: { x: pos.x, y: pos.y },
+            targetPosition: "top",
+            sourcePosition: "bottom",
+        };
     });
 
-    return {
-        nodes: nodes.map((node) => {
-            const pos = dagreGraph.node(node.id);
+    return { nodes: layoutedNodes, edges };
+}
+
+function updateSpouseEdgeHandles(nodes, edges) {
+    const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n.position]));
+    return edges.map(edge => {
+        if (!edge.id.startsWith("spouse-")) return edge;
+        const sourcePos = nodeMap[edge.source];
+        const targetPos = nodeMap[edge.target];
+        if (!sourcePos || !targetPos) return edge;
+        const sourceCenterX = sourcePos.x + nodeWidth / 2;
+        const targetCenterX = targetPos.x + nodeWidth / 2;
+        // Always use source-right (source) to target-left (target)
+        if (sourceCenterX <= targetCenterX) {
+            return { ...edge, sourceHandle: "spouse-right", targetHandle: "spouse-left" };
+        } else {
+            // Swap source/target so source is always left, target is right
             return {
-                ...node,
-                position: { x: pos.x - nodeWidth / 2, y: pos.y - nodeHeight / 2 },
-                targetPosition: "top",
-                sourcePosition: "bottom",
+                ...edge,
+                source: edge.target,
+                target: edge.source,
+                sourceHandle: "spouse-right",
+                targetHandle: "spouse-left"
             };
-        }),
-        edges,
-    };
+        }
+    });
 }
 
 function FamilyNode({ data }) {
@@ -170,17 +228,15 @@ function FamilyNode({ data }) {
                 if (e.key === "Enter" || e.key === " ") data.onView();
             }}
         >
-            {/* Add Parent (+) Button */}
             <button
                 className="family-node-plus family-node-plus-top"
                 title="Add Parent"
                 onClick={e => { e.stopPropagation(); data.onAddParent(); }}
             >+</button>
-            <Handle type="target" position={Position.Top} style={{ background: "#bcb88a" }} />
-            <Handle type="source" position={Position.Bottom} style={{ background: "#bcb88a" }} />
-            {/* Spouse handles for horizontal edge */}
-            <Handle type="source" position={Position.Right} id="spouse-right" style={{ background: "#7c9a7a" }} />
-            <Handle type="target" position={Position.Left} id="spouse-left" style={{ background: "#7c9a7a" }} />
+            <Handle type="target" position={Position.Top} style={{ background: "#bcb88a" }} id="top" key="top" />
+            <Handle type="source" position={Position.Bottom} style={{ background: "#bcb88a" }} id="bottom" key="bottom" />
+            <Handle type="source" position={Position.Right} id="spouse-right" style={{ background: "#7c9a7a" }} key="spouse-right" />
+            <Handle type="target" position={Position.Left} id="spouse-left" style={{ background: "#7c9a7a" }} key="spouse-left" />
             <img
                 src={getFullImageUrl(data.photoUrl)}
                 alt={data.label}
@@ -196,7 +252,6 @@ function FamilyNode({ data }) {
             />
             <div style={{ fontWeight: "bold" }}>{data.label}</div>
             <div style={{ fontSize: 12, color: "#888" }}>{data.dates}</div>
-            {/* Add Child (+) Button */}
             <button
                 className="family-node-plus family-node-plus-bottom"
                 title="Add Child"
@@ -230,15 +285,13 @@ function buildFamilyGraph(members, onView, onAddParent, onAddChild, referenceUse
         style: { width: nodeWidth, background: "#fffbe9", border: "1px solid #bcb88a", borderRadius: 12 },
     }));
 
+    const nodeIdSet = new Set(nodes.map(n => n.id));
     const edges = [];
     members.forEach(child => {
         (child.parentsIds || []).forEach(parentId => {
             const parentIdStr = String(parentId);
             const childIdStr = String(child.familyMemberId);
-            if (
-                nodes.find(n => n.id === parentIdStr) &&
-                nodes.find(n => n.id === childIdStr)
-            ) {
+            if (nodeIdSet.has(parentIdStr) && nodeIdSet.has(childIdStr)) {
                 edges.push({
                     id: `${parentIdStr}->${childIdStr}`,
                     source: parentIdStr,
@@ -250,31 +303,31 @@ function buildFamilyGraph(members, onView, onAddParent, onAddChild, referenceUse
         });
     });
 
-    // Add spouse edges (dotted, horizontal)
+    const spouseEdgeSet = new Set();
     members.forEach(member => {
         (member.spouseIds || []).forEach(spouseId => {
             const spouseIdStr = String(spouseId);
             const memberIdStr = String(member.familyMemberId);
-            // Avoid duplicate spouse edges
-            if (
-                memberIdStr < spouseIdStr &&
-                nodes.find(n => n.id === spouseIdStr) &&
-                nodes.find(n => n.id === memberIdStr)
-            ) {
-                edges.push({
-                    id: `spouse-${memberIdStr}-${spouseIdStr}`,
-                    source: memberIdStr,
-                    target: spouseIdStr,
-                    sourceHandle: "spouse-right",
-                    targetHandle: "spouse-left",
-                    type: "default",
-                    style: { stroke: "#7c9a7a", strokeWidth: 2, strokeDasharray: "4 2" }
-                });
+            if (nodeIdSet.has(spouseIdStr) && nodeIdSet.has(memberIdStr)) {
+                const pairKey = [memberIdStr, spouseIdStr].sort().join("-");
+                if (!spouseEdgeSet.has(pairKey)) {
+                    spouseEdgeSet.add(pairKey);
+                    edges.push({
+                        id: `spouse-${pairKey}`,
+                        source: memberIdStr,
+                        target: spouseIdStr,
+                        type: "straight", // <-- Add this line
+                        style: { stroke: "#7c9a7a", strokeWidth: 2, strokeDasharray: "4 2" }
+                    });
+                }
             }
         });
     });
 
-    return getLayoutedElementsRelative(nodes, edges, referenceUserId);
+    const layout = getLayoutedElementsRelative(nodes, edges, referenceUserId);
+    // Call updateSpouseEdgeHandles after layout
+    layout.edges = updateSpouseEdgeHandles(layout.nodes, layout.edges);
+    return layout;
 }
 
 const FamilyTreePage = () => {
@@ -295,7 +348,6 @@ const FamilyTreePage = () => {
         if (res.ok) {
             const data = await res.json();
             setFamilyMembers(data);
-            // Set default reference user if not set
             if (!referenceUserId && data.length > 0) {
                 setReferenceUserId(String(data[0].familyMemberId));
             }
@@ -340,7 +392,6 @@ const FamilyTreePage = () => {
         fetchMembers();
     };
 
-    // When a node is clicked, set as reference user (for demo)
     const handleSetReferenceUser = (member) => {
         setReferenceUserId(String(member.familyMemberId));
         setViewingMember(member);
@@ -360,10 +411,6 @@ const FamilyTreePage = () => {
 
     return (
         <div className="familytree-container">
-            {/*<div className="familytree-treeheader">*/}
-            {/*    <h1>Family Tree</h1>*/}
-            {/*    <button className="auth-button" onClick={handleAdd}>Add Family Member</button>*/}
-            {/*</div>*/}
             <div className="familytree-treearea">
                 <ReactFlow
                     nodes={nodes}
