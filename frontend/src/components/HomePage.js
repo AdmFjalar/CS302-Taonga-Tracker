@@ -1,51 +1,57 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ItemView, ItemEdit } from "./ItemPages";
-import { getFullImageUrl } from "./utils";
+import FamilyMemberEdit from "./FamilyMemberEdit";
+import FamilyMemberView from "./FamilyMemberView";
+import { getFullImageUrl, toDateInputValue } from "./utils";
 import "./HomePage.css";
 
 /**
- * Finds the oldest heirloom in the list.
- * @param {Array} items - List of items.
- * @returns {object|null} The oldest item or null.
+ * Finds the oldest recorded and oldest living family members.
+ * @param {Array} members - List of family members.
+ * @returns {{oldest: object|null, oldestLiving: object|null}}
  */
-const findOldestHeirloom = (items) => {
-  const withDate = items.filter(
-      (item) => item.creationDate && !isNaN(new Date(item.creationDate))
+function getOldestMembers(members) {
+  if (!members || members.length === 0) return { oldest: null, oldestLiving: null };
+  const valid = members.filter(m => m.dateOfBirth);
+  if (valid.length === 0) return { oldest: null, oldestLiving: null };
+  const oldest = valid.reduce((a, b) =>
+      new Date(a.dateOfBirth) < new Date(b.dateOfBirth) ? a : b, valid[0]
   );
-  if (withDate.length === 0) return null;
-  return withDate.reduce((oldest, item) =>
-      new Date(item.creationDate) < new Date(oldest.creationDate) ? item : oldest
-  );
-};
+  const living = valid.filter(m => !m.dateOfDeath);
+  const oldestLiving = living.length > 0
+      ? living.reduce((a, b) =>
+          new Date(a.dateOfBirth) < new Date(b.dateOfBirth) ? a : b, living[0]
+      )
+      : null;
+  return { oldest, oldestLiving };
+}
 
-/**
- * Finds the most valuable heirloom in the list.
- * @param {Array} items - List of items.
- * @returns {object|null} The most valuable item or null.
- */
-const findMostValuableHeirloom = (items) =>
-    items.reduce((mostValuable, item) =>
-        !mostValuable || (item.estimatedValue || 0) > (mostValuable.estimatedValue || 0)
-            ? item
-            : mostValuable, null
+const findOldestHeirloom = (items) =>
+    items.reduce((oldest, item) =>
+            (!oldest || (item.creationDate && new Date(item.creationDate) < new Date(oldest.creationDate)))
+                ? item
+                : oldest,
+        null
     );
 
-/**
- * Home page component showing highlights and allowing item viewing.
- * @component
- * @returns {JSX.Element}
- */
+const findMostValuableHeirloom = (items) =>
+    items.reduce((mostValuable, item) =>
+            (!mostValuable || (item.estimatedValue && item.estimatedValue > mostValuable.estimatedValue))
+                ? item
+                : mostValuable,
+        null
+    );
+
 const HomePage = () => {
   const [items, setItems] = useState([]);
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const [highlighted, setHighlighted] = useState({ oldest: null, oldestLiving: null });
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [editingMember, setEditingMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [highlightedItems, setHighlightedItems] = useState({
-    oldest: null,
-    mostValuable: null,
-  });
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -61,10 +67,6 @@ const HomePage = () => {
         if (!res.ok) throw new Error("Failed to fetch items");
         const data = await res.json();
         setItems(data);
-        setHighlightedItems({
-          oldest: findOldestHeirloom(data),
-          mostValuable: findMostValuableHeirloom(data),
-        });
       } catch (err) {
         setError(err.message);
       } finally {
@@ -74,16 +76,53 @@ const HomePage = () => {
     fetchItems();
   }, []);
 
-  // Handle save after edit
+  useEffect(() => {
+    const fetchFamilyMembers = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch("http://localhost:5240/api/familymember", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setFamilyMembers(data);
+          setHighlighted(getOldestMembers(data));
+        }
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchFamilyMembers();
+  }, []);
+
+  const oldestHeirloom = findOldestHeirloom(items);
+  const mostValuableHeirloom = findMostValuableHeirloom(items);
+
+  // Save handler for heirlooms
   const handleEditSave = (updatedItem) => {
     setItems((prev) =>
         prev.map((item) =>
             item.vaultItemId === updatedItem.vaultItemId ? updatedItem : item
         )
     );
-    setEditing(false);
     setEditingItem(null);
     setSelectedItem(updatedItem);
+  };
+
+  // Save handler for family members
+  const handleMemberSave = (updatedMember) => {
+    setFamilyMembers((prev) =>
+        prev.map((m) =>
+            m.familyMemberId === updatedMember.familyMemberId ? updatedMember : m
+        )
+    );
+    setEditingMember(null);
+    setSelectedMember(updatedMember);
+    setHighlighted(getOldestMembers(
+        familyMembers.map((m) =>
+            m.familyMemberId === updatedMember.familyMemberId ? updatedMember : m
+        )
+    ));
   };
 
   if (loading) {
@@ -101,68 +140,150 @@ const HomePage = () => {
   return (
       <div className="layout">
         <div className="content-wrapper">
-          {!selectedItem && !editing ? (
+          {/* Main highlights view */}
+          {!selectedItem && !editingItem && !selectedMember && !editingMember ? (
               <div className="home-container">
-                <h1 className="home-title">Heirloom Highlights</h1>
+                <h1 className="home-title">Welcome to Your Family Archive</h1>
                 <div className="highlight-section">
-                  {highlightedItems.oldest && (
+                  {highlighted.oldest && (
                       <div
                           className="highlight-card"
-                          onClick={() => setSelectedItem(highlightedItems.oldest)}
+                          onClick={() => setSelectedMember(highlighted.oldest)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="View oldest relative"
+                      >
+                        <h2>Oldest Recorded Family Member</h2>
+                        <img
+                            src={getFullImageUrl(highlighted.oldest.profilePictureUrl)}
+                            alt={`${highlighted.oldest.firstName} ${highlighted.oldest.lastName}`}
+                            style={{ width: 120, height: 120, objectFit: "cover", borderRadius: "50%", marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                        />
+                        <p>
+                          <b>{highlighted.oldest.firstName} {highlighted.oldest.lastName}</b>
+                        </p>
+                        <p>
+                          Born: {toDateInputValue(highlighted.oldest.dateOfBirth)}
+                          {highlighted.oldest.dateOfDeath && (
+                              <> &ndash; Died: {toDateInputValue(highlighted.oldest.dateOfDeath)}</>
+                          )}
+                        </p>
+                        {highlighted.oldest.relationshipType && (
+                            <p>Relationship: {highlighted.oldest.relationshipType}</p>
+                        )}
+                      </div>
+                  )}
+                  {highlighted.oldestLiving && (
+                      <div
+                          className="highlight-card"
+                          onClick={() => setSelectedMember(highlighted.oldestLiving)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="View oldest living relative"
+                      >
+                        <h2>Oldest Living Family Member</h2>
+                        <img
+                            src={getFullImageUrl(highlighted.oldestLiving.profilePictureUrl)}
+                            alt={`${highlighted.oldestLiving.firstName} ${highlighted.oldestLiving.lastName}`}
+                            style={{ width: 120, height: 120, objectFit: "cover", borderRadius: "50%", marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                        />
+                        <p>
+                          <b>{highlighted.oldestLiving.firstName} {highlighted.oldestLiving.lastName}</b>
+                        </p>
+                        <p>
+                          Born: {toDateInputValue(highlighted.oldestLiving.dateOfBirth)}
+                        </p>
+                        {highlighted.oldestLiving.relationshipType && (
+                            <p>Relationship: {highlighted.oldestLiving.relationshipType}</p>
+                        )}
+                      </div>
+                  )}
+                  {oldestHeirloom && (
+                      <div
+                          className="highlight-card"
+                          onClick={() => setSelectedItem(oldestHeirloom)}
                           tabIndex={0}
                           role="button"
                           aria-label="View oldest heirloom"
                       >
                         <h2>Oldest Heirloom</h2>
                         <img
-                            src={getFullImageUrl(highlightedItems.oldest.photoUrl)}
-                            alt={highlightedItems.oldest.title || "Oldest Heirloom"}
+                            src={getFullImageUrl(oldestHeirloom.photoUrl)}
+                            alt={oldestHeirloom.title}
+                            style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
                         />
-                        <p><b>Title:</b> {highlightedItems.oldest.title || "Unknown"}</p>
-                        <p><b>Creation Date:</b> {highlightedItems.oldest.creationDate || "N/A"}</p>
-                        <p><b>Description:</b> {highlightedItems.oldest.description || "No description available."}</p>
+                        <p>
+                          <b>{oldestHeirloom.title}</b>
+                        </p>
+                        <p>
+                          Created: {toDateInputValue(oldestHeirloom.creationDate)}
+                        </p>
+                        {oldestHeirloom.estimatedValue && (
+                            <p>Estimated Value: ${oldestHeirloom.estimatedValue}</p>
+                        )}
                       </div>
                   )}
-                  {highlightedItems.mostValuable && (
+                  {mostValuableHeirloom && (
                       <div
                           className="highlight-card"
-                          onClick={() => setSelectedItem(highlightedItems.mostValuable)}
+                          onClick={() => setSelectedItem(mostValuableHeirloom)}
                           tabIndex={0}
                           role="button"
                           aria-label="View most valuable heirloom"
                       >
                         <h2>Most Valuable Heirloom</h2>
                         <img
-                            src={getFullImageUrl(highlightedItems.mostValuable.photoUrl)}
-                            alt={highlightedItems.mostValuable.title || "Most Valuable Heirloom"}
+                            src={getFullImageUrl(mostValuableHeirloom.photoUrl)}
+                            alt={mostValuableHeirloom.title}
+                            style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
                         />
-                        <p><b>Title:</b> {highlightedItems.mostValuable.title || "Unknown"}</p>
-                        <p><b>Estimated Value:</b> ${highlightedItems.mostValuable.estimatedValue || "N/A"}</p>
-                        <p><b>Description:</b> {highlightedItems.mostValuable.description || "No description available."}</p>
+                        <p>
+                          <b>{mostValuableHeirloom.title}</b>
+                        </p>
+                        {mostValuableHeirloom.estimatedValue && (
+                            <p>Estimated Value: ${mostValuableHeirloom.estimatedValue}</p>
+                        )}
+                        {mostValuableHeirloom.creationDate && (
+                            <p>Created: {toDateInputValue(mostValuableHeirloom.creationDate)}</p>
+                        )}
                       </div>
                   )}
                 </div>
               </div>
-          ) : editing && editingItem ? (
+          ) : editingItem ? (
               <ItemEdit
                   initialItem={editingItem}
                   onSave={handleEditSave}
                   navigateTo={() => {
-                    setEditing(false);
                     setEditingItem(null);
                     setSelectedItem(editingItem);
                   }}
               />
-          ) : (
+          ) : selectedItem ? (
               <ItemView
                   item={selectedItem}
                   onBack={() => setSelectedItem(null)}
                   onEdit={() => {
                     setEditingItem(selectedItem);
-                    setEditing(true);
                   }}
               />
-          )}
+          ) : editingMember ? (
+              <FamilyMemberEdit
+                  initialMember={editingMember}
+                  familyMembers={familyMembers}
+                  onSave={handleMemberSave}
+                  onCancel={() => {
+                    setEditingMember(null);
+                    setSelectedMember(editingMember);
+                  }}
+              />
+          ) : selectedMember ? (
+              <FamilyMemberView
+                  member={selectedMember}
+                  onBack={() => setSelectedMember(null)}
+                  onEdit={() => setEditingMember(selectedMember)}
+              />
+          ) : null}
         </div>
       </div>
   );
