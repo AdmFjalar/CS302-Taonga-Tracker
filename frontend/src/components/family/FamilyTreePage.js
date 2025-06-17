@@ -7,6 +7,7 @@ import FamilyMemberEdit from "./FamilyMemberEdit";
 import FamilyMemberAdd from "./FamilyMemberAdd";
 import Button from "../shared/Button";
 import { FamilyService } from "../../services/family";
+import { authAPI } from "../../services/api";
 import "../../styles/family/FamilyTreePage.css";
 import "../../styles/family/FamilyTreeMenu.css";
 import ELK from "elkjs/lib/elk.bundled.js";
@@ -230,6 +231,9 @@ function FamilyNode({ data, id, setHoveredNodeId }) {
                 }}
             />
             <div style={{ fontWeight: "bold" }}>{data.label}</div>
+            {data.relationship && (
+                <div style={{ fontSize: 12, color: "#4a6741", marginTop: 2, fontWeight: "500" }}>{data.relationship}</div>
+            )}
             <div style={{ fontSize: 12, color: "#888" }}>{data.dates}</div>
             <button
                 className="family-node-plus family-node-plus-bottom"
@@ -271,6 +275,7 @@ function buildFamilyGraph(members, onView, onAddParent, onAddChild, referenceUse
             spouseIds: member.spouseIds || [],
             setHoveredNodeId,
             siblingIds: member.siblingIds || [],
+            relationship: "", // Will be populated later
         },
         position: { x: 0, y: 0 },
         style: { width: nodeWidth, background: "#fffbe9", border: "1px solid #bcb88a", borderRadius: 12 },
@@ -316,6 +321,24 @@ function buildFamilyGraph(members, onView, onAddParent, onAddChild, referenceUse
             }
         }
     });
+
+    // Build parent-child maps for calculating relationships
+    const { parentToChildren, childToParents } = buildParentChildMaps(nodes, edges);
+
+    // Calculate and add relationship information to each node
+    if (referenceUserId) {
+        nodes.forEach(node => {
+            if (node.id !== referenceUserId) {
+                node.data.relationship = calculateRelationship(
+                    node.id,
+                    referenceUserId,
+                    parentToChildren,
+                    childToParents,
+                    nodes
+                );
+            }
+        });
+    }
 
     return { nodes, edges };
 }
@@ -486,9 +509,204 @@ function getHighlightedEdges(edges, hoveredNodeId, lineageIds) {
             className: [
                 isSpouse ? "spouse-edge" : "",
                 (isDirect || isAncestorLine || isDescendantLine) ? "highlighted-edge" : ""
-            ].filter(Boolean).join(" ")
+            ].filter(Boolean).join(" "),
+
         };
     });
+}
+
+/**
+ * Returns nodes with proper highlighting.
+ * Highlights direct, ancestor, descendant relationships, and spouse connections.
+ * Other nodes are dimmed.
+ * @param {Array} nodes - The array of nodes.
+ * @param {string|null} hoveredNodeId - The currently hovered node ID.
+ * @param {Object} lineageIds - Object with ancestors and descendants sets.
+ * @returns {Array} The updated nodes array with className properties for highlighting.
+ */
+function getHighlightedNodes(nodes, hoveredNodeId, lineageIds) {
+    if (!hoveredNodeId) return nodes; // Return original nodes when nothing is hovered
+
+    // Find the hovered node to get its spouse IDs
+    const hoveredNode = nodes.find(node => node.id === hoveredNodeId);
+    const spouseIds = new Set(hoveredNode?.data?.spouseIds || []);
+
+    return nodes.map(node => {
+        // Check if node is the hovered one, in its lineage, or a spouse
+        const isHovered = node.id === hoveredNodeId;
+        const isAncestor = lineageIds.ancestors.has(node.id);
+        const isDescendant = lineageIds.descendants.has(node.id);
+        const isSpouse = spouseIds.has(Number(node.id)) || spouseIds.has(node.id);
+
+        let className = "";
+
+        // Apply appropriate CSS classes based on relationship
+        if (isHovered || isAncestor || isDescendant || isSpouse) {
+            className = "highlighted-node";
+        } else {
+            className = "dimmed-node";
+        }
+
+        return {
+            ...node,
+            className
+        };
+    });
+}
+
+/**
+ * Calculates the relationship between two family members based on the tree structure
+ * @param {string} targetId - The ID of the target family member
+ * @param {string} referenceId - The ID of the reference family member
+ * @param {Object} parentToChildren - Mapping from parent ID to array of child IDs
+ * @param {Object} childToParents - Mapping from child ID to array of parent IDs
+ * @param {Array} nodes - The array of React Flow nodes (for spouse information)
+ * @returns {string} The relationship description
+ */
+function calculateRelationship(targetId, referenceId, parentToChildren, childToParents, nodes) {
+    // Return empty if target is reference or if any ID is missing
+    if (targetId === referenceId || !targetId || !referenceId) {
+        return "";
+    }
+
+    const idToNode = Object.fromEntries(nodes.map(n => [n.id, n]));
+
+    // Check if target is spouse of reference
+    if (idToNode[referenceId]?.data?.spouseIds?.includes(targetId)) {
+        return "Spouse";
+    }
+
+    // Check if target is parent of reference
+    if (childToParents[referenceId]?.includes(targetId)) {
+        return "Parent";
+    }
+
+    // Check if target is child of reference
+    if (parentToChildren[referenceId]?.includes(targetId)) {
+        return "Child";
+    }
+
+    // Check if target is sibling of reference (share at least one parent)
+    const referenceParents = childToParents[referenceId] || [];
+    const targetParents = childToParents[targetId] || [];
+    if (referenceParents.length > 0 && targetParents.length > 0) {
+        for (const parent of referenceParents) {
+            if (targetParents.includes(parent)) {
+                return "Sibling";
+            }
+        }
+    }
+
+    // Check if target is grandparent of reference
+    for (const parent of referenceParents) {
+        if (childToParents[parent]?.includes(targetId)) {
+            return "Grandparent";
+        }
+    }
+
+    // Check if target is grandchild of reference
+    for (const child of (parentToChildren[referenceId] || [])) {
+        if (parentToChildren[child]?.includes(targetId)) {
+            return "Grandchild";
+        }
+    }
+
+    // Check for aunt/uncle: sibling of parent
+    for (const parent of referenceParents) {
+        const parentSiblings = [];
+        const grandparents = childToParents[parent] || [];
+
+        for (const grandparent of grandparents) {
+            const parentsChildren = parentToChildren[grandparent] || [];
+            for (const sibling of parentsChildren) {
+                if (sibling !== parent) {
+                    parentSiblings.push(sibling);
+                }
+            }
+        }
+
+        if (parentSiblings.includes(targetId)) {
+            return "Aunt/Uncle";
+        }
+    }
+
+    // Check for niece/nephew: child of sibling
+    const siblings = [];
+    for (const parent of referenceParents) {
+        const parentChildren = parentToChildren[parent] || [];
+        for (const child of parentChildren) {
+            if (child !== referenceId) {
+                siblings.push(child);
+            }
+        }
+    }
+
+    for (const sibling of siblings) {
+        if ((parentToChildren[sibling] || []).includes(targetId)) {
+            return "Niece/Nephew";
+        }
+    }
+
+    // Check for cousin: child of aunt/uncle
+    for (const parent of referenceParents) {
+        const parentSiblings = [];
+        const grandparents = childToParents[parent] || [];
+
+        for (const grandparent of grandparents) {
+            const parentsChildren = parentToChildren[grandparent] || [];
+            for (const sibling of parentsChildren) {
+                if (sibling !== parent) {
+                    parentSiblings.push(sibling);
+                }
+            }
+        }
+
+        for (const auntUncle of parentSiblings) {
+            if ((parentToChildren[auntUncle] || []).includes(targetId)) {
+                return "Cousin";
+            }
+        }
+    }
+
+    // Check for great-grandparent/great-grandchild relationship (3 generations apart)
+    // Great-grandparent
+    for (const parent of referenceParents) {
+        for (const grandparent of (childToParents[parent] || [])) {
+            if ((childToParents[grandparent] || []).includes(targetId)) {
+                return "Great-grandparent";
+            }
+        }
+    }
+
+    // Great-grandchild
+    for (const child of (parentToChildren[referenceId] || [])) {
+        for (const grandchild of (parentToChildren[child] || [])) {
+            if ((parentToChildren[grandchild] || []).includes(targetId)) {
+                return "Great-grandchild";
+            }
+        }
+    }
+
+    // If we have ancestors or descendants but couldn't determine a specific relationship
+    const ancestors = getAncestorIds(referenceId, childToParents);
+    if (ancestors.has(targetId)) {
+        return "Ancestor";
+    }
+
+    const descendants = getDescendantIds(referenceId, parentToChildren);
+    if (descendants.has(targetId)) {
+        return "Descendant";
+    }
+
+    // Spouse of sibling = brother/sister-in-law
+    for (const sibling of siblings) {
+        if (idToNode[sibling]?.data?.spouseIds?.includes(targetId)) {
+            return "In-law";
+        }
+    }
+
+    // If no specific relationship is found
+    return "Extended Family";
 }
 
 // =========================
@@ -523,9 +741,32 @@ const FamilyTreePage = () => {
             setLoading(true);
             const data = await FamilyService.getAllMembers();
             setFamilyMembers(data);
-            if (!referenceUserId && data.length > 0) {
-                setReferenceUserId(String(data[0].familyMemberId));
+
+            // If we don't have a reference user ID set yet, try to get the current user
+            if (!referenceUserId) {
+                try {
+                    // Fetch the current user from the auth API
+                    const currentUser = await authAPI.getCurrentUser();
+
+                    // Find the family member that corresponds to the current user
+                    const userFamilyMember = data.find(member => member.userId === currentUser.id);
+
+                    if (userFamilyMember) {
+                        // Set the logged-in user as the reference user
+                        setReferenceUserId(String(userFamilyMember.familyMemberId));
+                    } else if (data.length > 0) {
+                        // Fallback to the first family member if no match is found
+                        setReferenceUserId(String(data[0].familyMemberId));
+                    }
+                } catch (authErr) {
+                    console.error("Error fetching current user:", authErr);
+                    // Fallback to first family member if there's an error getting the current user
+                    if (data.length > 0) {
+                        setReferenceUserId(String(data[0].familyMemberId));
+                    }
+                }
             }
+
             setLoading(false);
         } catch (err) {
             setError(err.message);
@@ -583,6 +824,8 @@ const FamilyTreePage = () => {
     };
     const handleSetReferenceUser = (member) => {
         setReferenceUserId(String(member.familyMemberId));
+    };
+    const handleViewMember = (member) => {
         setViewingMember(member);
     };
 
@@ -592,7 +835,7 @@ const FamilyTreePage = () => {
         (async () => {
             const { nodes, edges } = buildFamilyGraph(
                 familyMembers,
-                handleSetReferenceUser,
+                handleViewMember, // Changed from handleSetReferenceUser to handleViewMember
                 handleAddParent,
                 handleAddChild,
                 referenceUserId,
@@ -616,6 +859,9 @@ const FamilyTreePage = () => {
     // Highlight edges for direct, ancestor, or descendant relationships
     const highlightedEdges = getHighlightedEdges(edges, hoveredNodeId, lineageIds);
 
+    // Highlight nodes for lineage relationships
+    const highlightedNodes = getHighlightedNodes(nodes, hoveredNodeId, lineageIds);
+
     if (loading) {
         return <div className="familytree-container">Loading family tree...</div>;
     }
@@ -635,7 +881,7 @@ const FamilyTreePage = () => {
             <div className="familytree-treearea">
                 {/* ReactFlow renders the interactive family tree graph */}
                 <ReactFlow
-                    nodes={nodes}
+                    nodes={highlightedNodes}
                     edges={highlightedEdges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
@@ -661,6 +907,7 @@ const FamilyTreePage = () => {
                             familyMembers={familyMembers}
                             onBack={() => setViewingMember(null)}
                             onEdit={() => handleEdit(viewingMember)}
+                            onViewMember={handleViewMember}
                         />
                     </div>
                 </div>

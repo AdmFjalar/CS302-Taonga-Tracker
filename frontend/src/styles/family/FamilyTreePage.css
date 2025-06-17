@@ -245,3 +245,17 @@
     stroke-dasharray: 6, 6;
     stroke-width: 4 !important;
 }
+
+/* Highlighted and dimmed node styles */
+.family-node-card {
+    transition: opacity 0.3s, box-shadow 0.3s;
+}
+
+.highlighted-node {
+    box-shadow: 0 0 0 3px #2e4d2a, 0 4px 10px rgba(30, 50, 28, 0.3) !important;
+    z-index: 10;
+}
+
+.dimmed-node {
+    opacity: 0.4;
+}
