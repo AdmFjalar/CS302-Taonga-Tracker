@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getFullImageUrl, toDateInputValue, autoSpaceComma } from "../../services/utils";
-import "../../styles/heirloom/ItemPages.css"; // Fixed CSS reference from CreateItemPage.css to ItemPages.css
+import "../../styles/heirloom/CreateItemPage.css"; // Fixed CSS reference from CreateItemPage.css to ItemPages.css
 
 const placeholderImg = "https://placehold.co/40x40";
 

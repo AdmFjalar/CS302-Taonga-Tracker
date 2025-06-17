@@ -1,7 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { getFullImageUrl, formatDate, formatCurrency, truncateText } from "../../services/utils";
-import "../../styles/heirloom/ItemPages.css"; // Fixed CSS reference from CreateItemPage.css to ItemPages.css
+import "../../styles/heirloom/CreateItemPage.css"; // Fixed CSS reference from CreateItemPage.css to ItemPages.css
+import "../../styles/heirloom/ItemPages.css"
 
 /**
  * A field row for displaying item details
