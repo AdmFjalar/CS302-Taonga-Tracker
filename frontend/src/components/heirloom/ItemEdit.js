@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getFullImageUrl, toDateInputValue, autoSpaceComma } from "./utils";
-import "./CreateItemPage.css";
+import { getFullImageUrl, toDateInputValue, autoSpaceComma } from "../../services/utils";
+import "../../styles/heirloom/ItemPages.css"; // Fixed CSS reference from CreateItemPage.css to ItemPages.css
 
 const placeholderImg = "https://placehold.co/40x40";
 
@@ -22,6 +22,16 @@ const defaultItem = {
     craftType: [],
     sharedWithIds: [],
 };
+
+/**
+ * ItemEdit component for creating or editing a vault item (heirloom).
+ * Handles form state, image upload, and user suggestions for sharing.
+ * @param {Object} props
+ * @param {Function} props.onSave - Callback after save.
+ * @param {Object} [props.initialItem] - The item to edit (if any).
+ * @param {Function} [props.navigateTo] - Callback to navigate after save/cancel.
+ * @param {Array} [props.familyMembers] - Family members for creator selection.
+ */
 
 function CreatorSelector({ familyMembers, selectedId, onSelect }) {
     const [search, setSearch] = useState("");
@@ -460,3 +470,4 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
 };
 
 export default ItemEdit;
+

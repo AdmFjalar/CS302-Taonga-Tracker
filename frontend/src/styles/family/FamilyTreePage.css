@@ -10,9 +10,10 @@
 }
 
 .familytree-treearea {
+    /* Remove max-width for full width, keep min-height and padding */
     width: 100%;
-    max-width: 1200px;
     min-height: 600px;
+    height: 100%;
     background: #fffbe9;
     border-radius: 18px;
     box-shadow: 0 4px 24px 0 rgba(30,50,28,0.10), 0 1.5px 4px 0 rgba(30,50,28,0.08);
@@ -21,15 +22,16 @@
     align-items: center;
     justify-content: flex-start;
     margin: 0 auto;
-    padding: 2rem 0 2rem 0;
+    padding: 2rem;
 }
 
 .familytree-treeheader {
-    max-width: 900px;
+    width: 90%;
+    /* Remove max-width for flexibility */
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     margin-bottom: 1.5rem;
     padding: 0;
     gap: 1rem;
@@ -222,4 +224,24 @@
 
 .family-node-plus-bottom {
     bottom: -24px;
+}
+
+/* Highlighted ancestor/descendant edge */
+.highlighted-edge path {
+    stroke: #2e4d2a !important;
+    stroke-width: 4 !important;
+}
+
+/* Spouse edge: dotted line */
+.spouse-edge path {
+    stroke-dasharray: 6, 6;
+    stroke-width: 3px;
+    stroke: #7c9a7a !important;
+}
+
+.spouse-edge.highlighted-edge path,
+.highlighted-edge.spouse-edge path {
+    stroke: #2e4d2a !important;
+    stroke-dasharray: 6, 6;
+    stroke-width: 4 !important;
 }

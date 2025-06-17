@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
-import "./SettingsPage.css";
-
-const getFullImageUrl = (relativePath) => {
-  const backendUrl = "http://localhost:5240";
-  if (!relativePath) return "https://placehold.co/100x100";
-  return `${backendUrl}${relativePath}`;
-};
+import "../../styles/user/SettingsPage.css";
+import { getFullImageUrl } from "../../services/utils";
 
 const SettingsPage = () => {
   const [user, setUser] = useState({

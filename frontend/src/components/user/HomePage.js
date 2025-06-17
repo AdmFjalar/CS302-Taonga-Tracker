@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { ItemView, ItemEdit } from "./ItemPages";
-import FamilyMemberEdit from "./FamilyMemberEdit";
-import FamilyMemberView from "./FamilyMemberView";
-import { getFullImageUrl, toDateInputValue } from "./utils";
-import "./HomePage.css";
+import { ItemView, ItemEdit } from "../heirloom/ItemPages";
+import FamilyMemberEdit from "../family/FamilyMemberEdit";
+import FamilyMemberView from "../family/FamilyMemberView";
+import { getFullImageUrl, toDateInputValue } from "../../services/utils";
+import Button from "../shared/Button";
+import { FamilyService } from "../../services/family";
+import { HeirloomService } from "../../services/heirloom";
+import "../../styles/user/HomePage.css";
 
 /**
  * Finds the oldest recorded and oldest living family members.
@@ -98,7 +101,7 @@ const HomePage = () => {
   const oldestHeirloom = findOldestHeirloom(items);
   const mostValuableHeirloom = findMostValuableHeirloom(items);
 
-  // Save handler for heirlooms
+  // Save handler for heirloom
   const handleEditSave = (updatedItem) => {
     setItems((prev) =>
         prev.map((item) =>

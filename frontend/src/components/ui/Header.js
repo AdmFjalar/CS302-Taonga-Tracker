@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Header.css";
-
-/**
- * Returns the full image URL for a given relative path.
- * @param {string} relativePath - The relative path to the image.
- * @returns {string} The full image URL or a placeholder if not provided.
- */
-const getFullImageUrl = (relativePath) => {
-    const backendUrl = "http://localhost:5240";
-    if (!relativePath) return "https://placehold.co/32x32";
-    return `${backendUrl}${relativePath}`;
-};
+import { getFullImageUrl } from "../../services/utils";
+import "../../styles/ui/Header.css";
 
 /**
  * Header component displaying the trial button, icons, and user avatar.
