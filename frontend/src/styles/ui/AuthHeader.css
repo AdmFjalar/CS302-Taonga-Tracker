@@ -1,0 +1,65 @@
+/* AuthHeader styles - matching the original landing page header styling */
+.landing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #bcb88a;
+  padding: 1rem 2rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.logo a {
+  font-family: "Young Serif", serif;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-top: auto;
+  margin-bottom: auto;
+  text-decoration: none;
+  color: #273520;
+  transition: color 0.3s ease, transform 0.2s ease;
+  display: inline-block;
+}
+
+.logo a:hover {
+  color: #1e321c;
+  transform: scale(1.03);
+    transition: 0.3s;
+}
+
+.auth-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.signin-link {
+  color: #1e321c;
+  font-family: "Young Serif", serif;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 0.95rem;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.signup-button {
+  background-color: #1e321c;
+  color: white;
+  padding: 0.4rem 0.9rem;
+  font-family: "Young Serif", serif;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.signup-button:hover {
+  background-color: #304e30;
+}
+
+.auth-page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

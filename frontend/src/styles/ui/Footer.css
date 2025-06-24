@@ -1,0 +1,87 @@
+.footer {
+  background-color: #222;
+  color: #fff;
+  padding: 2rem 0 1rem;
+  margin-top: auto; /* Push footer to bottom on short pages */
+  width: 100%;
+  flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.footer-section {
+  flex: 1;
+  min-width: 250px;
+  margin-bottom: 1.5rem;
+  padding: 0 1rem;
+}
+
+.footer-section h4 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #f5f5f5;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.footer-section h4::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 50px;
+  height: 2px;
+  background-color: #4CAF50;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-section ul li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-section a, .footer-bottom a {
+  color: #ccc;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-section a:hover, .footer-bottom a:hover {
+  color: #4CAF50;
+  text-decoration: underline;
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid #444;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+/* For the main layout, offset the left side to account for sidebar */
+.layout .footer {
+  margin-left: 0; /* Override any inheritance */
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+  }
+
+  .footer-section {
+    margin-bottom: 2rem;
+  }
+}

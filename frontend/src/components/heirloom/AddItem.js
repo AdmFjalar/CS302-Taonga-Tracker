@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ItemEdit from "./ItemEdit";
+import { familyAPI, vaultAPI } from "../../services/api";
 
 /**
  * AddItem component for creating a new heirloom/vault item.
@@ -12,40 +13,30 @@ const AddItem = ({ navigateTo, onSave }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
 
     useEffect(() => {
-        // Fetch all family members for creator selection
+        // Fetch all family members for creator selection using the family API service
         const fetchFamilyMembers = async () => {
-            const token = localStorage.getItem("authToken");
-            const res = await fetch("http://localhost:5240/api/familymember", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
-                setFamilyMembers(await res.json());
+            try {
+                const data = await familyAPI.getAll();
+                setFamilyMembers(data);
+            } catch (error) {
+                console.error("Error fetching family members:", error);
             }
         };
         fetchFamilyMembers();
     }, []);
 
     /**
-     * Handles saving a new item to the backend.
+     * Handles saving a new item to the backend using the vault API service
      * @param {Object} item - The item to save.
      */
     const handleSave = async (item) => {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch("http://localhost:5240/api/vaultitem", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(item),
-        });
-        if (!res.ok) {
-            alert("Failed to create item");
-            return;
+        try {
+            const data = await vaultAPI.create(item);
+            if (onSave) onSave(data);
+            if (navigateTo) navigateTo();
+        } catch (error) {
+            alert("Failed to create item: " + error.message);
         }
-        const data = await res.json();
-        if (onSave) onSave(data);
-        if (navigateTo) navigateTo();
     };
 
     return (

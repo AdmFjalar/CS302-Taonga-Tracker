@@ -31,6 +31,9 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequireUppercase = false;
         options.Password.RequireLowercase = true;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.AllowedForNewUsers = false;
     })
     .AddUserStore<UserStore>()
     .AddRoleStore<RoleStore>()

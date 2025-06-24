@@ -5,13 +5,6 @@ import "../styles/LandingPage.css";
 const LandingPage = () => {
   return (
     <div className="landing-layout">
-      <header className="landing-header">
-        <h1 className="logo">Taonga Trove</h1>
-        <div className="auth-links">
-          <Link to="/login" className="signin-link">Sign in</Link>
-          <Link to="/register" className="signup-button">Sign up</Link>
-        </div>
-      </header>
 
       <main className="landing-main">
         <h2 className="headline">A better way to track heirlooms</h2>

@@ -3,8 +3,9 @@
  * and other values that should be centralized and easily updatable.
  */
 
-// Base API URL
-export const API_BASE_URL = "http://localhost:5240";
+// Base API URL - Use environment variable if available, fallback to localhost for development
+// The docker container should be built with REACT_APP_API_URL=http://134.199.171.168:8080
+export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
 // Authentication endpoints
 export const AUTH_ENDPOINTS = {

@@ -4,7 +4,8 @@ import FamilyMemberEdit from "../family/FamilyMemberEdit";
 import FamilyMemberView from "../family/FamilyMemberView";
 import { getFullImageUrl, toDateInputValue } from "../../services/utils";
 import Button from "../shared/Button";
-import { FamilyService } from "../../services/family";
+import { familyAPI } from "../../services/api";
+import { vaultAPI } from "../../services/api";
 import { HeirloomService } from "../../services/heirloom";
 import "../../styles/user/HomePage.css";
 
@@ -61,14 +62,8 @@ const HomePage = () => {
       setLoading(true);
       setError(null);
       try {
-        const token = localStorage.getItem("authToken");
-        if (!token) throw new Error("User is not logged in");
-        const res = await fetch("http://localhost:5240/api/vaultitem", {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Failed to fetch items");
-        const data = await res.json();
+        // Using the vault API service instead of direct fetch
+        const data = await vaultAPI.getAll();
         setItems(data);
       } catch (err) {
         setError(err.message);
@@ -82,15 +77,10 @@ const HomePage = () => {
   useEffect(() => {
     const fetchFamilyMembers = async () => {
       try {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch("http://localhost:5240/api/familymember", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setFamilyMembers(data);
-          setHighlighted(getOldestMembers(data));
-        }
+        // Using the family API service instead of direct fetch
+        const data = await familyAPI.getAll();
+        setFamilyMembers(data);
+        setHighlighted(getOldestMembers(data));
       } catch (err) {
         // Optionally handle error
       }

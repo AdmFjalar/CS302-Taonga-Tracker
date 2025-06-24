@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getFullImageUrl, toDateInputValue, autoSpaceComma } from "../../services/utils";
+import { familyAPI, vaultAPI, authAPI } from "../../services/api";
 import "../../styles/heirloom/CreateItemPage.css"; // Fixed CSS reference from CreateItemPage.css to ItemPages.css
 
 const placeholderImg = "https://placehold.co/40x40";
@@ -110,22 +111,25 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
 
     const [localFamilyMembers, setLocalFamilyMembers] = useState(familyMembers);
 
+    // Modified useEffect to prevent excessive API calls
     useEffect(() => {
-        if (!familyMembers || familyMembers.length === 0) {
+        // Only fetch if no family members were passed as props and
+        // if we haven't already fetched them (empty array check)
+        if ((!familyMembers || familyMembers.length === 0) && localFamilyMembers.length === 0) {
             const fetchFamilyMembers = async () => {
-                const token = localStorage.getItem("authToken");
-                const res = await fetch("http://localhost:5240/api/familymember", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (res.ok) {
-                    setLocalFamilyMembers(await res.json());
+                try {
+                    const data = await familyAPI.getAll();
+                    setLocalFamilyMembers(data);
+                } catch (error) {
+                    console.error("Error fetching family members:", error);
                 }
             };
             fetchFamilyMembers();
-        } else {
+        } else if (familyMembers.length > 0 && localFamilyMembers !== familyMembers) {
+            // Update local state if props change and are not empty
             setLocalFamilyMembers(familyMembers);
         }
-    }, [familyMembers]);
+    }, [familyMembers]); // Only re-run if familyMembers prop changes
 
     useEffect(() => {
         if (initialItem) {
@@ -157,16 +161,11 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         }
         setSuggestionLoading(true);
         try {
-            const token = localStorage.getItem("authToken");
-            const res = await fetch(`http://localhost:5240/api/auth/search-users?q=${encodeURIComponent(query)}`, {
-                headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-            });
-            if (res.ok) {
-                setUserSuggestions(await res.json());
-            } else {
-                setUserSuggestions([]);
-            }
-        } catch {
+            // Using the auth API service instead of direct fetch
+            const users = await authAPI.searchUsers(query);
+            setUserSuggestions(users);
+        } catch (error) {
+            console.error("Error searching users:", error);
             setUserSuggestions([]);
         }
         setSuggestionLoading(false);
@@ -209,17 +208,9 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         if (!file) return;
         setUploading(true);
         setUploadError("");
-        const formData = new FormData();
-        formData.append("file", file);
         try {
-            const token = localStorage.getItem("authToken");
-            const res = await fetch("http://localhost:5240/api/vaultitem/upload-image", {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
-                body: formData,
-            });
-            if (!res.ok) throw new Error("Image upload failed");
-            const data = await res.json();
+            // Using the vault API service instead of direct fetch
+            const data = await vaultAPI.uploadImage(file);
             setItem((prev) => ({ ...prev, photoUrl: data.url }));
         } catch (err) {
             setUploadError(err.message);
@@ -242,23 +233,11 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
             sharedWithIds: sharedWithInput.split(",").map((v) => v.trim()).filter(Boolean),
         };
 
-        // If editing (existing item), send PUT request
+        // If editing (existing item), use vaultAPI to update
         if (item.vaultItemId && item.vaultItemId !== "0") {
             try {
-                const token = localStorage.getItem("authToken");
-                const res = await fetch(`http://localhost:5240/api/vaultitem/${item.vaultItemId}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(updatedItem),
-                });
-                if (!res.ok) {
-                    alert("Failed to update item");
-                    return;
-                }
-                const data = await res.json();
+                // Using the vault API service instead of direct fetch
+                const data = await vaultAPI.update(item.vaultItemId, updatedItem);
                 if (onSave) onSave(data);
                 window.location.reload();
                 if (navigateTo) navigateTo();
@@ -275,13 +254,8 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         if (!item.vaultItemId || item.vaultItemId === "0") return;
         if (!window.confirm("Are you sure you want to delete this item?")) return;
         try {
-            const token = localStorage.getItem("authToken");
-            const url = `http://localhost:5240/api/vaultitem/${item.vaultItemId}`;
-            const response = await fetch(url, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!response.ok) throw new Error("Failed to delete the heirloom");
+            // Using the vault API service instead of direct fetch
+            await vaultAPI.delete(item.vaultItemId);
             alert("Heirloom deleted.");
             window.location.reload();
             if (navigateTo) navigateTo("/home");

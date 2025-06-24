@@ -13,19 +13,52 @@ body {
 /* Layout styles */
 .layout {
   display: flex;
+  min-height: 100vh;
 }
 
 .content-wrapper {
   flex: 1;
   margin-left: 200px; /* Fixed margin based on actual sidebar width */
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 200px); /* Account for sidebar width */
   min-height: 100vh;
-  width: auto; /* Let it adapt to available space */
+  position: relative;
+}
+
+/* Auth pages layout */
+.auth-page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-content {
+  flex: 1;
+  width: 100%;
+}
+
+.auth-layout > *:not(footer) {
+  flex: 1;
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  padding: 1rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Sidebar - basic styling kept for reference */
 .sidebar {
   background-color: #f3f4ec;
   padding: 1rem;
+  width: 200px;
+  position: fixed;
+  height: 100vh;
+  z-index: 1;
 }
 
 .header {

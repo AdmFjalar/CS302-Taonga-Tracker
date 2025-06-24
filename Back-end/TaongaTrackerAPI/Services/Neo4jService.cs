@@ -283,9 +283,9 @@ public async Task<FamilyMemberDto> AddFamilyMemberToUserTreeAsync(string userId,
         SiblingIds: $siblingIds,
         UserId: $memberUserId
     }
-    SET m.FamilyMemberId = coalesce($memberId, elementId(m))
+    SET m.FamilyMemberId = coalesce($memberId, toString(id(m)))
     CREATE (m)-[:BELONGS_TO]->(t)
-    RETURN m";
+    RETURN m, toString(id(m)) AS memberId";
     var result = await session.RunAsync(query, new
     {
         userId,
@@ -316,7 +316,7 @@ public async Task<FamilyMemberDto> AddFamilyMemberToUserTreeAsync(string userId,
 
     var record = result.Current;
     var node = record["m"].As<INode>();
-    var newMemberId = node.Properties.ContainsKey("FamilyMemberId") ? node["FamilyMemberId"].As<string>() : node.ElementId;
+    var newMemberId = record["memberId"].As<string>();
 
     // --- Bidirectional update logic for parents and children ---
     foreach (var parentId in member.ParentsIds ?? new List<string>())

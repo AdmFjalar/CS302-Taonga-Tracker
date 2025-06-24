@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../../styles/user/SettingsPage.css";
 import { getFullImageUrl } from "../../services/utils";
+import { authAPI, vaultAPI } from "../../services/api";
 
 const SettingsPage = () => {
   const [user, setUser] = useState({
@@ -18,19 +19,14 @@ const SettingsPage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch("http://localhost:5240/api/Auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser((prev) => ({
-            ...prev,
-            ...data,
-            profilePictureUrl: data.profilePictureUrl || "",
-            userId: data.id || "",
-          }));
-        }
+        // Using the auth API service instead of direct fetch
+        const data = await authAPI.getCurrentUser();
+        setUser((prev) => ({
+          ...prev,
+          ...data,
+          profilePictureUrl: data.profilePictureUrl || "",
+          userId: data.id || "",
+        }));
       } catch {}
     };
     fetchUser();
@@ -39,17 +35,9 @@ const SettingsPage = () => {
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
       try {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch("http://localhost:5240/api/vaultitem/upload-image", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-        if (!res.ok) throw new Error("Failed to upload image");
-        const data = await res.json();
+        // Using the vault API service for image upload instead of direct fetch
+        const data = await vaultAPI.uploadImage(file);
         setUser((prev) => ({
           ...prev,
           profilePictureUrl: data.url,
@@ -68,7 +56,7 @@ const SettingsPage = () => {
 
   const handleSaveChanges = async () => {
     try {
-      const token = localStorage.getItem("authToken");
+      // Using the auth API service to update user profile instead of direct fetch
       const payload = {
         firstName: user.firstName,
         middleNames: user.middleNames,
@@ -77,15 +65,7 @@ const SettingsPage = () => {
         profilePictureUrl: user.profilePictureUrl,
         region: user.region,
       };
-      const res = await fetch("http://localhost:5240/api/Auth/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Failed to update profile");
+      await authAPI.updateCurrentUser(payload);
       setUnsavedChanges(false);
       alert("Profile updated!");
     } catch (err) {
@@ -203,3 +183,4 @@ const SettingsPage = () => {
 };
 
 export default SettingsPage;
+

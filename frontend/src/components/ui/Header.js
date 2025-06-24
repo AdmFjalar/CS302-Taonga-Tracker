@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getFullImageUrl } from "../../services/utils";
+import { authAPI } from "../../services/api";
 import "../../styles/ui/Header.css";
 
 /**
@@ -16,17 +17,12 @@ const Header = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const token = localStorage.getItem("authToken");
-                if (!token) return;
-                const res = await fetch("http://localhost:5240/api/Auth/me", {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setProfilePictureUrl(data.profilePictureUrl || "");
-                }
-            } catch {
+                // Using authAPI service instead of direct fetch
+                const data = await authAPI.getCurrentUser();
+                setProfilePictureUrl(data.profilePictureUrl || "");
+            } catch (error) {
                 // Silently fail if fetch fails
+                console.log("Failed to fetch user profile:", error);
             }
         };
         fetchUser();

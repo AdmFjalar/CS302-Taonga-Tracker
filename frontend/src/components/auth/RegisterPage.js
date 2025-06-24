@@ -84,8 +84,9 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="auth-layout">
-      <h1 className="auth-title">Taonga Trove</h1>
+    <div className="register-page">
+      <h1 className="auth-title">Sign Up</h1>
+
       <form className="auth-form" onSubmit={handleRegister}>
         <label htmlFor="email">Email</label>
         <input

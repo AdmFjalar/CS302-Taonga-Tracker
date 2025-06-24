@@ -1,0 +1,70 @@
+/* About Page Styles */
+
+.about-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.about-page h1 {
+  color: #4a5240;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #b5b690;
+  padding-bottom: 1rem;
+  text-align: center;
+}
+
+.about-section {
+  margin-bottom: 2rem;
+}
+
+.about-section h2 {
+  color: #6b5843;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.about-section h2::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background-color: #b5b690;
+}
+
+.about-section p {
+  line-height: 1.6;
+  color: #333;
+}
+
+.feature-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.feature-list li {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.feature-list li::before {
+  content: "•";
+  color: #6b5843;
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .about-page {
+    padding: 1rem;
+  }
+
+  .about-section h2 {
+    font-size: 1.3rem;
+  }
+}

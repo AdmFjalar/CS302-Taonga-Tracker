@@ -4,8 +4,29 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 95vh;
+  min-height: 100vh;
   font-family: 'Georgia', serif;
+}
+
+/* This container targets the actual login/register page content area */
+.auth-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  padding: 2rem 0;
+}
+
+/* Center the login/register forms specifically */
+.login-page, .register-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 150px); /* Account for header and footer */
+  width: 100%;
 }
 
 .auth-title {

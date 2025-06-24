@@ -58,9 +58,12 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="auth-layout">
-      <h1 className="auth-title">Taonga Trove</h1>
+    <div className="login-page">
+      <h1 className="auth-title">Sign In</h1>
+
       <form className="auth-form" onSubmit={handleLogin}>
+        {error && <div className="auth-error">{error}</div>}
+
         <label htmlFor="emailOrUserName">Username or Email</label>
         <input
           id="emailOrUserName"
@@ -68,8 +71,7 @@ const LoginPage = () => {
           type="text"
           value={credentials.emailOrUserName}
           onChange={handleChange}
-          disabled={loading}
-          autoComplete="username"
+          required
         />
 
         <label htmlFor="password">Password</label>
@@ -79,21 +81,25 @@ const LoginPage = () => {
           type="password"
           value={credentials.password}
           onChange={handleChange}
-          disabled={loading}
-          autoComplete="current-password"
+          required
         />
 
-        {error && <div className="auth-error">{error}</div>}
+        <div className="button-wrapper">
+          <button
+            type="submit"
+            className="auth-button"
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </div>
 
-        <Link to="/register" className="auth-link">Need an account? Sign Up</Link>
-
-        <button
-          type="submit"
-          className="auth-button"
-          disabled={loading}
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
+        <p style={{ textAlign: "center", marginTop: "1rem" }}>
+          Don't have an account?{" "}
+          <Link to="/register" style={{ color: "#1e321c", fontWeight: "bold" }}>
+            Sign up
+          </Link>
+        </p>
       </form>
     </div>
   );
