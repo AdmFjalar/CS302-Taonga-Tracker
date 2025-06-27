@@ -59,11 +59,8 @@ const LoginPage = () => {
 
   return (
     <div className="login-page">
-      <h1 className="auth-title">Sign In</h1>
-
       <form className="auth-form" onSubmit={handleLogin}>
-        {error && <div className="auth-error">{error}</div>}
-
+        <h1 className="auth-title">Sign In</h1>
         <label htmlFor="emailOrUserName">Username or Email</label>
         <input
           id="emailOrUserName"
@@ -79,12 +76,16 @@ const LoginPage = () => {
           id="password"
           name="password"
           type="password"
+          minLength={8}
+          maxLength={64}
           value={credentials.password}
           onChange={handleChange}
           required
         />
 
-        <div className="button-wrapper">
+        {error && <div className="auth-error">{error}</div>}
+
+        <span className="auth-action-container">
           <button
             type="submit"
             className="auth-button"
@@ -92,14 +93,8 @@ const LoginPage = () => {
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
-        </div>
-
-        <p style={{ textAlign: "center", marginTop: "1rem" }}>
-          Don't have an account?{" "}
-          <Link to="/register" style={{ color: "#1e321c", fontWeight: "bold" }}>
-            Sign up
-          </Link>
-        </p>
+          <Link to="/register" className="auth-link">Don't have an account?</Link>
+        </span>
       </form>
     </div>
   );

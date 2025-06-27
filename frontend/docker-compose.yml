@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=http://134.199.171.168:8080  # Points to the base URL without /api
+    ports:
+      - "80:80"  # Frontend served on standard HTTP port
+    restart: unless-stopped

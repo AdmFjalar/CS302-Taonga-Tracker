@@ -87,9 +87,8 @@ const TermsPage = () => {
       <section className="terms-section">
         <h2>7. Contact</h2>
         <p>
-          This project is not actively maintained beyond the scope of the university course.
-          For educational inquiries related to this project, please contact the CS302 course
-          administrators.
+          This project is not necessarily actively maintained beyond the scope of the university course.
+          For inquiries related to this project, please contact <a href="mailto:support@taongatracker.com">support@taongatracker.com</a>.
         </p>
       </section>
 

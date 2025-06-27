@@ -10,6 +10,8 @@
       content="A digital heirloom and family tree tracking application."
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!-- URL fix script - must be loaded early -->
+    <script src="%PUBLIC_URL%/url-fix.js"></script>
     <!--
       manifest.json provides metadata used when your web app is installed on a
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
@@ -25,6 +27,8 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Taonga Tracker</title>
+    <script src="/url-fix.js"></script>
+    <script src="/url-fix.js"></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

@@ -1,34 +1,51 @@
 .header {
-  background-color: #bcb88a;
-  padding: 1rem;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  border-bottom: #1e321c 1.5px solid;
+  background: transparent; /* Remove background color */
+  padding: 1rem 2rem;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: none; /* Remove border */
+  font-family: var(--font-primary);
+  transition: background-color 0.6s ease;
 }
 
-.trial-button {
-  background-color:  #1e321c;
-  color: white;
-  font-size: 0.875rem;
-  border-radius: 99px;
-  padding: 0.40rem 1rem;
+/* Logo styling to match AuthHeader */
+.logo {
+  order: 0; /* Ensure logo is first (left side) */
 }
 
-.trial-button:hover {
-  background-color: #2e4d2a;
+.logo a {
+  font-family: var(--font-secondary);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  margin-top: auto;
+  margin-bottom: auto;
+  text-decoration: none;
+  color: var(--color-primary-700);
+  transition: color 0.3s ease, transform 0.2s ease;
+  display: inline-block;
 }
 
+.logo a:hover {
+  color: var(--color-primary-700);
+  transform: scale(1.03);
+  transition: 0.3s;
+}
+
+/* Right side icons and elements */
 .header-icons {
   display: flex;
   align-items: center;
   gap: 1rem;
+  order: 2; /* Ensure icons are second (right side) */
 }
 
 .icon {
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: var(--text-lg);
+  color: var(--color-primary-700);
 }
 
 .avatar {
@@ -37,6 +54,18 @@
   border-radius: 9999px;
   object-fit: cover;
   object-position: center;
-  background: #e3e7d3;
+  background: var(--color-secondary-200);
   display: block;
+}
+
+.trial-button {
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
+  font-size: var(--text-sm);
+  border-radius: 99px;
+  padding: 0.40rem 1rem;
+}
+
+.trial-button:hover {
+  background-color: var(--color-primary-600);
 }

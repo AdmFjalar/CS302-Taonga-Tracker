@@ -67,6 +67,7 @@ function CreatorSelector({ familyMembers, selectedId, onSelect }) {
                             padding: "2px 8px 2px 2px",
                             cursor: "pointer",
                             minWidth: 0,
+                            width: "auto",
                         }}
                     >
                         <input
@@ -289,14 +290,19 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                     </div>
                     <div className="item-edit-mainfields">
                         <div className="form-row">
+                            <label className="form-label" htmlFor="title-input">
+                                <span className="required-field">Title</span>
+                            </label>
                             <input
+                                id="title-input"
                                 type="text"
                                 className="item-edit-title"
                                 value={item.title}
                                 onChange={e => handleChange("title", e.target.value)}
-                                placeholder="Heirloom Title"
+                                placeholder=""
                                 required
                             />
+                            <small className="required-field-hint">* Required field</small>
                         </div>
                         <div className="form-row">
                             <textarea
@@ -412,6 +418,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                                                     padding: 8,
                                                     cursor: "pointer",
                                                     borderBottom: "1px solid #eee",
+                                                    width: "fit-content",
                                                 }}
                                                 onMouseDown={() => handleSuggestionClick(user.email)}
                                             >

@@ -12,7 +12,7 @@ import '../../styles/ui/AuthHeader.css';
 const AuthHeader = ({ showAuthButtons = true }) => {
   return (
     <header className="landing-header">
-      <h1 className="logo"><Link to={"/"}>Taonga Trove</Link></h1>
+      <h1 className="logo"><Link to={"/"}>Taonga Tracker</Link></h1>
       {showAuthButtons && (
         <div className="auth-links">
           <Link to="/login" className="signin-link">Sign in</Link>

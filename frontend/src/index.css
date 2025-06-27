@@ -1,11 +1,23 @@
+/* Import design system */
+@import './styles/fonts.css';
+@import './styles/colors.css';
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+* {
+  font-family: var(--font-primary);
+}
+
+h1, h2, h3, h4, h5, h6, .heading-font {
+  font-family: var(--font-secondary);
+}
+
 html, body, #root {
   height: 100%;
   width: 100%;
-  background-color: #f6f9f3; /* match app background if needed */
+  background-color: var(--color-primary-100);
 }

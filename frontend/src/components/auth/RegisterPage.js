@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../../styles/auth/AuthPage.css";
 import { useNavigate, Link } from "react-router-dom";
 import { authAPI } from "../../services/api";
@@ -19,6 +19,27 @@ const RegisterPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [passwordErrors, setPasswordErrors] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false
+  });
+  const [formValid, setFormValid] = useState(false);
+
+  // Effect to check form validity whenever password errors change
+  useEffect(() => {
+    const isPasswordValid = Object.values(passwordErrors).every(Boolean);
+    setFormValid(
+      formData.userName &&
+      formData.email &&
+      formData.firstName &&
+      formData.lastName &&
+      formData.password &&
+      isPasswordValid
+    );
+  }, [formData, passwordErrors]);
 
   /**
    * Updates form field values when user types
@@ -27,35 +48,32 @@ const RegisterPage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Validate password on change
+    if (name === "password") {
+      validatePassword(value);
+    }
+
     if (error) setError(null); // Clear error when user types
   };
 
   /**
-   * Validates the registration form
-   * @returns {boolean} True if form is valid, false otherwise
+   * Validates the password against requirements
+   * @param {string} password - The password to validate
+   * @returns {boolean} True if password meets all requirements
    */
-  const validateForm = () => {
-    if (!formData.userName) {
-      setError("Username is required");
-      return false;
-    }
-    if (!formData.email) {
-      setError("Email is required");
-      return false;
-    }
-    if (!formData.password) {
-      setError("Password is required");
-      return false;
-    }
-    if (!formData.firstName) {
-      setError("First name is required");
-      return false;
-    }
-    if (!formData.lastName) {
-      setError("Last name is required");
-      return false;
-    }
-    return true;
+  const validatePassword = (password) => {
+    const requirements = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[^A-Za-z0-9]/.test(password)
+    };
+
+    setPasswordErrors(requirements);
+
+    return Object.values(requirements).every(Boolean);
   };
 
   /**
@@ -65,7 +83,36 @@ const RegisterPage = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    // Force validation on submit
+    const isPasswordValid = validatePassword(formData.password);
+
+    // Field validation
+    if (!formData.userName) {
+      setError("Username is required");
+      return;
+    }
+    if (!formData.email) {
+      setError("Email is required");
+      return;
+    }
+    if (!formData.password) {
+      setError("Password is required");
+      return;
+    }
+    if (!formData.firstName) {
+      setError("First name is required");
+      return;
+    }
+    if (!formData.lastName) {
+      setError("Last name is required");
+      return;
+    }
+
+    // Final password validation check - make sure all password requirements are met
+    if (!Object.values(passwordErrors).every(Boolean)) {
+      setError("Your password must include: 8+ characters, uppercase & lowercase letters, numbers, and special characters");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -85,10 +132,12 @@ const RegisterPage = () => {
 
   return (
     <div className="register-page">
-      <h1 className="auth-title">Sign Up</h1>
-
       <form className="auth-form" onSubmit={handleRegister}>
-        <label htmlFor="email">Email</label>
+        <h1 className="auth-title">Sign Up</h1>
+        <span>
+          <label htmlFor="email">Email</label>
+          <small className="required-field-hint">* Required field</small>
+        </span>
         <input
           id="email"
           name="email"
@@ -97,9 +146,13 @@ const RegisterPage = () => {
           onChange={handleChange}
           disabled={loading}
           autoComplete="email"
+          required
         />
 
-        <label htmlFor="userName">Username</label>
+        <span>
+          <label htmlFor="userName">Username</label>
+          <small className="required-field-hint">* Required field</small>
+        </span>
         <input
           id="userName"
           name="userName"
@@ -108,51 +161,78 @@ const RegisterPage = () => {
           onChange={handleChange}
           disabled={loading}
           autoComplete="username"
+          required
         />
 
-        <label htmlFor="password">Password</label>
-        <input
+        <span>
+          <label htmlFor="firstName">First Name</label>
+          <small className="required-field-hint">* Required field</small>
+        </span>
+          <input
+            id="firstName"
+            name="firstName"
+            type="text"
+            value={formData.firstName}
+            onChange={handleChange}
+            disabled={loading}
+            autoComplete="given-name"
+            required
+        />
+        <span>
+          <label htmlFor="lastName">Last Name</label>
+          <small className="required-field-hint">* Required field</small>
+        </span>
+          <input
+            id="lastName"
+            name="lastName"
+            type="text"
+            value={formData.lastName}
+            onChange={handleChange}
+            disabled={loading}
+            autoComplete="family-name"
+            required
+        />
+
+        <span>
+          <label htmlFor="password">Password</label>
+          <small className="required-field-hint">* Required field</small>
+        </span>
+          <input
           id="password"
           name="password"
           type="password"
+          minLength={8}
+          maxLength={64}
           value={formData.password}
           onChange={handleChange}
           disabled={loading}
           autoComplete="new-password"
+          required
         />
 
-        <label htmlFor="firstName">First Name</label>
-        <input
-          id="firstName"
-          name="firstName"
-          type="text"
-          value={formData.firstName}
-          onChange={handleChange}
-          disabled={loading}
-          autoComplete="given-name"
-        />
-
-        <label htmlFor="lastName">Last Name</label>
-        <input
-          id="lastName"
-          name="lastName"
-          type="text"
-          value={formData.lastName}
-          onChange={handleChange}
-          disabled={loading}
-          autoComplete="family-name"
-        />
+        <div className="password-requirements">
+          <p>Password must include:</p>
+          <ul>
+            <li className={passwordErrors.length ? "met" : ""}>At least 8 characters</li>
+            <li className={passwordErrors.uppercase ? "met" : ""}>At least one uppercase letter</li>
+            <li className={passwordErrors.lowercase ? "met" : ""}>At least one lowercase letter</li>
+            <li className={passwordErrors.number ? "met" : ""}>At least one number</li>
+            <li className={passwordErrors.special ? "met" : ""}>At least one special character</li>
+          </ul>
+        </div>
 
         {error && <div className="auth-error">{error}</div>}
 
-        <Link to="/login" className="auth-link">Already have an account?</Link>
-        <button
-          type="submit"
-          className="auth-button"
-          disabled={loading}
-        >
-          {loading ? "Creating Account..." : "Sign Up"}
-        </button>
+        <span className="auth-action-container">
+          <button
+            type="submit"
+            className="auth-button"
+            disabled={loading}
+          >
+            {loading ? "Creating Account..." : "Sign Up"}
+          </button>
+          <Link to="/login" className="auth-link">Already have an account?</Link>
+        </span>
       </form>
     </div>
   );

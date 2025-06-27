@@ -3,28 +3,35 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #bcb88a;
+  background: transparent;
   padding: 1rem 2rem;
   width: 100%;
   box-sizing: border-box;
+  transition: background-color 0.6s ease;
 }
 
+/*.landing-header:hover {*/
+/*  background-color: rgba(255, 255, 255, 0.2);*/
+/*    transition: background-color 0.6s ease;*/
+/*}*/
+
 .logo a {
-  font-family: "Young Serif", serif;
-  font-size: 1.8rem;
-  font-weight: bold;
+  font-family: var(--font-secondary);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
   margin-top: auto;
   margin-bottom: auto;
   text-decoration: none;
-  color: #273520;
+  color: var(--color-primary-700);
   transition: color 0.3s ease, transform 0.2s ease;
   display: inline-block;
+  float: left;
 }
 
 .logo a:hover {
-  color: #1e321c;
+  color: var(--color-primary-700);
   transform: scale(1.03);
-    transition: 0.3s;
+  transition: 0.3s;
 }
 
 .auth-links {
@@ -33,33 +40,32 @@
 }
 
 .signin-link {
-  color: #1e321c;
-  font-family: "Young Serif", serif;
-  font-weight: bold;
+  color: var(--color-primary-700);
+  font-family: var(--font-secondary);
+  font-weight: var(--weight-bold);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: var(--text-sm);
   margin-top: auto;
   margin-bottom: auto;
 }
 
 .signup-button {
-  background-color: #1e321c;
-  color: white;
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
   padding: 0.4rem 0.9rem;
-  font-family: "Young Serif", serif;
-  font-size: 0.9rem;
-  font-weight: bold;
+  font-family: var(--font-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
   border-radius: 9999px;
   text-decoration: none;
   transition: background-color 0.2s ease;
 }
 
 .signup-button:hover {
-  background-color: #304e30;
+  background-color: var(--color-primary-600);
 }
 
 .auth-page-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
 }

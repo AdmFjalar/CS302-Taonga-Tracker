@@ -1,29 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
-
 .landing-layout {
-  background-color: #f6f9f3;
-  min-height: 100vh;
-  font-family: Georgia, serif;
+  font-family: var(--font-primary);
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  /*background: rgba(255, 255, 255, 0.2);*/
+  border-radius: 25px;
+  padding: 2rem;
+  margin: 1rem 0;
+}
+
+.landing-layout::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle at 30% 30%, var(--gradient-spot-light-1), transparent 40%),
+    radial-gradient(circle at 70% 70%, var(--gradient-spot-light-2), transparent 40%),
+    radial-gradient(ellipse at 40% 60%, var(--gradient-spot-medium-1), transparent 50%),
+    radial-gradient(ellipse at 60% 30%, var(--gradient-spot-medium-2), transparent 45%);
+  z-index: -1;
+  will-change: transform;
+  animation: float-gradient 2s ease-in-out infinite alternate;
+}
+
+.landing-layout::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle at 65% 25%, var(--gradient-spot-light-1), transparent 35%),
+    radial-gradient(circle at 25% 65%, var(--gradient-spot-light-2), transparent 40%),
+    radial-gradient(ellipse at 75% 45%, var(--gradient-spot-medium-1), transparent 50%);
+  z-index: -1;
+  will-change: transform;
+  animation: float-gradient-alt 30s ease-in-out infinite alternate;
 }
 
 .landing-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #bcb88a;
+  background-color: var(--color-secondary-300);
   padding: 1rem 2rem;
-  /*border-bottom: 1px solid #1e321c;*/
+  /*border-bottom: 1px solid var(--color-primary-700);*/
 }
 
 .logo {
-  font-family: "Young Serif", serif;
-  font-size: 1.8rem;
-  font-weight: bold;
+  font-family: var(--font-secondary);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
   margin-top: auto;
   margin-bottom: auto;
-  color: #273520;
+  color: var(--color-primary-500);
 }
 
 .auth-links {
@@ -32,32 +67,32 @@
 }
 
 .signin-link {
-  color: #1e321c;
-  font-family: "Young Serif", serif;
-  font-weight: bold;
+  color: var(--color-primary-700);
+  font-family: var(--font-secondary);
+  font-weight: var(--weight-bold);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: var(--text-sm);
   margin-top: auto;
   margin-bottom: auto;
 }
 
 .signup-button {
-  background-color: #1e321c;
-  color: white;
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
   padding: 0.4rem 0.9rem;
-  font-family: "Young Serif", serif;
-  font-size: 0.9rem;
-  font-weight: bold;
+  font-family: var(--font-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
   border-radius: 9999px;
   text-decoration: none;
-  box-shadow: 2px 2px 0 #7c9a7a;
+  box-shadow: 2px 2px 0 var(--color-primary-400);
   transition: background 0.2s ease;
   margin-top: auto;
   margin-bottom: auto;
 }
 
 .signup-button:hover {
-  background-color: #2e4d2a;
+  background-color: var(--color-primary-600);
 }
 
 .landing-main {
@@ -71,33 +106,35 @@
 }
 
 .headline {
-  font-family: "Young Serif", serif;
-  font-size: 2rem;
-  font-weight: bold;
-  color: #1e321c;
+  font-family: var(--font-secondary);
+  font-size: var(--text-5xl);
+  font-weight: var(--weight-medium);
+  color: var(--color-primary-700);
   margin-bottom: 0.5rem;
 }
 
 .subhead {
-  font-size: 1.1rem;
-  color: #1e321c;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  color: var(--color-primary-700);
   margin-bottom: 2rem;
 }
 
 .features-bar {
-  background-color: #a2a078;
+  background-color: var(--color-secondary-400);
   border-radius: 2rem;
   padding: 0.75rem 1.5rem;
   display: flex;
   gap: 2rem;
-  box-shadow: 2px 4px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 4px 0 var(--color-shadow-light);
 }
 
 .feature-pill {
-  color: white;
-  font-weight: 600;
-  font-size: 0.95rem;
-  background-color: #bcb88a;
+  color: var(--color-primary-700);
+  text-shadow: var(--color-neutral-white);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+  background-color: var(--color-secondary-300);
   border-radius: 9999px;
   padding: 0.4rem 1rem;
 }

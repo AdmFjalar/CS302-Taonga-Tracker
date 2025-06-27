@@ -1,11 +1,79 @@
 .auth-layout {
-  background-color: #f6f9f3;
+  background: var(--gradient-primary);
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  font-family: 'Georgia', serif;
+  min-height: 92vh;
+  font-family: var(--font-primary);
+}
+
+.auth-layout::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle at 30% 30%, var(--gradient-spot-light-1), transparent 40%),
+    radial-gradient(circle at 70% 70%, var(--gradient-spot-light-2), transparent 40%),
+    radial-gradient(ellipse at 40% 60%, var(--gradient-spot-medium-1), transparent 50%),
+    radial-gradient(ellipse at 60% 30%, var(--gradient-spot-medium-2), transparent 45%);
+  z-index: -1;
+  will-change: transform;
+  animation: float-gradient 25s ease-in-out infinite alternate;
+}
+
+.auth-layout::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle at 65% 25%, var(--gradient-spot-light-1), transparent 35%),
+    radial-gradient(circle at 25% 65%, var(--gradient-spot-light-2), transparent 40%),
+    radial-gradient(ellipse at 75% 45%, var(--gradient-spot-medium-1), transparent 50%);
+  z-index: -1;
+  will-change: transform;
+  animation: float-gradient-alt 3s ease-in-out infinite alternate;
+}
+
+@keyframes float-gradient {
+  0% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(-5%, 3%) rotate(2deg) scale(1.05);
+  }
+  50% {
+    transform: translate(3%, -2%) rotate(-1deg) scale(0.98);
+  }
+  75% {
+    transform: translate(-4%, -4%) rotate(1deg) scale(1.03);
+  }
+  100% {
+    transform: translate(5%, 5%) rotate(-2deg) scale(0.95);
+  }
+}
+
+@keyframes float-gradient-alt {
+  0% {
+    transform: translate(5%, 3%) rotate(1deg) scale(0.95);
+  }
+  30% {
+    transform: translate(-3%, -5%) rotate(-1.5deg) scale(1.02);
+  }
+  60% {
+    transform: translate(2%, 6%) rotate(0.5deg) scale(0.97);
+  }
+  100% {
+    transform: translate(-4%, -2%) rotate(-1deg) scale(1.04);
+  }
 }
 
 /* This container targets the actual login/register page content area */
@@ -16,7 +84,8 @@
   justify-content: center;
   flex: 1;
   width: 100%;
-  padding: 2rem 0;
+  position: relative;
+  z-index: 1;
 }
 
 /* Center the login/register forms specifically */
@@ -27,42 +96,119 @@
   justify-content: center;
   min-height: calc(100vh - 150px); /* Account for header and footer */
   width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page::before, .register-page::before,
+.faq-page::before, .about-page::before, .terms-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 30% 30%, var(--gradient-spot-light-1), transparent 40%),
+    radial-gradient(circle at 70% 70%, var(--gradient-spot-light-2), transparent 40%);
+  will-change: transform;
+  animation: moveGradient 30s ease-in-out infinite alternate;
+}
+
+.login-page::after, .register-page::after,
+.faq-page::after, .about-page::after, .terms-page::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 40% 60%, var(--gradient-spot-medium-1), transparent 50%),
+    radial-gradient(ellipse at 60% 30%, var(--gradient-spot-medium-2), transparent 45%);
+  will-change: transform;
+  animation: moveGradient-alt 25s ease-in-out infinite alternate;
+}
+
+@keyframes moveGradient {
+  0% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(-4%, 3%) rotate(1deg) scale(1.05);
+  }
+  66% {
+    transform: translate(3%, -3%) rotate(-1deg) scale(0.98);
+  }
+  100% {
+    transform: translate(-2%, -4%) rotate(2deg) scale(1.02);
+  }
+}
+
+@keyframes moveGradient-alt {
+  0% {
+    transform: translate(3%, 2%) rotate(-1deg) scale(0.98);
+  }
+  33% {
+    transform: translate(-2%, -3%) rotate(1.5deg) scale(1.03);
+  }
+  66% {
+    transform: translate(4%, -2%) rotate(-0.5deg) scale(0.97);
+  }
+  100% {
+    transform: translate(-3%, 4%) rotate(1deg) scale(1.04);
+  }
 }
 
 .auth-title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #1e321c;
-  margin-bottom: 2.5rem;
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-primary-700);
 }
 
 .auth-form {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  min-width: 20rem;
+  min-width: 30%;
+  background: var(--color-neutral-white);
+  border-radius: 25px;
+  padding: 2rem;
+  margin: 1rem 0;
 }
 
 .auth-form label {
-  font-weight: bold;
-  color: #1e321c;
+  font-weight: var(--weight-bold);
+  color: var(--color-primary-700);
   align-self: flex-start;
 }
 
 .auth-form input {
   padding: 0.5rem;
-  border: 1px solid #1e321c;
-  font-size: 1rem;
-  background: white;
+  border: 1px solid var(--color-primary-700);
+  font-size: var(--text-base);
   width: 100%;
+  background-color: var(--color-background-translucent);
+  color: var(--color-primary-700);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.auth-form input:focus {
+  background-color: var(--color-background-translucent-focus);
+  border-color: var(--color-primary-400);
+  outline: none;
 }
 
 .auth-link {
-  font-size: 0.7rem;
+  font-size: var(--text-xs);
   text-align: right;
-  color: #1e321c;
+  color: var(--color-primary-700);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   align-self: flex-end;
   padding-bottom: 0.6rem;
   margin-top: -0.24rem;
@@ -71,23 +217,22 @@
 .auth-button {
   margin-top: 0.5rem;
   margin: 0 auto;
-  background-color: #1e321c;
-  color: white;
-  font-size: 1.2rem;
-  font-weight: bold;
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
   border: none;
   border-radius: 9999px;
   padding: 0.5rem 2rem;
   cursor: pointer;
-  box-shadow: 2px 2px 0 #7c9a7a;
+  box-shadow: 2px 2px 0 var(--color-primary-400);
   transition: background 0.2s ease;
   width: 100%;
   max-width: 100%;
-  
 }
 
 .auth-button:hover {
-  background-color: #2e4d2a;
+  background-color: var(--color-primary-600);
 }
 
 .auth-form a.auth-button {
@@ -101,4 +246,193 @@
   width: 100%;
   display: flex;
   justify-content: center;
+}
+
+.password-requirements {
+  font-size: var(--text-sm);
+  margin: 0.5rem 0 1rem;
+  padding: 0.8rem;
+  background-color: var(--color-background-translucent);
+  border-radius: 4px;
+  border: 1px solid var(--color-neutral-200);
+}
+
+.password-requirements p {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-neutral-600);
+  font-weight: var(--weight-semibold);
+}
+
+.password-requirements ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: none;
+}
+
+.password-requirements li {
+  margin-bottom: 0.25rem;
+  color: var(--color-error);
+  position: relative;
+}
+
+.password-requirements li:before {
+  content: "✕";
+  margin-right: 0.5rem;
+  color: var(--color-error);
+  display: inline-block;
+  width: 15px;
+}
+
+.password-requirements li.met {
+  color: var(--color-success);
+}
+
+.password-requirements li.met:before {
+  content: "✓";
+  color: var(--color-success);
+}
+
+/* Enhanced gradient animations specifically for auth-page-container */
+.auth-page-container {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  width: 100%;
+  z-index: 0;
+  background: var(--gradient-primary);
+}
+
+.auth-page-container::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background:
+    radial-gradient(ellipse at 30% 30%, var(--gradient-enhanced-light-1), transparent 35%),
+    radial-gradient(ellipse at 70% 70%, var(--gradient-enhanced-dark-1), transparent 35%),
+    radial-gradient(circle at 20% 80%, var(--gradient-enhanced-medium-1), transparent 30%),
+    radial-gradient(circle at 80% 20%, var(--gradient-enhanced-medium-2), transparent 30%);
+  z-index: -1;
+  will-change: transform;
+  animation: auth-container-gradient 10s ease-in-out infinite;
+}
+
+.auth-page-container::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background:
+    radial-gradient(circle at 35% 65%, var(--gradient-enhanced-medium-2), transparent 40%),
+    radial-gradient(circle at 65% 35%, var(--gradient-enhanced-light-2), transparent 40%),
+    radial-gradient(ellipse at 15% 40%, var(--gradient-enhanced-dark-2), transparent 35%),
+    radial-gradient(ellipse at 85% 60%, var(--gradient-enhanced-light-2), transparent 35%);
+  z-index: -1;
+  will-change: transform;
+  animation: auth-container-gradient-alt 25s ease-in-out infinite;
+}
+
+/* More random, complex keyframe animations */
+@keyframes auth-container-gradient {
+  0% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+  }
+  10% {
+    transform: translate(-10%, 5%) rotate(2deg) scale(1.05);
+  }
+  25% {
+    transform: translate(-25%, -10%) rotate(7deg) scale(0.95);
+  }
+  40% {
+    transform: translate(-5%, -20%) rotate(3deg) scale(1.02);
+  }
+  50% {
+    transform: translate(10%, -15%) rotate(-2deg) scale(0.97);
+  }
+  65% {
+    transform: translate(20%, 5%) rotate(-5deg) scale(1.04);
+  }
+  80% {
+    transform: translate(5%, 15%) rotate(-2deg) scale(0.98);
+  }
+  100% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes auth-container-gradient-alt {
+  0% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+  }
+  15% {
+    transform: translate(15%, -8%) rotate(-3deg) scale(0.97);
+  }
+  30% {
+    transform: translate(20%, 10%) rotate(-7deg) scale(1.03);
+  }
+  45% {
+    transform: translate(5%, 20%) rotate(-4deg) scale(0.96);
+  }
+  60% {
+    transform: translate(-10%, 15%) rotate(2deg) scale(1.05);
+  }
+  75% {
+    transform: translate(-20%, -5%) rotate(5deg) scale(0.98);
+  }
+  90% {
+    transform: translate(-8%, -15%) rotate(2deg) scale(1.02);
+  }
+  100% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
+  }
+}
+
+/* Reset all specific page animations back to original */
+.auth-layout::before, .auth-layout::after,
+.login-page::before, .login-page::after,
+.register-page::before, .register-page::after,
+.faq-page::before, .faq-page::after,
+.about-page::before, .about-page::after,
+.terms-page::before, .terms-page::after,
+.landing-layout::before, .landing-layout::after {
+  display: none;
+}
+
+.auth-form span {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.3rem;
+}
+
+.required-field-hint {
+  color: var(--color-neutral-500);
+  font-size: var(--text-xs);
+  font-style: italic;
+  text-align: right;
+  margin-left: 1.5rem;
+}
+
+.auth-form .auth-action-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.auth-form .auth-action-container .auth-link {
+  align-self: center;
+  padding-bottom: 0;
+  margin-top: 0;
+}
+
+.auth-form .auth-action-container .auth-button {
+  margin: 0;
+  max-width: 50%;
 }

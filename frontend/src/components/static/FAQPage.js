@@ -13,8 +13,7 @@ const FAQPage = () => {
 
       <div className="faq-intro">
         <p>
-          Find answers to the most common questions about Taonga Tracker, how it works,
-          and how you can use it to preserve your family heritage.
+            Find out the most frequently asked questions about Taonga Tracker, how it works, and how it can help you preserve your family heritage.
         </p>
       </div>
 
@@ -23,10 +22,7 @@ const FAQPage = () => {
           <h3>What is Taonga Tracker?</h3>
           <div className="faq-answer">
             <p>
-              Taonga Tracker is a platform designed to help families document, organize, and
-              preserve their heritage items and family connections across generations. It allows
-              you to create digital records of your family heirlooms, complete with photos,
-              stories, and provenance information.
+                Taonga Tracker is a family heritage app for documenting, organizing and preserving heritage items & families and their relationships across generations. Taonga Tracker creates digital records of family heirlooms facilitating digital story telling, with accompanying photos and information on provenance.
             </p>
           </div>
         </div>
@@ -35,9 +31,7 @@ const FAQPage = () => {
           <h3>Is Taonga Tracker free to use?</h3>
           <div className="faq-answer">
             <p>
-              Currently, Taonga Tracker is a university project (CS302) and is available as
-              a demonstration. There is no cost associated with using the platform during this
-              development phase.
+                Currently, Taonga Tracker is a university project (CS302) provided as a demonstration. As a result, there is no cost associated with using Taonga Tracker during this demonstration and development phase.
             </p>
           </div>
         </div>
@@ -46,9 +40,7 @@ const FAQPage = () => {
           <h3>How secure is my data?</h3>
           <div className="faq-answer">
             <p>
-              As stated in our Terms and Conditions, Taonga Tracker is currently a Minimum Viable
-              Product (MVP) created for educational purposes. While we implement basic security
-              practices, we recommend not storing highly sensitive information at this stage.
+                As outlined in our Terms and Conditions, Taonga Tracker is a Minimum Viable Product (MVP) created for educational, instructional and knowledge dissemination purposes. We implement rudimentary security protocols. For the time being, we recommend not storing highly sensitive data.
             </p>
             <p>
               For more information about data security, please visit our <a href="/terms">Terms and Conditions</a> page.
@@ -60,9 +52,7 @@ const FAQPage = () => {
           <h3>How do I add a family heirloom to my account?</h3>
           <div className="faq-answer">
             <p>
-              After logging in, navigate to the "Heirlooms" section from the sidebar menu.
-              Click on the "Add New Item" button and fill out the form with details about your
-              heirloom, including photos, description, history, and any known previous owners.
+                After you log in, go to the sidebar menu and go to "Heirlooms". Click the "Add New Item" button and fill out the form with the information regarding the heirloom, such as photographs, description, history, and previous owners.
             </p>
           </div>
         </div>
@@ -71,9 +61,7 @@ const FAQPage = () => {
           <h3>Can I create a family tree?</h3>
           <div className="faq-answer">
             <p>
-              Yes! Taonga Tracker includes a family tree feature that allows you to document your
-              family relationships. Navigate to the "Family Tree" section from the sidebar menu
-              to add family members and establish relationships between them.
+                Yes. Taonga Tracker has a family tree feature, so you can document your family relationships. From the sidebar menu, click on "Family Tree" to add family members and relationships.
             </p>
           </div>
         </div>
@@ -82,9 +70,7 @@ const FAQPage = () => {
           <h3>Can I link heirlooms to family members?</h3>
           <div className="faq-answer">
             <p>
-              Absolutely. One of the key features of Taonga Tracker is the ability to connect
-              heirlooms with their previous owners in your family tree. This creates a complete
-              provenance record that helps preserve the full story of your family treasures.
+                Yes. One of Taonga Tracker's features is linking heirlooms to family members in your family tree so there is a complete provenance record, preserving the full story of your family's treasures.
             </p>
           </div>
         </div>
@@ -93,9 +79,7 @@ const FAQPage = () => {
           <h3>Can I share my heirloom information with other family members?</h3>
           <div className="faq-answer">
             <p>
-              In the current MVP version, sharing features are limited. However, future updates
-              plan to include family sharing capabilities so multiple family members can contribute
-              to and view the family collection.
+                Currently with the MVP, you cannot share heirlooms but there are plans for future updates with family sharing features for multiple family members to contribute and view the family collection.
             </p>
           </div>
         </div>

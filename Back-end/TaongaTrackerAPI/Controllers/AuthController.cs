@@ -79,11 +79,41 @@ public class AuthController : ControllerBase
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
-
-        if (result.Succeeded) return Ok(new { Message = "User created successfully", UserId = user.Id });
         
-        Console.WriteLine(result.Errors);
-        return BadRequest(result.Errors);
+        if (result.Succeeded) return Ok(new { Message = "User created successfully", UserId = user.Id });
+
+        var errors = new List<string>();
+        foreach (var error in result.Errors)
+        {
+            switch (error.Code)
+            {
+                case "DuplicateUserName":
+                    errors.Add("Username is already in use.");
+                    break;
+                case "DuplicateEmail":
+                    errors.Add("Email is already in use.");
+                    break;
+                case "PasswordTooShort":
+                    errors.Add("Password is too short.");
+                    break;
+                case "PasswordRequiresNonAlphanumeric":
+                    errors.Add("Password must contain at least one non-alphanumeric character.");
+                    break;
+                case "PasswordRequiresDigit":
+                    errors.Add("Password must contain at least one digit.");
+                    break;
+                case "PasswordRequiresUpper":
+                    errors.Add("Password must contain at least one uppercase letter.");
+                    break;
+                case "PasswordRequiresLower":
+                    errors.Add("Password must contain at least one lowercase letter.");
+                    break;
+                default:
+                    errors.Add(error.Description);
+                    break;
+            }
+        }
+        return BadRequest(new { Errors = errors });
     }
     
     [HttpGet("me")]

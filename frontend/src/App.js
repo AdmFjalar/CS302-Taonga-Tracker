@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import LandingPage from "./components/LandingPage";
 import HomePage from "./components/user/HomePage";
 import LoginPage from "./components/auth/LoginPage";
@@ -9,11 +9,11 @@ import SettingsPage from "./components/user/SettingsPage";
 import Sidebar from "./components/ui/SideBar";
 import Header from "./components/ui/Header";
 import Footer from "./components/ui/Footer";
-import AuthHeader from "./components/ui/AuthHeader";
 import FamilyTreePage from "./components/family/FamilyTreePage";
 import AboutPage from "./components/static/AboutPage";
 import TermsPage from "./components/static/TermsPage";
 import FAQPage from "./components/static/FAQPage";
+import AuthHeader from "./components/ui/AuthHeader";
 import "./App.css";
 
 /**
@@ -31,10 +31,10 @@ function App() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         setIsLoggedIn(!!token);
-    }, []);
+    }, [location.pathname]); // Re-check on route changes
 
     // Pages that always show auth layout regardless of login status
-    const alwaysAuthPages = ["/", "/login", "/register"];
+    const alwaysAuthPages = ["/login", "/register"]; // Removed "/" from this list
 
     // Pages that show auth layout when not logged in, but main layout when logged in
     const conditionalPages = ["/about", "/terms", "/faq"];
@@ -42,19 +42,20 @@ function App() {
     const isAlwaysAuthPage = alwaysAuthPages.includes(location.pathname);
     const isConditionalAuthPage = conditionalPages.includes(location.pathname);
     const isLoginOrRegister = ["/login", "/register"].includes(location.pathname);
+    const isRootPath = location.pathname === "/";
 
-    // For login/register pages, or for conditional pages when not logged in
-    const showAuthLayout = isAlwaysAuthPage || (isConditionalAuthPage && !isLoggedIn);
-
-    // Only show auth header on certain pages
-    const showAuthHeader = showAuthLayout;
+    // Show auth layout only for:
+    // 1. Always auth pages (login, register) OR
+    // 2. Conditional pages (about, terms, faq) when user is NOT logged in
+    // 3. Root path when user is NOT logged in
+    const showAuthLayout = isAlwaysAuthPage || (isConditionalAuthPage && !isLoggedIn) || (isRootPath && !isLoggedIn);
 
     if (showAuthLayout) {
         // Authentication pages layout
         return (
             <div className="auth-page-container">
-                {showAuthHeader && (
-                    <AuthHeader showAuthButtons={!isLoginOrRegister} />
+                {(isAlwaysAuthPage || isConditionalAuthPage || isRootPath) && (
+                    <AuthHeader showAuthButtons={true} />
                 )}
                 <div className="auth-content">
                     <Routes>
@@ -78,6 +79,7 @@ function App() {
             <div className="content-wrapper">
                 <Header />
                 <Routes>
+                    <Route path="/" element={<Navigate to="/home" replace />} />
                     <Route path="/home" element={<HomePage />} />
                     <Route path="/heirloom" element={<HeirloomPage />} />
                     <Route path="/family" element={<FamilyTreePage />} />

@@ -1,13 +1,51 @@
 import React, { useEffect, useState } from "react";
+import { differenceInYears, parseISO } from 'date-fns';
 import { ItemView, ItemEdit } from "../heirloom/ItemPages";
 import FamilyMemberEdit from "../family/FamilyMemberEdit";
 import FamilyMemberView from "../family/FamilyMemberView";
 import { getFullImageUrl, toDateInputValue } from "../../services/utils";
-import Button from "../shared/Button";
 import { familyAPI } from "../../services/api";
 import { vaultAPI } from "../../services/api";
-import { HeirloomService } from "../../services/heirloom";
 import "../../styles/user/HomePage.css";
+
+/**
+ * Calculate age based on birth date and possibly death date
+ * @param {string} birthDateStr - Birth date as string
+ * @param {string|null} deathDateStr - Death date as string, or null if still living
+ * @returns {number} - Age in years
+ */
+function calculateAge(birthDateStr, deathDateStr) {
+  try {
+    const birthDate = new Date(birthDateStr);
+
+    // If person is deceased, calculate age at time of death
+    if (deathDateStr) {
+      const deathDate = new Date(deathDateStr);
+      return differenceInYears(deathDate, birthDate);
+    }
+
+    // If person is still living, calculate current age
+    return differenceInYears(new Date(), birthDate);
+  } catch (error) {
+    console.error("Error calculating age:", error);
+    return 0;
+  }
+}
+
+/**
+ * Calculate the age of an heirloom in years
+ * @param {string} creationDateStr - Creation date of the heirloom as string
+ * @returns {number} - Age in years
+ */
+function calculateHeirloomAge(creationDateStr) {
+  try {
+    const creationDate = new Date(creationDateStr);
+    return differenceInYears(new Date(), creationDate);
+  } catch (error) {
+    console.error("Error calculating heirloom age:", error);
+    return 0;
+  }
+}
 
 /**
  * Finds the oldest recorded and oldest living family members.
@@ -131,156 +169,164 @@ const HomePage = () => {
   }
 
   return (
-      <div className="layout">
-        <div className="content-wrapper">
-          {/* Main highlights view */}
-          {!selectedItem && !editingItem && !selectedMember && !editingMember ? (
-              <div className="home-container">
-                <h1 className="home-title">Welcome to Your Family Archive</h1>
-                <div className="highlight-section">
-                  {highlighted.oldest && (
-                      <div
-                          className="highlight-card"
-                          onClick={() => setSelectedMember(highlighted.oldest)}
-                          tabIndex={0}
-                          role="button"
-                          aria-label="View oldest relative"
-                      >
-                        <h2>Oldest Recorded Family Member</h2>
-                        <img
-                            src={getFullImageUrl(highlighted.oldest.profilePictureUrl)}
-                            alt={`${highlighted.oldest.firstName} ${highlighted.oldest.lastName}`}
-                            style={{ width: 120, height: 120, objectFit: "cover", borderRadius: "50%", marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
-                        />
-                        <p>
-                          <b>{highlighted.oldest.firstName} {highlighted.oldest.lastName}</b>
-                        </p>
-                        <p>
-                          Born: {toDateInputValue(highlighted.oldest.dateOfBirth)}
-                          {highlighted.oldest.dateOfDeath && (
-                              <> &ndash; Died: {toDateInputValue(highlighted.oldest.dateOfDeath)}</>
-                          )}
-                        </p>
-                        {highlighted.oldest.relationshipType && (
-                            <p>Relationship: {highlighted.oldest.relationshipType}</p>
+      <div className="home-container">
+        {/* Main highlights view */}
+        {!selectedItem && !editingItem && !selectedMember && !editingMember ? (
+            <>
+              <h1 className="home-title">Welcome to Your Family Archive</h1>
+              <div className="highlight-section">
+                {highlighted.oldest && (
+                    <div
+                        className="highlight-card"
+                        onClick={() => setSelectedMember(highlighted.oldest)}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="View oldest relative"
+                    >
+                      <h2>Oldest Recorded Family Member</h2>
+                      <img
+                          src={getFullImageUrl(highlighted.oldest.profilePictureUrl)}
+                          alt={`${highlighted.oldest.firstName} ${highlighted.oldest.lastName}`}
+                          style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                      />
+                      <p>
+                        <b>{highlighted.oldest.firstName} {highlighted.oldest.lastName}</b>
+                      </p>
+                      <p>
+                        Born: {toDateInputValue(highlighted.oldest.dateOfBirth)}
+                        {highlighted.oldest.dateOfDeath && (
+                            <> &ndash; Deceased: {toDateInputValue(highlighted.oldest.dateOfDeath)}</>
                         )}
-                      </div>
-                  )}
-                  {highlighted.oldestLiving && (
-                      <div
-                          className="highlight-card"
-                          onClick={() => setSelectedMember(highlighted.oldestLiving)}
-                          tabIndex={0}
-                          role="button"
-                          aria-label="View oldest living relative"
-                      >
-                        <h2>Oldest Living Family Member</h2>
-                        <img
-                            src={getFullImageUrl(highlighted.oldestLiving.profilePictureUrl)}
-                            alt={`${highlighted.oldestLiving.firstName} ${highlighted.oldestLiving.lastName}`}
-                            style={{ width: 120, height: 120, objectFit: "cover", borderRadius: "50%", marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
-                        />
-                        <p>
-                          <b>{highlighted.oldestLiving.firstName} {highlighted.oldestLiving.lastName}</b>
-                        </p>
-                        <p>
-                          Born: {toDateInputValue(highlighted.oldestLiving.dateOfBirth)}
-                        </p>
-                        {highlighted.oldestLiving.relationshipType && (
-                            <p>Relationship: {highlighted.oldestLiving.relationshipType}</p>
-                        )}
-                      </div>
-                  )}
-                  {oldestHeirloom && (
-                      <div
-                          className="highlight-card"
-                          onClick={() => setSelectedItem(oldestHeirloom)}
-                          tabIndex={0}
-                          role="button"
-                          aria-label="View oldest heirloom"
-                      >
-                        <h2>Oldest Heirloom</h2>
-                        <img
-                            src={getFullImageUrl(oldestHeirloom.photoUrl)}
-                            alt={oldestHeirloom.title}
-                            style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
-                        />
-                        <p>
-                          <b>{oldestHeirloom.title}</b>
-                        </p>
-                        <p>
-                          Created: {toDateInputValue(oldestHeirloom.creationDate)}
-                        </p>
-                        {oldestHeirloom.estimatedValue && (
-                            <p>Estimated Value: ${oldestHeirloom.estimatedValue}</p>
-                        )}
-                      </div>
-                  )}
-                  {mostValuableHeirloom && (
-                      <div
-                          className="highlight-card"
-                          onClick={() => setSelectedItem(mostValuableHeirloom)}
-                          tabIndex={0}
-                          role="button"
-                          aria-label="View most valuable heirloom"
-                      >
-                        <h2>Most Valuable Heirloom</h2>
-                        <img
-                            src={getFullImageUrl(mostValuableHeirloom.photoUrl)}
-                            alt={mostValuableHeirloom.title}
-                            style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
-                        />
-                        <p>
-                          <b>{mostValuableHeirloom.title}</b>
-                        </p>
-                        {mostValuableHeirloom.estimatedValue && (
-                            <p>Estimated Value: ${mostValuableHeirloom.estimatedValue}</p>
-                        )}
-                        {mostValuableHeirloom.creationDate && (
-                            <p>Created: {toDateInputValue(mostValuableHeirloom.creationDate)}</p>
-                        )}
-                      </div>
-                  )}
-                </div>
+                      </p>
+                      <p>
+                        <strong>Age: {calculateAge(highlighted.oldest.dateOfBirth, highlighted.oldest.dateOfDeath)} years</strong>
+                      </p>
+                      {highlighted.oldest.relationshipType && (
+                          <p>Relationship: {highlighted.oldest.relationshipType}</p>
+                      )}
+                    </div>
+                )}
+                {highlighted.oldestLiving && (
+                    <div
+                        className="highlight-card"
+                        onClick={() => setSelectedMember(highlighted.oldestLiving)}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="View oldest living relative"
+                    >
+                      <h2>Oldest Living Family Member</h2>
+                      <img
+                          src={getFullImageUrl(highlighted.oldestLiving.profilePictureUrl)}
+                          alt={`${highlighted.oldestLiving.firstName} ${highlighted.oldestLiving.lastName}`}
+                          style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                      />
+                      <p>
+                        <b>{highlighted.oldestLiving.firstName} {highlighted.oldestLiving.lastName}</b>
+                      </p>
+                      <p>
+                        Born: {toDateInputValue(highlighted.oldestLiving.dateOfBirth)}
+                      </p>
+                      <p>
+                        <strong>Age: {calculateAge(highlighted.oldestLiving.dateOfBirth)} years</strong>
+                      </p>
+                      {highlighted.oldestLiving.relationshipType && (
+                          <p>Relationship: {highlighted.oldestLiving.relationshipType}</p>
+                      )}
+                    </div>
+                )}
+                {oldestHeirloom && (
+                    <div
+                        className="highlight-card"
+                        onClick={() => setSelectedItem(oldestHeirloom)}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="View oldest heirloom"
+                    >
+                      <h2>Oldest Heirloom</h2>
+                      <img
+                          src={getFullImageUrl(oldestHeirloom.photoUrl)}
+                          alt={oldestHeirloom.title}
+                          style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                      />
+                      <p>
+                        <b>{oldestHeirloom.title}</b>
+                      </p>
+                      <p>
+                        Created: {toDateInputValue(oldestHeirloom.creationDate)}
+                      </p>
+                      <p>
+                        <strong>Age: {calculateHeirloomAge(oldestHeirloom.creationDate)} years</strong>
+                      </p>
+                      {oldestHeirloom.estimatedValue && (
+                          <p>Estimated Value: ${oldestHeirloom.estimatedValue}</p>
+                      )}
+                    </div>
+                )}
+                {mostValuableHeirloom && (
+                    <div
+                        className="highlight-card"
+                        onClick={() => setSelectedItem(mostValuableHeirloom)}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="View most valuable heirloom"
+                    >
+                      <h2>Most Valuable Heirloom</h2>
+                      <img
+                          src={getFullImageUrl(mostValuableHeirloom.photoUrl)}
+                          alt={mostValuableHeirloom.title}
+                          style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                      />
+                      <p>
+                        <b>{mostValuableHeirloom.title}</b>
+                      </p>
+                      {mostValuableHeirloom.estimatedValue && (
+                          <p>Estimated Value: <strong><i>${mostValuableHeirloom.estimatedValue}</i></strong></p>
+                      )}
+                      {mostValuableHeirloom.creationDate && (
+                          <p>Created: {toDateInputValue(mostValuableHeirloom.creationDate)}</p>
+                      )}
+                    </div>
+                )}
               </div>
-          ) : editingItem ? (
-              <ItemEdit
-                  initialItem={editingItem}
-                  onSave={handleEditSave}
-                  navigateTo={() => {
-                    setEditingItem(null);
-                    setSelectedItem(editingItem);
-                  }}
-              />
-          ) : selectedItem ? (
-              <ItemView
-                  item={selectedItem}
-                  onBack={() => setSelectedItem(null)}
-                  onEdit={() => {
-                    setEditingItem(selectedItem);
-                  }}
-              />
-          ) : editingMember ? (
-              <FamilyMemberEdit
-                  initialMember={editingMember}
-                  familyMembers={familyMembers}
-                  onSave={handleMemberSave}
-                  onCancel={() => {
-                    setEditingMember(null);
-                    setSelectedMember(editingMember);
-                  }}
-              />
-          ) : selectedMember ? (
-              <FamilyMemberView
-                  member={selectedMember}
-                  familyMembers={familyMembers}
-                  onBack={() => setSelectedMember(null)}
-                  onEdit={() => setEditingMember(selectedMember)}
-              />
-          ) : null}
-        </div>
+            </>
+        ) : editingItem ? (
+            <ItemEdit
+                initialItem={editingItem}
+                onSave={handleEditSave}
+                navigateTo={() => {
+                  setEditingItem(null);
+                  setSelectedItem(editingItem);
+                }}
+            />
+        ) : selectedItem ? (
+            <ItemView
+                item={selectedItem}
+                onBack={() => setSelectedItem(null)}
+                onEdit={() => {
+                  setEditingItem(selectedItem);
+                }}
+            />
+        ) : editingMember ? (
+            <FamilyMemberEdit
+                initialMember={editingMember}
+                familyMembers={familyMembers}
+                onSave={handleMemberSave}
+                onCancel={() => {
+                  setEditingMember(null);
+                  setSelectedMember(editingMember);
+                }}
+            />
+        ) : selectedMember ? (
+            <FamilyMemberView
+                member={selectedMember}
+                familyMembers={familyMembers}
+                onBack={() => setSelectedMember(null)}
+                onEdit={() => setEditingMember(selectedMember)}
+            />
+        ) : null}
       </div>
   );
 };
 
 export default HomePage;
+

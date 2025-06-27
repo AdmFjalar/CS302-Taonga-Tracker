@@ -1,0 +1,65 @@
+/* Color variables for the entire application */
+
+:root {
+  /* Primary Colors - Green tones for main brand identity */
+  --color-primary-100: #f6f9f3;      /* Lightest green, used for backgrounds */
+  --color-primary-200: #e3e9dc;      /* Light green for hover states and soft elements */
+  --color-primary-300: #d1dbc7;      /* Medium-light green */
+  --color-primary-400: #7c9a7a;      /* Medium green for accents and secondary elements */
+  --color-primary-500: #4a5240;      /* Medium-dark green */
+  --color-primary-600: #2e4d2a;      /* Darker green for hover states */
+  --color-primary-700: #1e321c;      /* Darkest green for buttons and important elements */
+
+  /* Secondary Colors - Earth tones for warmth and heritage feel */
+  --color-secondary-100: #fffbe9;    /* Lightest cream, used for backgrounds */
+  --color-secondary-200: #e3e7d3;    /* Light cream for highlighting */
+  --color-secondary-300: #bcb88a;    /* Medium beige for borders and separators */
+  --color-secondary-400: #a2a078;    /* Medium-dark beige for accents */
+  --color-secondary-500: #6b5843;    /* Brown for headings and special elements */
+
+  /* Neutral Colors */
+  --color-neutral-white: #ffffff;    /* White */
+  --color-neutral-100: #f5f5f5;      /* Off-white */
+  --color-neutral-200: #e5e5e5;      /* Light gray */
+  --color-neutral-300: #d4d4d4;      /* Medium light gray */
+  --color-neutral-400: #a3a3a3;      /* Medium gray */
+  --color-neutral-500: #737373;      /* Medium dark gray */
+  --color-neutral-600: #525252;      /* Dark gray */
+  --color-neutral-700: #404040;      /* Very dark gray */
+  --color-neutral-800: #222222;      /* Nearly black */
+  --color-neutral-900: #171717;      /* Black */
+
+  /* Semantic Colors */
+  --color-success: #28a745;          /* Success green */
+  --color-warning: #ffc107;          /* Warning yellow/amber */
+  --color-error: #dc3545;            /* Error red */
+  --color-error-dark: #a94442;       /* Dark error red for hover states */
+  --color-info: #17a2b8;             /* Info blue */
+
+  /* Specific UI Colors */
+  --color-shadow-light: rgba(30, 50, 28, 0.08);    /* Light shadows */
+  --color-shadow-medium: rgba(30, 50, 28, 0.10);   /* Medium shadows */
+  --color-shadow-dark: rgba(30, 50, 28, 0.16);     /* Dark shadows */
+  --color-overlay: rgba(30, 50, 28, 0.18);         /* Modal overlays */
+
+  /* Gradient Colors */
+  --gradient-primary: linear-gradient(135deg, var(--color-primary-100), var(--color-primary-200), var(--color-secondary-200), var(--color-secondary-300));
+
+  /* Gradient Component Colors - For creating complex gradients */
+  --gradient-spot-light-1: rgba(240, 245, 235, 0.7);  /* Lighter version */
+  --gradient-spot-light-2: rgba(230, 240, 225, 0.7);  /* Lighter version */
+  --gradient-spot-medium-1: rgba(220, 218, 180, 0.4); /* Lighter version */
+  --gradient-spot-medium-2: rgba(200, 198, 160, 0.5); /* Lighter version */
+
+  /* Enhanced Gradient Component Colors */
+  --gradient-enhanced-light-1: rgba(245, 248, 240, 0.9); /* Lighter version */
+  --gradient-enhanced-light-2: rgba(240, 246, 235, 0.8); /* Lighter version */
+  --gradient-enhanced-medium-1: rgba(235, 242, 225, 0.85); /* Lighter version */
+  --gradient-enhanced-medium-2: rgba(210, 205, 150, 0.8); /* Lighter version */
+  --gradient-enhanced-dark-1: rgba(180, 178, 140, 0.9);   /* Lighter version */
+  --gradient-enhanced-dark-2: rgba(170, 168, 120, 0.75);  /* Lighter version */
+
+  /* UI Component Colors */
+  --color-background-translucent: rgba(255, 255, 255, 0.2);
+  --color-background-translucent-focus: rgba(255, 255, 255, 0.3);
+}

@@ -1,8 +1,8 @@
 .familytree-container {
-    background: #f6f9f3;
+    background: var(--color-secondary-100);
     min-height: 100vh;
     width: 100%;
-    font-family: Georgia, serif;
+    font-family: var(--font-primary);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -10,13 +10,12 @@
 }
 
 .familytree-treearea {
-    /* Remove max-width for full width, keep min-height and padding */
     width: 100%;
     min-height: 600px;
     height: 100%;
-    background: #fffbe9;
+    background: var(--color-secondary-100);
     border-radius: 18px;
-    box-shadow: 0 4px 24px 0 rgba(30,50,28,0.10), 0 1.5px 4px 0 rgba(30,50,28,0.08);
+    box-shadow: 0 4px 24px 0 var(--color-shadow-medium), 0 1.5px 4px 0 var(--color-shadow-light);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -27,7 +26,6 @@
 
 .familytree-treeheader {
     width: 90%;
-    /* Remove max-width for flexibility */
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -40,8 +38,8 @@
 .familytree-treeheader h1 {
     text-align: center;
     font-size: 2.2rem;
-    font-family: "Young Serif", Georgia, serif;
-    color: #273520;
+    font-family: var(--font-secondary);
+    color: var(--color-primary-500);
     margin: 0;
     width: auto;
 }
@@ -49,7 +47,7 @@
 .family-modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(30,50,28,0.18);
+    background: var(--color-overlay);
     z-index: 2000;
     display: flex;
     align-items: center;
@@ -57,9 +55,9 @@
 }
 
 .family-modal {
-    background: #fffbe9;
+    background: var(--color-secondary-100);
     border-radius: 18px;
-    box-shadow: 0 8px 32px 0 rgba(30,50,28,0.16), 0 2px 8px 0 rgba(30,50,28,0.10);
+    box-shadow: 0 8px 32px 0 var(--color-shadow-dark), 0 2px 8px 0 var(--color-shadow-medium);
     padding: 2.5rem 2.2rem 2rem 2.2rem;
     min-width: 370px;
     max-width: 95vw;
@@ -82,26 +80,26 @@
     height: 90px;
     object-fit: cover;
     border-radius: 12px;
-    background: #e3e7d3;
-    border: 1.5px solid #bcb88a;
+    background: var(--color-secondary-200);
+    border: 1.5px solid var(--color-secondary-300);
 }
 
 .family-modal-rel {
     font-size: 1.1rem;
-    color: #7c9a7a;
+    color: var(--color-primary-400);
     margin-top: 0.2rem;
 }
 
 .family-modal-dob {
     font-size: 1rem;
-    color: #bcb88a;
+    color: var(--color-secondary-300);
     margin-top: 0.1rem;
 }
 
 .family-modal-details {
-    font-size: 1.05rem;
-    color: #273520;
-    background: #f6f9f3;
+    font-size: var(--text-md);
+    color: var(--color-primary-500);
+    background: var(--color-primary-100);
     border-radius: 10px;
     padding: 1rem 1.2rem;
     margin-bottom: 0.5rem;
@@ -136,10 +134,10 @@
     flex: 1;
     padding: 0.25rem 0.5rem;
     font-size: 1rem;
-    border: 1px solid #bcb88a;
+    border: 1px solid var(--color-secondary-300);
     border-radius: 6px;
-    background: #fff;
-    font-family: Georgia, serif;
+    background: var(--color-neutral-white);
+    font-family: var(--font-primary);
 }
 
 .family-form select[multiple] {
@@ -147,32 +145,32 @@
 }
 
 .family-form .error-text {
-    color: #b94a48;
+    color: var(--color-error);
     font-size: 1rem;
     margin-bottom: 0.5rem;
 }
 
 .auth-button {
-    background-color: #1e321c;
-    color: white;
+    background-color: var(--color-primary-700);
+    color: var(--color-neutral-white);
     border: none;
     border-radius: 9999px;
     font-weight: bold;
     font-size: 1rem;
     padding: 0.5rem 1.5rem;
-    box-shadow: 2px 2px 0 #7c9a7a;
+    box-shadow: 2px 2px 0 var(--color-primary-400);
     cursor: pointer;
     transition: background 0.2s ease;
     max-width: max-content;
 }
 
 .auth-button:hover {
-    background-color: #2e4d2a;
+    background-color: var(--color-primary-600);
 }
 
 .auth-button.delete {
-    background: #b94a48;
-    color: #fff;
+    background: var(--color-error);
+    color: var(--color-neutral-white);
 }
 
 .auth-button.delete:hover {
@@ -197,7 +195,7 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 2;
-    background: #bcb88a;
+    background: var(--color-secondary-300);
     border: none;
     border-radius: 50%;
     width: 28px;
@@ -207,7 +205,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 4px 0 rgba(30,50,28,0.10);
+    box-shadow: 0 1px 4px 0 var(--color-shadow-light);
 }
 
 /* Show plus buttons on hover or focus */
@@ -228,7 +226,7 @@
 
 /* Highlighted ancestor/descendant edge */
 .highlighted-edge path {
-    stroke: #2e4d2a !important;
+    stroke: var(--color-primary-600) !important;
     stroke-width: 4 !important;
 }
 
@@ -236,12 +234,12 @@
 .spouse-edge path {
     stroke-dasharray: 6, 6;
     stroke-width: 3px;
-    stroke: #7c9a7a !important;
+    stroke: var(--color-primary-400) !important;
 }
 
 .spouse-edge.highlighted-edge path,
 .highlighted-edge.spouse-edge path {
-    stroke: #2e4d2a !important;
+    stroke: var(--color-primary-600) !important;
     stroke-dasharray: 6, 6;
     stroke-width: 4 !important;
 }
@@ -252,7 +250,7 @@
 }
 
 .highlighted-node {
-    box-shadow: 0 0 0 3px #2e4d2a, 0 4px 10px rgba(30, 50, 28, 0.3) !important;
+    box-shadow: 0 0 0 3px var(--color-primary-600), 0 4px 10px var(--color-shadow-medium) !important;
     z-index: 10;
 }
 

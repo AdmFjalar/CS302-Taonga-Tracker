@@ -1,10 +1,11 @@
 .footer {
-  background-color: #222;
-  color: #fff;
+  background-color: var(--color-neutral-800);
+  color: var(--color-neutral-white);
   padding: 2rem 0 1rem;
   margin-top: auto; /* Push footer to bottom on short pages */
   width: 100%;
   flex-shrink: 0; /* Prevent footer from shrinking */
+  font-family: var(--font-primary);
 }
 
 .footer-content {
@@ -24,9 +25,10 @@
 }
 
 .footer-section h4 {
-  font-size: 1.2rem;
+  font-size: var(--text-md);
   margin-bottom: 1rem;
-  color: #f5f5f5;
+  color: var(--color-neutral-100);
+  font-weight: var(--weight-semibold);
   position: relative;
   padding-bottom: 0.5rem;
 }
@@ -38,7 +40,7 @@
   bottom: 0;
   width: 50px;
   height: 2px;
-  background-color: #4CAF50;
+  background-color: var(--color-primary-400);
 }
 
 .footer-section ul {
@@ -51,23 +53,23 @@
 }
 
 .footer-section a, .footer-bottom a {
-  color: #ccc;
+  color: var(--color-neutral-300);
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
 .footer-section a:hover, .footer-bottom a:hover {
-  color: #4CAF50;
+  color: var(--color-primary-400);
   text-decoration: underline;
 }
 
 .footer-bottom {
   text-align: center;
   padding-top: 1rem;
-  border-top: 1px solid #444;
+  border-top: 1px solid var(--color-neutral-600);
   margin-top: 1rem;
-  font-size: 0.9rem;
-  color: #aaa;
+  font-size: var(--text-sm);
+  color: var(--color-neutral-400);
 }
 
 /* For the main layout, offset the left side to account for sidebar */

@@ -12,20 +12,16 @@ const AboutPage = () => {
       <h1>About Taonga Tracker</h1>
 
       <section className="about-section">
-        <h2>Our Mission</h2>
+        <h2>Our Purpose</h2>
         <p>
-          Taonga Tracker was developed with a mission to help families preserve their heritage,
-          history, and heirlooms for generations to come. Our platform provides a secure and
-          organized way to document your family's treasured possessions, stories, and connections.
+            Taonga Tracker was designed with the purpose of assisting families preserving their heritage, history, or heirlooms for future generations. The platform offers a safe and organized method for documenting a family's treasured items and the stories, people, and connections that surround them.
         </p>
       </section>
 
       <section className="about-section">
         <h2>University Project</h2>
         <p>
-          This application was developed as a Minimum Viable Product (MVP) for a CS302 university
-          project. It demonstrates the core functionality of a heritage tracking system, but is not
-          intended for commercial use in its current state.
+            This application was developed as a Minimum Viable Product (MVP) for a university project for CS302. The application only demonstrates the core functionality of a heritage tracking system and is not commercial in its current state.
         </p>
       </section>
 
@@ -33,16 +29,13 @@ const AboutPage = () => {
         <h2>Features</h2>
         <ul className="feature-list">
           <li>
-            <strong>Heirloom Tracking:</strong> Document and catalog your family treasures with photos,
-            descriptions, histories, and ownership details.
+            <p><strong>Heirloom Tracking:</strong> Collect and document family heirlooms by pictures, descriptions, histories, and ownership.</p>
           </li>
           <li>
-            <strong>Family Tree:</strong> Create and manage your family connections to track heirloom
-            provenance and heritage.
+            <p><strong>Family Tree:</strong> Create and manage your family connections to understand heirloom provenance and heritage.</p>
           </li>
           <li>
-            <strong>Secure Accounts:</strong> Personal accounts ensure your family's information
-            remains private and accessible only to you.
+            <p><strong>Secure Accounts:</strong> Personal account information ensures that no one sees unless you want them to see it.</p>
           </li>
         </ul>
       </section>
@@ -50,18 +43,14 @@ const AboutPage = () => {
       <section className="about-section">
         <h2>Development Team</h2>
         <p>
-          Taonga Tracker was developed by a team of dedicated computer science students as part of
-          their coursework in CS302. The team focused on creating a functional, user-friendly
-          application that demonstrates software engineering principles and best practices.
+            Taonga Tracker was developed by a dedicated group of university computer science students for course work in CS302. Collectively we decided to focus on developing a functional, easy-to-use application that demonstrates the concepts and best practices in software engineering.
         </p>
       </section>
 
       <section className="about-section">
         <h2>Future Development</h2>
         <p>
-          While Taonga Tracker is currently an MVP, there are many planned enhancements including
-          improved security features, expanded storage options, advanced search capabilities, and
-          integration with genealogy services.
+            Although taonga tracker is a Minimum Viable Product (MVP), it has a lot of planned improvements, including new security, larger storage, improved search capabilities, and the linking of genealogy services.
         </p>
       </section>
     </div>

@@ -1,17 +1,16 @@
 .settings-layout-sleek {
   padding: 2.5rem 0;
-  background-color: #f6f9f3;
-  font-family: Georgia, serif;
-  min-height: 100vh;
+  background: var(--color-secondary-100);
+  font-family: var(--font-primary);
   display: flex;
   justify-content: center;
 }
 
 .settings-main-sleek {
-  background: #fff;
+  background: var(--color-secondary-100);
   padding: 2.5rem 2.5rem 2rem 2.5rem;
   border-radius: 1.2rem;
-  box-shadow: 0 4px 18px rgba(30, 50, 28, 0.10);
+  box-shadow: 0 4px 18px var(--color-shadow-medium);
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
@@ -21,32 +20,33 @@
 }
 
 .settings-main-sleek h1 {
-  font-size: 2rem;
-  color: #273520;
-  border-bottom: 2px solid #bcb88a;
+  font-size: var(--text-3xl);
+  color: var(--color-primary-500);
+  border-bottom: 2px solid var(--color-secondary-300);
   padding-bottom: 0.7rem;
   margin-bottom: 1.5rem;
-  font-family: Georgia, serif;
+  font-family: var(--font-secondary);
   letter-spacing: 0.5px;
 }
 
 .settings-section-sleek {
-  background-color: #e3e7d3;
+  /*background-color: var(--color-secondary-200);*/
   padding: 2rem 1.5rem;
-  border: 1px solid #bcb88a;
+  border: 1px solid var(--color-secondary-300);
   border-radius: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  box-shadow: 0 2px 8px rgba(188, 184, 138, 0.08);
+  box-shadow: 0 2px 8px var(--color-shadow-light);
+  margin: 2rem 0;
 }
 
 .settings-section-sleek h2 {
   margin: 0 0 1.2rem;
-  color: #1e321c;
-  font-size: 1.25rem;
+  color: var(--color-primary-700);
+  font-size: var(--text-lg);
   text-decoration: underline;
-  font-family: Georgia, serif;
+  font-family: var(--font-secondary);
 }
 
 .settings-profile-row {
@@ -68,10 +68,10 @@
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #1e321c;
-  background: #fff;
+  border: 3px solid var(--color-primary-700);
+  background: var(--color-neutral-white);
   margin-bottom: 0.7rem;
-  box-shadow: 0 2px 8px rgba(30, 50, 28, 0.10);
+  box-shadow: 0 2px 8px var(--color-shadow-medium);
 }
 
 .settings-avatar-large img {
@@ -80,7 +80,7 @@
   object-fit: cover;
   object-position: center;
   border-radius: 50%;
-  background: #e3e7d3;
+  background: var(--color-secondary-200);
   display: block;
 }
 
@@ -104,32 +104,32 @@
   width: 120px;
   display: inline-block;
   text-align: left;
-  font-weight: bold;
-  color: #1e321c;
-  font-family: Georgia, serif;
+  font-weight: var(--weight-bold);
+  color: var(--color-primary-700);
+  font-family: var(--font-primary);
 }
 
 .form-row input,
 .form-row select {
   flex: 1;
   padding: 0.4rem 0.7rem;
-  font-size: 1rem;
-  border: 1px solid #bcb88a;
+  font-size: var(--text-base);
+  border: 1px solid var(--color-secondary-300);
   border-radius: 0.5rem;
-  background: #fff;
-  font-family: Georgia, serif;
+  background: var(--color-neutral-white);
+  font-family: var(--font-primary);
   transition: border 0.2s;
 }
 
 .form-row input:focus,
 .form-row select:focus {
-  border-color: #1e321c;
+  border-color: var(--color-primary-700);
   outline: none;
 }
 
 .settings-readonly {
-  color: #888;
-  font-family: Georgia, serif;
+  color: var(--color-neutral-500);
+  font-family: var(--font-primary);
   background: none;
   border: none;
   padding: 0.4rem 0;
@@ -142,21 +142,48 @@
 }
 
 .auth-button {
-  background-color: #1e321c;
-  color: white;
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
   border: none;
   border-radius: 9999px;
-  font-weight: bold;
-  font-size: 1rem;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
   padding: 0.6rem 1.5rem;
-  box-shadow: 2px 2px 0 #7c9a7a;
+  box-shadow: 2px 2px 0 var(--color-primary-400);
   cursor: pointer;
   transition: background 0.2s;
   max-width: max-content;
 }
 
 .auth-button:hover {
-  background-color: #2e4d2a;
+  background-color: var(--color-primary-600);
+}
+
+.settings-content {
+  padding: 2.5rem;
+  background-color: var(--color-primary-100);
+  font-family: var(--font-primary);
+  min-height: calc(100vh - 160px); /* Adjusted for header/footer */
+  width: 100%;
+}
+
+.settings-container {
+  padding: 2rem;
+  background: var(--color-secondary-100);
+  min-height: 92vh;
+}
+
+/* Ensure settings content displays correctly */
+.settings-layout-sleek {
+  display: block !important; /* Override any flex settings */
+  padding: 0 !important;
+  background: none !important;
+  min-height: 0 !important;
+}
+
+.settings-main-sleek {
+  margin: 0 auto;
+  max-width: 600px;
 }
 
 @media (max-width: 700px) {

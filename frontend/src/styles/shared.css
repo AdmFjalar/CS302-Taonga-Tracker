@@ -3,39 +3,63 @@
  * This contains common elements like buttons, forms, and layout primitives
  */
 
-/* --- Color Variables --- */
+/* --- Global UX Improvements --- */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Improved focus states for accessibility */
+:focus {
+  outline: 3px solid var(--color-primary-300);
+  outline-offset: 2px;
+  transition: outline-offset 0.1s ease;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Selection style for better visual feedback */
+::selection {
+  background: var(--color-secondary-200);
+  color: var(--color-primary-700);
+}
+
+/* --- Legacy Color Variables (These should be removed once all files reference colors.css variables) --- */
 :root {
   /* Primary colors */
-  --color-primary: #1e321c;
-  --color-primary-hover: #2e4d2a;
-  --color-primary-light: #7c9a7a;
+  --color-primary: var(--color-primary-700);
+  --color-primary-hover: var(--color-primary-600);
+  --color-primary-light: var(--color-primary-400);
 
   /* Secondary colors */
-  --color-secondary: #bcb88a;
-  --color-secondary-light: #e3e7d3;
+  --color-secondary: var(--color-secondary-300);
+  --color-secondary-light: var(--color-secondary-200);
 
   /* Background colors */
-  --color-bg-main: #f6f9f3;
-  --color-bg-card: #fffbe9;
+  --color-bg-main: var(--color-primary-100);
+  --color-bg-card: var(--color-secondary-100);
 
   /* Text colors */
-  --color-text: #273520;
-  --color-text-light: #888;
-  --color-text-error: #b94a48;
+  --color-text: var(--color-primary-500);
+  --color-text-light: var(--color-neutral-500);
+  --color-text-error: var(--color-error);
 
   /* Status colors */
-  --color-error: #b94a48;
-  --color-error-hover: #a94442;
+  --color-error: var(--color-error);
+  --color-error-hover: var(--color-error-dark);
 
   /* Font families */
-  --font-primary: Georgia, serif;
-  --font-heading: "Young Serif", Georgia, serif;
+  --font-primary: var(--font-primary);
+  --font-heading: var(--font-secondary);
 }
 
 /* --- Typography --- */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
-  color: var(--color-text);
+  font-family: var(--font-secondary);
+  color: var(--color-primary-500);
   margin-top: 0;
 }
 
@@ -47,16 +71,42 @@ body, input, button, select, textarea {
 .btn {
   border: none;
   border-radius: 9999px;
-  font-weight: bold;
-  font-size: 1rem;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
   padding: 0.5rem 1.5rem;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition: all 0.2s ease;
   max-width: max-content;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background-color: var(--color-background-translucent);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.5s, height 0.5s;
+  z-index: 0;
+}
+
+.btn:hover:before {
+  width: 300%;
+  height: 300%;
+}
+
+.btn > * {
+  position: relative;
+  z-index: 1;
 }
 
 .btn:disabled {
@@ -72,7 +122,8 @@ body, input, button, select, textarea {
 
 .btn-primary:hover:not(:disabled) {
   background-color: var(--color-primary-hover);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0 var(--color-primary-light);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -127,6 +178,7 @@ body, input, button, select, textarea {
   text-align: left;
   font-weight: bold;
   color: var(--color-text);
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .form-row input,
@@ -139,7 +191,14 @@ body, input, button, select, textarea {
   border-radius: 6px;
   background: white;
   font-family: var(--font-primary);
-  transition: border 0.2s;
+  transition: all 0.3s ease;
+}
+
+.form-row input:hover,
+.form-row select:hover,
+.form-row textarea:hover {
+  box-shadow: 0 2px 5px rgba(30, 50, 28, 0.1);
+  border-color: #a5a27a;
 }
 
 .form-row input:focus,
@@ -147,7 +206,15 @@ body, input, button, select, textarea {
 .form-row textarea:focus {
   border-color: var(--color-primary);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(30, 50, 28, 0.1);
+  box-shadow: 0 0 0 3px rgba(30, 50, 28, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-row input:focus + label,
+.form-row select:focus + label,
+.form-row textarea:focus + label {
+  color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 .form-column {
@@ -160,12 +227,30 @@ body, input, button, select, textarea {
 .form-column label {
   font-weight: bold;
   color: var(--color-text);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.form-column input:focus + label,
+.form-column select:focus + label,
+.form-column textarea:focus + label {
+  color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 .error-text {
   color: var(--color-error);
   font-size: 0.9rem;
   margin-top: 0.25rem;
+  opacity: 0;
+  transform: translateY(-5px);
+  animation: fadeInUp 0.3s forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* --- Layout Primitives --- */
@@ -232,6 +317,39 @@ body, input, button, select, textarea {
   .form-row b, .form-row label {
     width: 100%;
     margin-bottom: 0.25rem;
+  }
+}
+
+.auth-content {
+  min-height: 92vh;
+}
+
+.auth-page-container {
+  background: linear-gradient(135deg, #e3e9dc, #d1dbc7, #bcb88a, #a2a078);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-page-container::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(227, 233, 220, 0.6), transparent 40%),
+    radial-gradient(circle at 70% 70%, rgba(209, 219, 199, 0.6), transparent 40%);
+  z-index: -1;
+  animation: rotate-gradient 2s linear infinite;
+}
+
+@keyframes rotate-gradient {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 

@@ -27,9 +27,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     {
         options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireUppercase = false;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequireUppercase = true;
         options.Password.RequireLowercase = true;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
         options.Lockout.MaxFailedAccessAttempts = 5;
@@ -75,10 +75,14 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped<INeo4jService, Neo4jService>();
 
+builder.WebHost.ConfigureKestrel((context, options) =>
+{
+    options.Configure(context.Configuration.GetSection("Kestrel"));
+});
+
 var app = builder.Build();
 
 app.UseCors("AllowAll");
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles();

@@ -1,13 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
-
 .sidebar {
   width: fit-content;
-  background-color: #f6f9f3;
+  background-color: var(--color-primary-100);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-right: #1e321c 1.5px solid;
+  border-right: var(--color-primary-700) 1.5px solid;
   position: fixed;
   top: 0;
   left: 0;
@@ -18,10 +16,10 @@
 }
 
 .sidebar-title {
-  font-family: "Young Serif", serif;
-  font-size: 1.9rem;
-  font-weight: bold;
-  color: #273520;
+  font-family: var(--font-secondary);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-primary-500);
   margin-bottom: 11.8rem;
   width: auto;
 }
@@ -30,9 +28,9 @@
   display: flex;
   flex-direction: column;
   gap: 2.7rem;
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #273520;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-primary-500);
 }
 
 .nav-link {
@@ -45,14 +43,14 @@
 }
 
 .signout-button {
-  background-color: #1e321c;
-  color: white;
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
   border-radius: 9999px;
   padding: 0.5rem 1.5rem;
-  font-size: 1.125rem;
+  font-size: var(--text-md);
   transition: background 0.2s ease;
 }
 
 .signout-button:hover {
-  background-color: #2e4d2a;
+  background-color: var(--color-primary-600);
 }

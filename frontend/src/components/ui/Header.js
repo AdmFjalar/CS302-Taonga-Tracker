@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getFullImageUrl } from "../../services/utils";
 import { authAPI } from "../../services/api";
 import "../../styles/ui/Header.css";
@@ -37,10 +37,10 @@ const Header = () => {
 
     return (
         <header className="header">
-            <button className="trial-button">Start Free Trial</button>
+            <h1 className="logo"><Link to="/home">Taonga Tracker</Link></h1>
             <div className="header-icons">
-                <span className="icon" aria-label="Messages">💬</span>
-                <span className="icon" aria-label="Notifications">🔔</span>
+                {/*<span className="icon" aria-label="Messages">💬</span>*/}
+                {/*<span className="icon" aria-label="Notifications">🔔</span>*/}
                 <img
                     src={getFullImageUrl(profilePictureUrl)}
                     alt="User Avatar"
