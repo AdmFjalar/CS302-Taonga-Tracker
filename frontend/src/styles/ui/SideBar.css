@@ -1,18 +1,22 @@
 .sidebar {
   width: fit-content;
-  background-color: var(--color-primary-100);
+  background-color: transparent; /* Made transparent */
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-right: var(--color-primary-700) 1.5px solid;
-  position: fixed;
-  top: 0;
+  position: sticky;
+  top: 80px; /* Distance from viewport top when stuck at header */
+  bottom: 80px; /* Distance from viewport bottom when stuck at footer */
   left: 0;
-  bottom: 0;
+  height: calc(100vh - 160px); /* Available height between constraints */
+  max-height: calc(100vh - 160px);
   overflow-y: auto;
-  height: 100vh;
   z-index: 1000;
+  pointer-events: auto; /* Re-enable pointer events for sidebar itself */
+  align-self: flex-start; /* Important: makes sticky behavior work properly */
+  float: left; /* This helps with the sticky behavior */
+  margin-right: -200px; /* Negative margin to not affect layout flow */
 }
 
 .sidebar-title {

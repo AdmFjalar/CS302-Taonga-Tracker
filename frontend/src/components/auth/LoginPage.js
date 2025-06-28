@@ -3,6 +3,8 @@ import "../../styles/auth/AuthPage.css";
 import { Link, useNavigate } from "react-router-dom";
 import { authAPI } from "../../services/api";
 import { STORAGE_KEYS } from "../../services/constants";
+import { tokenManager, validator, rateLimiter } from "../../services/security";
+import { gdprManager } from "../../services/gdpr";
 
 /**
  * LoginPage component handles user authentication.
@@ -35,23 +37,45 @@ const LoginPage = () => {
     setError(null);
 
     try {
+      // Rate limiting check
+      if (!rateLimiter.isAllowed('login', 5, 300000)) { // 5 attempts per 5 minutes
+        throw new Error("Too many login attempts. Please try again in 5 minutes.");
+      }
+
       // Validate form
       if (!credentials.emailOrUserName || !credentials.password) {
         throw new Error("Please enter both username/email and password");
       }
 
+      // Sanitize inputs
+      const sanitizedCredentials = {
+        emailOrUserName: validator.sanitizeInput(credentials.emailOrUserName.trim()),
+        password: credentials.password // Don't sanitize password as it may contain special chars
+      };
+
       // Call authentication API
       const data = await authAPI.login(
-        credentials.emailOrUserName,
-        credentials.password
+        sanitizedCredentials.emailOrUserName,
+        sanitizedCredentials.password
       );
 
-      // Store token and redirect
-      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+      // Use secure token management
+      tokenManager.setToken(data.token, data.expiresIn || 3600);
       localStorage.setItem(STORAGE_KEYS.USER_ID, data.userId);
+
+      // Dispatch login event to reset logout flag
+      window.dispatchEvent(new CustomEvent('userLogin'));
+
+      // Record GDPR processing activity
+      gdprManager.recordProcessingActivity(
+        'User login',
+        'Contract',
+        { userId: data.userId, loginTime: new Date().toISOString() }
+      );
+
       navigate("/home");
-    } catch (err) {
-      setError(err.message || "Login failed. Please check your credentials.");
+    } catch (error) {
+      setError(error.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }

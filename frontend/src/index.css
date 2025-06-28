@@ -19,5 +19,62 @@ h1, h2, h3, h4, h5, h6, .heading-font {
 html, body, #root {
   height: 100%;
   width: 100%;
-  background-color: var(--color-primary-100);
+}
+
+/* Animated gradient background on body - improved coverage with vibrant colors */
+body {
+  position: relative;
+  background: var(--color-secondary-100);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 30% 30%, var(--gradient-vibrant-green), transparent 40%),
+    radial-gradient(circle at 70% 70%, var(--gradient-warm-beige), transparent 40%),
+    radial-gradient(ellipse at 20% 80%, var(--gradient-heritage-brown), transparent 50%);
+  will-change: transform;
+  animation: moveGradient 30s ease-in-out infinite alternate;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 40% 60%, var(--gradient-accent-green), transparent 50%),
+    radial-gradient(ellipse at 60% 30%, var(--gradient-soft-cream), transparent 45%),
+    radial-gradient(circle at 80% 20%, var(--gradient-highlight-green), transparent 35%);
+  will-change: transform;
+  animation: moveGradient 25s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes moveGradient {
+  0% {
+    transform: translate(-5%, -5%) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(2%, -8%) rotate(45deg) scale(1.05);
+  }
+  50% {
+    transform: translate(-2%, 5%) rotate(90deg) scale(0.95);
+  }
+  75% {
+    transform: translate(5%, 2%) rotate(135deg) scale(1.02);
+  }
+  100% {
+    transform: translate(-3%, -3%) rotate(180deg) scale(1);
+  }
 }

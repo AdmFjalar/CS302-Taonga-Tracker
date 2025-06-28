@@ -5,6 +5,7 @@ import { getFullImageUrl, toDateInputValue } from "../../services/utils";
 import FamilyMemberView from "./FamilyMemberView";
 import FamilyMemberEdit from "./FamilyMemberEdit";
 import FamilyMemberAdd from "./FamilyMemberAdd";
+import LoadingScreen from "../ui/LoadingScreen";
 import Button from "../shared/Button";
 import { FamilyService } from "../../services/family";
 import { authAPI } from "../../services/api";
@@ -862,15 +863,20 @@ const FamilyTreePage = () => {
     // Highlight nodes for lineage relationships
     const highlightedNodes = getHighlightedNodes(nodes, hoveredNodeId, lineageIds);
 
+    // Show loading screen while fetching data
     if (loading) {
-        return <div className="familytree-container">Loading family tree...</div>;
+        return <LoadingScreen message="Building your family tree..." />;
     }
 
+    // Show error state
     if (error) {
         return (
             <div className="familytree-container">
-                <p className="error-message">Error: {error}</p>
-                <Button onClick={fetchMembers}>Retry</Button>
+                <div className="error-container">
+                    <h2>Error Loading Family Tree</h2>
+                    <p>{error}</p>
+                    <Button onClick={fetchMembers}>Try Again</Button>
+                </div>
             </div>
         );
     }

@@ -6,42 +6,69 @@ import LoginPage from "./components/auth/LoginPage";
 import RegisterPage from "./components/auth/RegisterPage";
 import HeirloomPage from "./components/heirloom/HeirloomPage";
 import SettingsPage from "./components/user/SettingsPage";
-import Sidebar from "./components/ui/SideBar";
 import Header from "./components/ui/Header";
 import Footer from "./components/ui/Footer";
+import CookieConsent from "./components/ui/CookieConsent";
+import SignOutScreen from "./components/ui/SignOutScreen";
 import FamilyTreePage from "./components/family/FamilyTreePage";
 import AboutPage from "./components/static/AboutPage";
 import TermsPage from "./components/static/TermsPage";
 import FAQPage from "./components/static/FAQPage";
-import AuthHeader from "./components/ui/AuthHeader";
+import PrivacyPage from "./components/static/PrivacyPage";
+import { STORAGE_KEYS } from "./services/constants";
 import "./App.css";
 
 /**
  * Main application component.
- * Renders authentication pages without sidebar/header,
- * and main app pages with sidebar/header.
+ * Uses consolidated Header that automatically shows appropriate content based on auth state.
+ * Header now includes navigation links for authenticated users.
  *
  * @returns {JSX.Element} The app component
  */
 function App() {
     const location = useLocation();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isSigningOut, setIsSigningOut] = useState(false);
 
     // Check if user is logged in
     useEffect(() => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
         setIsLoggedIn(!!token);
     }, [location.pathname]); // Re-check on route changes
 
+    // Listen for sign out events
+    useEffect(() => {
+        const handleSignOut = () => {
+            setIsSigningOut(true);
+        };
+
+        const handleSignOutComplete = () => {
+            setIsSigningOut(false);
+            setIsLoggedIn(false);
+        };
+
+        window.addEventListener('userSigningOut', handleSignOut);
+        window.addEventListener('userSignOutComplete', handleSignOutComplete);
+
+        return () => {
+            window.removeEventListener('userSigningOut', handleSignOut);
+            window.removeEventListener('userSignOutComplete', handleSignOutComplete);
+        };
+    }, []);
+
+    // Show sign out screen if user is signing out
+    if (isSigningOut) {
+        return <SignOutScreen />;
+    }
+
     // Pages that always show auth layout regardless of login status
-    const alwaysAuthPages = ["/login", "/register"]; // Removed "/" from this list
+    const alwaysAuthPages = ["/login", "/register"];
 
     // Pages that show auth layout when not logged in, but main layout when logged in
     const conditionalPages = ["/about", "/terms", "/faq"];
 
     const isAlwaysAuthPage = alwaysAuthPages.includes(location.pathname);
     const isConditionalAuthPage = conditionalPages.includes(location.pathname);
-    const isLoginOrRegister = ["/login", "/register"].includes(location.pathname);
     const isRootPath = location.pathname === "/";
 
     // Show auth layout only for:
@@ -51,12 +78,10 @@ function App() {
     const showAuthLayout = isAlwaysAuthPage || (isConditionalAuthPage && !isLoggedIn) || (isRootPath && !isLoggedIn);
 
     if (showAuthLayout) {
-        // Authentication pages layout
+        // Authentication pages layout - Header handles auth state automatically
         return (
             <div className="auth-page-container">
-                {(isAlwaysAuthPage || isConditionalAuthPage || isRootPath) && (
-                    <AuthHeader showAuthButtons={true} />
-                )}
+                <Header />
                 <div className="auth-content">
                     <Routes>
                         <Route path="/" element={<LandingPage />} />
@@ -65,19 +90,20 @@ function App() {
                         <Route path="/about" element={<AboutPage />} />
                         <Route path="/terms" element={<TermsPage />} />
                         <Route path="/faq" element={<FAQPage />} />
+                        <Route path="/privacy" element={<PrivacyPage />} />
                     </Routes>
                 </div>
                 <Footer />
+                <CookieConsent />
             </div>
         );
     }
 
-    // Main app layout: sidebar and header rendered once
+    // Main app layout: header is now sticky and contains navigation
     return (
         <div className="layout">
-            <Sidebar />
+            <Header />
             <div className="content-wrapper">
-                <Header />
                 <Routes>
                     <Route path="/" element={<Navigate to="/home" replace />} />
                     <Route path="/home" element={<HomePage />} />
@@ -87,9 +113,11 @@ function App() {
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/faq" element={<FAQPage />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
                 </Routes>
                 <Footer />
             </div>
+            <CookieConsent />
         </div>
     );
 }

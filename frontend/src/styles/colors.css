@@ -49,15 +49,15 @@
   --gradient-spot-light-1: rgba(240, 245, 235, 0.7);  /* Lighter version */
   --gradient-spot-light-2: rgba(230, 240, 225, 0.7);  /* Lighter version */
   --gradient-spot-medium-1: rgba(220, 218, 180, 0.4); /* Lighter version */
-  --gradient-spot-medium-2: rgba(200, 198, 160, 0.5); /* Lighter version */
+  --gradient-spot-medium-2: rgba(210, 210, 170, 0.3); /* Lighter version */
 
-  /* Enhanced Gradient Component Colors */
-  --gradient-enhanced-light-1: rgba(245, 248, 240, 0.9); /* Lighter version */
-  --gradient-enhanced-light-2: rgba(240, 246, 235, 0.8); /* Lighter version */
-  --gradient-enhanced-medium-1: rgba(235, 242, 225, 0.85); /* Lighter version */
-  --gradient-enhanced-medium-2: rgba(210, 205, 150, 0.8); /* Lighter version */
-  --gradient-enhanced-dark-1: rgba(180, 178, 140, 0.9);   /* Lighter version */
-  --gradient-enhanced-dark-2: rgba(170, 168, 120, 0.75);  /* Lighter version */
+  /* Enhanced Gradient Colors for Global Background */
+  --gradient-vibrant-green: rgba(124, 154, 122, 0.4);     /* Primary green with opacity */
+  --gradient-warm-beige: rgba(188, 184, 138, 0.3);        /* Secondary beige with opacity */
+  --gradient-heritage-brown: rgba(107, 88, 67, 0.2);      /* Secondary brown with opacity */
+  --gradient-soft-cream: rgba(227, 233, 220, 0.4);        /* Primary light with opacity */
+  --gradient-accent-green: rgba(162, 160, 120, 0.3);      /* Secondary accent with opacity */
+  --gradient-highlight-green: rgba(124, 154, 122, 0.2);   /* Primary green lighter with opacity */
 
   /* UI Component Colors */
   --color-background-translucent: rgba(255, 255, 255, 0.2);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ItemView, ItemEdit } from "./ItemPages";
 import AddItem from "./AddItem";
+import LoadingScreen from "../ui/LoadingScreen";
 import { getFullImageUrl } from "../../services/utils";
 import Button from "../shared/Button";
 import { HeirloomService } from "../../services/heirloom";
@@ -84,15 +85,18 @@ const HeirloomPage = () => {
     }
   };
 
+  // Show loading screen while fetching data
   if (loading) {
-    return <div className="heirloom-container loading">Loading heirlooms...</div>;
+    return <LoadingScreen message="Loading your precious heirlooms..." />;
   }
 
+  // Show error state
   if (error) {
     return (
-      <div className="heirloom-container error">
-        <p className="error-message">Error: {error}</p>
-        <Button onClick={handleRetry}>Retry</Button>
+      <div className="error-container">
+        <h2>Error Loading Heirlooms</h2>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Try Again</button>
       </div>
     );
   }

@@ -11,9 +11,30 @@ import {
   STORAGE_KEYS,
   getAuthHeader
 } from './constants';
+import { tokenManager, validator, rateLimiter } from './security';
+import { securityLogger } from './securityMonitoring';
+import { breachDetector } from './breachResponse';
+
+// Global flag to track logout state
+let isLoggingOut = false;
+
+// Listen for logout events
+window.addEventListener('userLogout', () => {
+  isLoggingOut = true;
+
+  // Reset the flag after a short delay to allow navigation to complete
+  setTimeout(() => {
+    isLoggingOut = false;
+  }, 2000); // 2 seconds should be enough for navigation
+});
+
+// Also listen for successful login to reset the flag
+window.addEventListener('userLogin', () => {
+  isLoggingOut = false;
+});
 
 /**
- * Generic API call function with error handling and authorization.
+ * Enhanced API call function with comprehensive security features
  * @param {string} url - API endpoint to call
  * @param {Object} options - Fetch options (method, headers, etc.)
  * @returns {Promise<any>} Response data
@@ -21,25 +42,82 @@ import {
  */
 async function apiCall(url, options = {}) {
   try {
-    // Add authorization header by default if token exists
-    const headers = options.headers || {};
-
-    if (!headers.Authorization) {
-      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+    // Skip API calls if user is logging out
+    if (isLoggingOut) {
+      throw new Error('User is logging out');
     }
 
-    // Make request
+    // Rate limiting check
+    const endpoint = url.split('/').pop();
+    if (!rateLimiter.isAllowed(`api_${endpoint}`, 30, 60000)) { // 30 calls per minute
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+
+    // Get secure token
+    const token = tokenManager.getToken();
+
+    // Check if this is a public endpoint that doesn't require authentication
+    const publicEndpoints = [
+      AUTH_ENDPOINTS.LOGIN,
+      AUTH_ENDPOINTS.REGISTER
+    ];
+    const isPublicEndpoint = publicEndpoints.some(endpoint => url.includes(endpoint));
+
+    // If no token and not a public endpoint and user is not logging out, this is an auth error
+    if (!token && !isPublicEndpoint && !isLoggingOut) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+
+    const headers = options.headers || {};
+
+    if (!headers.Authorization && token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Add security headers
+    headers['X-Requested-With'] = 'XMLHttpRequest';
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+
+    // Log API call for security monitoring (but not during logout)
+    if (!isLoggingOut) {
+      securityLogger.logSecurityEvent('api_call', {
+        url,
+        method: options.method || 'GET',
+        hasAuth: !!token
+      }, 'low');
+    }
+
+    // Make request with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     const response = await fetch(url, {
       ...options,
       headers,
+      signal: controller.signal
     });
 
-    // Handle common error scenarios
+    clearTimeout(timeoutId);
+
+    // Handle authentication errors
+    if (response.status === 401) {
+      // Don't clear token if user is already logging out
+      if (!isLoggingOut) {
+        tokenManager.clearToken();
+        securityLogger.logSecurityEvent('unauthorized_access', { url }, 'medium');
+      }
+      throw new Error('Authentication required. Please log in again.');
+    }
+
+    // Handle other error scenarios
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+
+      // Log security-relevant errors (but not during logout)
+      if (response.status === 403 && !isLoggingOut) {
+        securityLogger.logSecurityEvent('forbidden_access', { url, status: response.status }, 'medium');
+      }
+
       throw new Error(errorData.message || `API call failed: ${response.status}`);
     }
 
@@ -48,9 +126,32 @@ async function apiCall(url, options = {}) {
       return null;
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    // Check for suspicious response patterns (but not during logout)
+    if (typeof data === 'string' && data.includes('<script>') && !isLoggingOut) {
+      securityLogger.logSecurityEvent('suspicious_response', { url }, 'high');
+      throw new Error('Invalid response format');
+    }
+
+    return data;
   } catch (error) {
-    console.error("API call error:", error);
+    // Enhanced error logging (but not during logout)
+    if (error.name === 'AbortError' && !isLoggingOut) {
+      securityLogger.logSecurityEvent('request_timeout', { url }, 'low');
+      throw new Error('Request timed out. Please try again.');
+    }
+
+    // Check for potential security incidents (but not during logout)
+    if ((error.message.includes('network') || error.message.includes('fetch')) && !isLoggingOut) {
+      breachDetector.monitorSuspiciousActivity();
+    }
+
+    // Don't log errors during logout process
+    if (!isLoggingOut) {
+      console.error("API call error:", error);
+    }
+
     throw error;
   }
 }

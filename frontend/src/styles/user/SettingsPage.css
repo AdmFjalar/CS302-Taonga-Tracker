@@ -169,7 +169,7 @@
 
 .settings-container {
   padding: 2rem;
-  background: var(--color-secondary-100);
+  /*background: var(--color-secondary-100);*/
   min-height: 92vh;
 }
 

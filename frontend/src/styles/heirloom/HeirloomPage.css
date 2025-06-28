@@ -1,7 +1,7 @@
 /* Main container for the heirloom page */
 .heirloom-container {
   padding: 2rem 0;
-  background: var(--color-secondary-100);
+  /*background: var(--color-secondary-100);*/
   font-family: var(--font-primary);
   display: flex;
   flex-direction: column;

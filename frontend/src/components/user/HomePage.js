@@ -3,6 +3,7 @@ import { differenceInYears, parseISO } from 'date-fns';
 import { ItemView, ItemEdit } from "../heirloom/ItemPages";
 import FamilyMemberEdit from "../family/FamilyMemberEdit";
 import FamilyMemberView from "../family/FamilyMemberView";
+import LoadingScreen from "../ui/LoadingScreen";
 import { getFullImageUrl, toDateInputValue } from "../../services/utils";
 import { familyAPI } from "../../services/api";
 import { vaultAPI } from "../../services/api";
@@ -156,15 +157,19 @@ const HomePage = () => {
     ));
   };
 
+  // Show loading screen while fetching data
   if (loading) {
-    return <div className="home-container">Loading homepage...</div>;
+    return <LoadingScreen message="Loading your family treasures..." />;
   }
 
+  // Show error state
   if (error) {
     return (
-        <div className="home-container">
-          <p>Error: {error}</p>
-        </div>
+      <div className="error-container">
+        <h2>Error Loading Data</h2>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Try Again</button>
+      </div>
     );
   }
 
@@ -193,17 +198,17 @@ const HomePage = () => {
                         <b>{highlighted.oldest.firstName} {highlighted.oldest.lastName}</b>
                       </p>
                       <p>
-                        Born: {toDateInputValue(highlighted.oldest.dateOfBirth)}
+                        {toDateInputValue(highlighted.oldest.dateOfBirth)}
                         {highlighted.oldest.dateOfDeath && (
-                            <> &ndash; Deceased: {toDateInputValue(highlighted.oldest.dateOfDeath)}</>
+                            <> &ndash; {toDateInputValue(highlighted.oldest.dateOfDeath)}</>
                         )}
                       </p>
                       <p>
                         <strong>Age: {calculateAge(highlighted.oldest.dateOfBirth, highlighted.oldest.dateOfDeath)} years</strong>
                       </p>
-                      {highlighted.oldest.relationshipType && (
-                          <p>Relationship: {highlighted.oldest.relationshipType}</p>
-                      )}
+                      {/*{highlighted.oldest.relationshipType && (*/}
+                      {/*    <p>Relationship: {highlighted.oldest.relationshipType}</p>*/}
+                      {/*)}*/}
                     </div>
                 )}
                 {highlighted.oldestLiving && (
@@ -224,14 +229,11 @@ const HomePage = () => {
                         <b>{highlighted.oldestLiving.firstName} {highlighted.oldestLiving.lastName}</b>
                       </p>
                       <p>
-                        Born: {toDateInputValue(highlighted.oldestLiving.dateOfBirth)}
-                      </p>
-                      <p>
                         <strong>Age: {calculateAge(highlighted.oldestLiving.dateOfBirth)} years</strong>
                       </p>
-                      {highlighted.oldestLiving.relationshipType && (
-                          <p>Relationship: {highlighted.oldestLiving.relationshipType}</p>
-                      )}
+                      {/*{highlighted.oldestLiving.relationshipType && (*/}
+                      {/*    <p>Relationship: {highlighted.oldestLiving.relationshipType}</p>*/}
+                      {/*)}*/}
                     </div>
                 )}
                 {oldestHeirloom && (
@@ -251,14 +253,14 @@ const HomePage = () => {
                       <p>
                         <b>{oldestHeirloom.title}</b>
                       </p>
-                      <p>
-                        Created: {toDateInputValue(oldestHeirloom.creationDate)}
-                      </p>
+                      {/*<p>*/}
+                      {/*  Created: {toDateInputValue(oldestHeirloom.creationDate)}*/}
+                      {/*</p>*/}
                       <p>
                         <strong>Age: {calculateHeirloomAge(oldestHeirloom.creationDate)} years</strong>
                       </p>
                       {oldestHeirloom.estimatedValue && (
-                          <p>Estimated Value: ${oldestHeirloom.estimatedValue}</p>
+                          <p>${oldestHeirloom.estimatedValue}</p>
                       )}
                     </div>
                 )}
@@ -282,9 +284,9 @@ const HomePage = () => {
                       {mostValuableHeirloom.estimatedValue && (
                           <p>Estimated Value: <strong><i>${mostValuableHeirloom.estimatedValue}</i></strong></p>
                       )}
-                      {mostValuableHeirloom.creationDate && (
-                          <p>Created: {toDateInputValue(mostValuableHeirloom.creationDate)}</p>
-                      )}
+                      {/*{mostValuableHeirloom.creationDate && (*/}
+                      {/*    <p>Created: {toDateInputValue(mostValuableHeirloom.creationDate)}</p>*/}
+                      {/*)}*/}
                     </div>
                 )}
               </div>

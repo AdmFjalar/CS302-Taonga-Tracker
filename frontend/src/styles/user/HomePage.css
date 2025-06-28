@@ -1,7 +1,7 @@
 .layout {
   display: flex;
   font-family: var(--font-primary);
-  background-color: var(--color-primary-100);
+  /*background-color: var(--color-primary-100);*/
 }
 
 .content-wrapper {
@@ -12,13 +12,13 @@
 
 .home-container {
   padding: 2rem;
-  background: var(--color-secondary-100);
+  /*background: var(--color-secondary-100);*/
   font-family: var(--font-primary);
   min-height: 92vh;
 }
 
 .home-title {
-  font-size: var(--text-3xl);
+  font-size: var(--text-4xl);
   font-weight: var(--weight-bold);
   text-align: center;
   margin-bottom: 2rem;

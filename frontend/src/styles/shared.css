@@ -325,7 +325,7 @@ body, input, button, select, textarea {
 }
 
 .auth-page-container {
-  background: linear-gradient(135deg, #e3e9dc, #d1dbc7, #bcb88a, #a2a078);
+  /*background: linear-gradient(135deg, #e3e9dc, #d1dbc7, #bcb88a, #a2a078);*/
   position: relative;
   overflow: hidden;
 }

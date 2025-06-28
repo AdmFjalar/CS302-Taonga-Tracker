@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import LoadingScreen from "../ui/LoadingScreen";
 import "../../styles/user/SettingsPage.css";
 import { getFullImageUrl } from "../../services/utils";
 import { authAPI, vaultAPI } from "../../services/api";
@@ -18,11 +19,16 @@ const SettingsPage = () => {
     userId: "",
   });
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // Fetch user data on component mount
     const fetchUser = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const data = await authAPI.getCurrentUser();
         setUser((prev) => ({
           ...prev,
@@ -30,7 +36,11 @@ const SettingsPage = () => {
           profilePictureUrl: data.profilePictureUrl || "",
           userId: data.id || "",
         }));
-      } catch {}
+      } catch (err) {
+        setError("Failed to load user settings");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchUser();
   }, []);
@@ -39,6 +49,7 @@ const SettingsPage = () => {
     const file = e.target.files[0];
     if (file) {
       try {
+        setSaving(true);
         const data = await vaultAPI.uploadImage(file);
         setUser((prev) => ({
           ...prev,
@@ -47,6 +58,8 @@ const SettingsPage = () => {
         setUnsavedChanges(true);
       } catch (err) {
         alert("Image upload failed: " + err.message);
+      } finally {
+        setSaving(false);
       }
     }
   };
@@ -73,6 +86,22 @@ const SettingsPage = () => {
       alert("Profile update failed: " + err.message);
     }
   };
+
+  // Show loading screen while fetching user data
+  if (loading) {
+    return <LoadingScreen message="Loading your settings..." />;
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error Loading Settings</h2>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Try Again</button>
+      </div>
+    );
+  }
 
   // Direct render without nested layout divs
   return (
