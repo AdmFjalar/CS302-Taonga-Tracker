@@ -57,13 +57,13 @@
 }
 
 .family-modal {
-    background: var(--color-secondary-100);
-    border-radius: 18px;
-    box-shadow: 0 8px 32px 0 var(--color-shadow-dark), 0 2px 8px 0 var(--color-shadow-medium);
-    padding: 2.5rem 2.2rem 2rem 2.2rem;
-    min-width: 370px;
-    max-width: 95vw;
-    max-height: 95vh;
+    /*background: var(--color-secondary-100);*/
+    /*border-radius: 18px;*/
+    /*box-shadow: 0 8px 32px 0 var(--color-shadow-dark), 0 2px 8px 0 var(--color-shadow-medium);*/
+    /*padding: 2.5rem 2.2rem 2rem 2.2rem;*/
+    /*min-width: 370px;*/
+    /*max-width: 95vw;*/
+    /*max-height: 95vh;*/
     overflow-y: auto;
     display: flex;
     flex-direction: column;

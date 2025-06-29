@@ -15,6 +15,7 @@ import AboutPage from "./components/static/AboutPage";
 import TermsPage from "./components/static/TermsPage";
 import FAQPage from "./components/static/FAQPage";
 import PrivacyPage from "./components/static/PrivacyPage";
+import SitemapPage from "./components/static/SitemapPage";
 import { STORAGE_KEYS } from "./services/constants";
 import "./App.css";
 
@@ -91,6 +92,7 @@ function App() {
                         <Route path="/terms" element={<TermsPage />} />
                         <Route path="/faq" element={<FAQPage />} />
                         <Route path="/privacy" element={<PrivacyPage />} />
+                        <Route path="/sitemap" element={<SitemapPage />} />
                     </Routes>
                 </div>
                 <Footer />
@@ -114,6 +116,7 @@ function App() {
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/faq" element={<FAQPage />} />
                     <Route path="/privacy" element={<PrivacyPage />} />
+                    <Route path="/sitemap" element={<SitemapPage />} />
                 </Routes>
                 <Footer />
             </div>

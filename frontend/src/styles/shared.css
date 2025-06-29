@@ -173,7 +173,7 @@ body, input, button, select, textarea {
 }
 
 .form-row b, .form-row label {
-  width: 120px;
+  width: auto;
   display: inline-block;
   text-align: left;
   font-weight: bold;

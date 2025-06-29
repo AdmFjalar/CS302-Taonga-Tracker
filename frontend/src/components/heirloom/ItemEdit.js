@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getFullImageUrl, toDateInputValue, autoSpaceComma } from "../../services/utils";
 import { familyAPI, vaultAPI, authAPI } from "../../services/api";
-import "../../styles/heirloom/CreateItemPage.css"; // Fixed CSS reference from CreateItemPage.css to ItemPages.css
+import Button from "../shared/Button";
+import "../../styles/heirloom/CreateItemPage.css";
+import "../../styles/heirloom/ItemPages.css";
+import "../../styles/shared/StandardModal.css";
+import "../../styles/shared/StandardView.css";
 
 const placeholderImg = "https://placehold.co/40x40";
 
@@ -210,11 +214,11 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         setUploading(true);
         setUploadError("");
         try {
-            // Using the vault API service instead of direct fetch
+            // Use the same upload service as other components
             const data = await vaultAPI.uploadImage(file);
             setItem((prev) => ({ ...prev, photoUrl: data.url }));
         } catch (err) {
-            setUploadError(err.message);
+            setUploadError(err.message || "Image upload failed");
         } finally {
             setUploading(false);
         }
@@ -266,7 +270,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
     };
 
     return (
-        <div className="item-layout item-edit-sleek">
+        <div className="standard-modal-container">
             <form onSubmit={handleSubmit}>
                 {/* Top Section: Image, Title, Description */}
                 <div className="item-edit-top">
@@ -439,11 +443,17 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
 
                 {/* Action Buttons */}
                 <div className="item-edit-actions">
-                    <button type="submit" className="auth-button">Save Heirloom</button>
+                    <Button type="submit" variant="primary">
+                        Save Heirloom
+                    </Button>
                     {item.vaultItemId && item.vaultItemId !== "0" && (
-                        <button type="button" className="auth-button delete" onClick={handleDelete}>Delete</button>
+                        <Button type="button" variant="delete" onClick={handleDelete}>
+                            Delete
+                        </Button>
                     )}
-                    <button type="button" className="auth-button" onClick={navigateTo}>Cancel</button>
+                    <Button type="button" variant="secondary" onClick={navigateTo}>
+                        Cancel
+                    </Button>
                 </div>
             </form>
         </div>

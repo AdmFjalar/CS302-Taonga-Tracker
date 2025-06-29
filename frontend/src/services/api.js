@@ -76,7 +76,11 @@ async function apiCall(url, options = {}) {
 
     // Add security headers
     headers['X-Requested-With'] = 'XMLHttpRequest';
-    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+
+    // Only set Content-Type if not FormData (let browser set it for FormData)
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+    }
 
     // Log API call for security monitoring (but not during logout)
     if (!isLoggingOut) {
@@ -116,6 +120,11 @@ async function apiCall(url, options = {}) {
       // Log security-relevant errors (but not during logout)
       if (response.status === 403 && !isLoggingOut) {
         securityLogger.logSecurityEvent('forbidden_access', { url, status: response.status }, 'medium');
+      }
+
+      // Handle registration errors specifically (array of error messages)
+      if (errorData.errors && Array.isArray(errorData.errors)) {
+        throw new Error(errorData.errors.join('. '));
       }
 
       throw new Error(errorData.message || `API call failed: ${response.status}`);

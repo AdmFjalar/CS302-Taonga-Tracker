@@ -10,7 +10,7 @@ const FAQPage = () => {
   return (
     <div className="faq-page">
       <h1>Frequently Asked Questions</h1>
-
+        <p className="last-updated">Last updated: 2025-06-28</p>
       <div className="faq-intro">
         <p>
             Find out the most frequently asked questions about Taonga Tracker, how it works, and how it can help you preserve your family heritage.

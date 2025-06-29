@@ -733,6 +733,7 @@ const FamilyTreePage = () => {
     const [lineageIds, setLineageIds] = useState({ ancestors: new Set(), descendants: new Set() });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [currentView, setCurrentView] = useState('tree'); // 'tree', 'view', 'edit', 'add'
 
     /**
      * Fetches all family members from the API and sets the initial reference user.
@@ -797,30 +798,35 @@ const FamilyTreePage = () => {
         setViewingMember(null);
         setEditingMember(null);
         setAddContext(null);
+        setCurrentView('add');
     };
     const handleEdit = (member) => {
         setEditingMember(member);
         setViewingMember(null);
         setAdding(false);
         setAddContext(null);
+        setCurrentView('edit');
     };
     const handleAddParent = (member) => {
         setAddContext({ type: "parent", member });
         setAdding(true);
         setViewingMember(null);
         setEditingMember(null);
+        setCurrentView('add');
     };
     const handleAddChild = (member) => {
         setAddContext({ type: "child", member });
         setAdding(true);
         setViewingMember(null);
         setEditingMember(null);
+        setCurrentView('add');
     };
     const handleSaved = () => {
         setAdding(false);
         setEditingMember(null);
         setViewingMember(null);
         setAddContext(null);
+        setCurrentView('tree');
         fetchMembers();
     };
     const handleSetReferenceUser = (member) => {
@@ -828,6 +834,14 @@ const FamilyTreePage = () => {
     };
     const handleViewMember = (member) => {
         setViewingMember(member);
+        setCurrentView('view');
+    };
+    const handleBackToTree = () => {
+        setViewingMember(null);
+        setEditingMember(null);
+        setAdding(false);
+        setAddContext(null);
+        setCurrentView('tree');
     };
 
     // Layout and update nodes/edges when data changes
@@ -881,68 +895,61 @@ const FamilyTreePage = () => {
         );
     }
 
-    // Render the family tree and modals
+    // Render based on current view
     return (
         <div className="familytree-container">
-            <div className="familytree-treearea">
-                {/* ReactFlow renders the interactive family tree graph */}
-                <ReactFlow
-                    nodes={highlightedNodes}
-                    edges={highlightedEdges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                    nodeTypes={nodeTypes}
-                    fitView
-                    fitViewOptions={{ padding: 0.2, minZoom: 0.1, maxZoom: 1.5 }}
-                    panOnScroll
-                    panOnDrag
-                    nodesDraggable={false}
-                    nodesConnectable={false}
-                    elementsSelectable
-                >
-                    <Background />
-                    <Controls />
-                </ReactFlow>
-            </div>
-            {/* Modal for viewing a family member's details */}
-            {viewingMember && (
-                <div className="family-modal-overlay">
-                    <div className="family-modal">
-                        <FamilyMemberView
-                            member={viewingMember}
-                            familyMembers={familyMembers}
-                            onBack={() => setViewingMember(null)}
-                            onEdit={() => handleEdit(viewingMember)}
-                            onViewMember={handleViewMember}
-                        />
-                    </div>
+            {currentView === 'tree' && (
+                <div className="familytree-treearea">
+                    {/* ReactFlow renders the interactive family tree graph */}
+                    <ReactFlow
+                        nodes={highlightedNodes}
+                        edges={highlightedEdges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        nodeTypes={nodeTypes}
+                        fitView
+                        fitViewOptions={{ padding: 0.2, minZoom: 0.1, maxZoom: 1.5 }}
+                        panOnScroll
+                        panOnDrag
+                        nodesDraggable={false}
+                        nodesConnectable={false}
+                        elementsSelectable
+                    >
+                        <Background />
+                        <Controls />
+                    </ReactFlow>
                 </div>
             )}
-            {/* Modal for editing a family member */}
-            {editingMember && (
-                <div className="family-modal-overlay">
-                    <div className="family-modal">
-                        <FamilyMemberEdit
-                            initialMember={editingMember}
-                            familyMembers={familyMembers}
-                            onSave={handleSaved}
-                            onCancel={() => setEditingMember(null)}
-                        />
-                    </div>
-                </div>
+
+            {/* View for viewing a family member's details */}
+            {currentView === 'view' && viewingMember && (
+                <FamilyMemberView
+                    member={viewingMember}
+                    familyMembers={familyMembers}
+                    onBack={handleBackToTree}
+                    onEdit={() => handleEdit(viewingMember)}
+                    onViewMember={handleViewMember}
+                />
             )}
-            {/* Modal for adding a new family member */}
-            {adding && (
-                <div className="family-modal-overlay">
-                    <div className="family-modal">
-                        <FamilyMemberAdd
-                            familyMembers={familyMembers}
-                            onSave={handleSaved}
-                            onCancel={() => { setAdding(false); setAddContext(null); }}
-                            addContext={addContext}
-                        />
-                    </div>
-                </div>
+
+            {/* View for editing a family member */}
+            {currentView === 'edit' && editingMember && (
+                <FamilyMemberEdit
+                    initialMember={editingMember}
+                    familyMembers={familyMembers}
+                    onSave={handleSaved}
+                    onCancel={handleBackToTree}
+                />
+            )}
+
+            {/* View for adding a new family member */}
+            {currentView === 'add' && adding && (
+                <FamilyMemberAdd
+                    familyMembers={familyMembers}
+                    onSave={handleSaved}
+                    onCancel={handleBackToTree}
+                    addContext={addContext}
+                />
             )}
         </div>
     );

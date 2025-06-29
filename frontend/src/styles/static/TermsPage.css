@@ -8,8 +8,15 @@
   background: var(--color-neutral-white);
   border-radius: 25px;
   padding: 2rem;
-  margin: 1rem 0;
+  margin: 1rem auto;
   font-family: var(--font-primary);
+}
+
+.last-updated {
+  color: var(--color-neutral-600);
+  font-style: italic;
+  margin-bottom: 2rem;
+  font-size: var(--text-sm);
 }
 
 /* The gradient animations for this page are defined in AuthPage.css */

@@ -10,6 +10,7 @@ const AboutPage = () => {
   return (
     <div className="about-page">
       <h1>About Taonga Tracker</h1>
+        <p className="last-updated">Last updated: 2025-06-28</p>
 
       <section className="about-section">
         <h2>Our Purpose</h2>

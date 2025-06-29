@@ -10,9 +10,11 @@ const TermsPage = () => {
   return (
     <div className="terms-page">
       <h1>Terms and Conditions</h1>
+        <p className="last-updated">Last updated: 2025-06-28</p>
 
       <div className="terms-notice">
-        <p><strong>IMPORTANT NOTICE:</strong> Taonga Tracker is a demonstration project created for educational purposes as part of a university course (CS302). It is not intended for commercial use.</p>
+          <h2>⚠️ Important Notice: Academic Project</h2>
+          <p><strong>This is an academic MVP (Minimum Viable Product) developed for educational purposes only.</strong></p>
       </div>
 
       <section className="terms-section">

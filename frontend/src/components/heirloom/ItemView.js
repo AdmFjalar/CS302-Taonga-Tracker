@@ -1,21 +1,16 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { getFullImageUrl, formatDate, formatCurrency, truncateText } from "../../services/utils";
-import "../../styles/heirloom/CreateItemPage.css"; // Fixed CSS reference from CreateItemPage.css to ItemPages.css
-import "../../styles/heirloom/ItemPages.css"
+import Button from "../shared/Button";
+import "../../styles/shared/StandardModal.css";
 
 /**
  * A field row for displaying item details
- * @param {Object} props
- * @param {string} props.label - Label for the field
- * @param {string|number} props.value - Value to display
- * @param {Function} [props.formatter] - Optional formatter function
- * @returns {JSX.Element}
  */
 const ItemDetailField = ({ label, value, formatter = (val) => val || "N/A" }) => (
-  <div className="form-row">
-    <b>{label}:</b>
-    <span>{formatter(value)}</span>
+  <div className="standard-field-row vertical">
+    <div className="standard-field-label">{label}</div>
+    <div className="standard-field-value">{formatter(value)}</div>
   </div>
 );
 
@@ -27,40 +22,39 @@ ItemDetailField.propTypes = {
 
 /**
  * ItemView component displays a read-only view of a vault item/heirloom.
- * @param {Object} props
- * @param {Object} props.item - The item to display
- * @param {Function} props.onBack - Callback for back button
- * @param {Function} props.onEdit - Callback for edit button
- * @returns {JSX.Element}
  */
 const ItemView = ({ item, onBack, onEdit }) => (
-  <div className="item-layout item-edit-sleek">
-    {/* Top Section: Image, Title, Description */}
-    <div className="item-edit-top">
-      <div className="item-edit-image">
+  <div className="standard-modal-container">
+    {/* Header Section */}
+    <div className="standard-modal-header">
+      <div className="standard-modal-photo-container rectangular">
         <img
           src={getFullImageUrl(item.photoUrl)}
           alt={item.title || "Item Preview"}
-          className="item-edit-img-preview"
+          className="standard-modal-photo"
         />
       </div>
-      <div className="item-edit-mainfields">
-        <div className="form-row">
-          <span className="item-edit-title" style={{ border: "none", background: "none" }}>
+
+      <div className="standard-modal-primary-info">
+        <div className="standard-modal-title-container">
+          <h2 className="standard-modal-title">
             {item.title || "Untitled Item"}
-          </span>
+          </h2>
         </div>
-        <div className="form-row">
-          <div className="item-edit-description" style={{ background: "#f6f9f3", border: "none" }}>
-            {truncateText(item.description, 500) || "No description available."}
+        <div className="standard-modal-subtitle">
+          {item.itemType || "Heirloom"}
+        </div>
+        {item.description && (
+          <div className="standard-modal-description">
+            {truncateText(item.description, 500)}
           </div>
-        </div>
+        )}
       </div>
     </div>
 
-    {/* Bottom Section: Details */}
-    <div className="item-edit-bottom">
-      <div className="item-edit-grid">
+    {/* Content Section */}
+    <div className="standard-modal-content">
+      <div className="standard-modal-details-grid">
         <ItemDetailField
           label="Estimated Value"
           value={item.estimatedValue}
@@ -93,28 +87,29 @@ const ItemView = ({ item, onBack, onEdit }) => (
       </div>
     </div>
 
-    {/* Metadata Tooltip */}
-    <div className="metadata-tooltip">
-      <span className="metadata-link">Metadata</span>
-      <div className="tooltip-text">
-        <p><b>Vault Item ID:</b> {item.vaultItemId || "N/A"}</p>
-        <p><b>Current Owner ID:</b> {item.currentOwnerId || "N/A"}</p>
-        <p><b>Creator ID:</b> {item.creatorId || "N/A"}</p>
-        <p>
-          <b>Previous Owner IDs:</b>
-          {item.previousOwnerIds?.length ? item.previousOwnerIds.join(", ") : "N/A"}
-        </p>
-        <p>
-          <b>Shared With IDs:</b>
-          {item.sharedWithIds?.length ? item.sharedWithIds.join(", ") : "N/A"}
-        </p>
-      </div>
+    {/* Metadata section with collapsible details */}
+    <div className="standard-metadata-section">
+      <details>
+        <summary className="standard-metadata-toggle">
+          Metadata
+        </summary>
+        <div className="standard-metadata-content">
+          <p><strong>Vault Item ID:</strong> {item.vaultItemId || "N/A"}</p>
+          <p><strong>Current Owner ID:</strong> {item.currentOwnerId || "N/A"}</p>
+          <p><strong>Creator ID:</strong> {item.creatorId || "N/A"}</p>
+          <p><strong>Previous Owner IDs:</strong> {item.previousOwnerIds?.join(", ") || "N/A"}</p>
+        </div>
+      </details>
     </div>
 
-    {/* Action Buttons */}
-    <div className="item-edit-actions">
-      <button onClick={onEdit} className="auth-button">Edit</button>
-      <button onClick={onBack} className="auth-button">Back</button>
+    {/* Actions Section */}
+    <div className="standard-modal-actions">
+      <Button onClick={onBack} variant="secondary">
+        Back
+      </Button>
+      <Button onClick={() => onEdit(item)} variant="primary">
+        Edit
+      </Button>
     </div>
   </div>
 );
@@ -135,7 +130,7 @@ ItemView.propTypes = {
     sharedWithIds: PropTypes.arrayOf(PropTypes.string),
     currentOwnerId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     creatorId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    previousOwnerIds: PropTypes.arrayOf(PropTypes.string),
+    previousOwnerIds: PropTypes.arrayOf(PropTypes.string)
   }).isRequired,
   onBack: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired

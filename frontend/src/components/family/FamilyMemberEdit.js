@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { getFullImageUrl, toDateInputValue } from "../../services/utils";
 import { FamilyService } from "../../services/family";
 import Button from "../shared/Button";
-import "../../styles/family/FamilyMemberEdit.css";
+import "../../styles/shared/StandardModal.css";
 
 const defaultMember = {
     familyMemberId: "",
@@ -32,15 +32,6 @@ const placeholderImg = "https://placehold.co/40x40";
 
 /**
  * A component to select related family members with profile pictures
- *
- * @component
- * @param {Object} props
- * @param {string} props.label - Label for the relationship field
- * @param {Array} props.options - Available family members to select from
- * @param {Array} props.selectedIds - Currently selected IDs
- * @param {Function} props.onSelect - Handler when a selection changes
- * @param {Array} props.excludeIds - IDs to exclude from options
- * @returns {JSX.Element}
  */
 function RelationSelector({ label, options, selectedIds, onSelect, excludeIds }) {
     const [search, setSearch] = useState("");
@@ -51,51 +42,33 @@ function RelationSelector({ label, options, selectedIds, onSelect, excludeIds })
         );
 
     return (
-        <div className="form-row" style={{ flexDirection: "column", alignItems: "flex-start", width: "100%" }}>
-            <b style={{ marginBottom: 4 }}>{label}:</b>
+        <div className="standard-relationship-selector">
+            <div className="standard-field-label">{label}</div>
             <input
                 type="text"
                 placeholder={`Search ${label.toLowerCase()}...`}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                style={{ marginBottom: 8, width: "100%", maxWidth: 320 }}
+                className="standard-relationship-search"
             />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {filtered.length === 0 && <span style={{ color: "#888" }}>No matches</span>}
+            <div className="standard-relationship-tags">
+                {filtered.length === 0 && <span className="standard-field-value">No matches</span>}
                 {filtered.map(fm => (
                     <label
                         key={fm.familyMemberId}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            background: selectedIds.includes(fm.familyMemberId) ? "#bcb88a33" : "#fff",
-                            border: "1px solid #bcb88a",
-                            borderRadius: 8,
-                            padding: "2px 8px 2px 2px",
-                            cursor: "pointer",
-                            minWidth: 0,
-                        }}
+                        className={`standard-modal-related-tag ${selectedIds.includes(fm.familyMemberId) ? 'selected' : ''}`}
                     >
                         <input
                             type="checkbox"
                             checked={selectedIds.includes(fm.familyMemberId)}
                             onChange={e => onSelect(fm.familyMemberId, e.target.checked)}
-                            style={{ marginRight: 4 }}
                         />
                         <img
                             src={fm.profilePictureUrl ? getFullImageUrl(fm.profilePictureUrl) : placeholderImg}
                             alt={`${fm.firstName} ${fm.lastName}`}
-                            style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                                border: "1px solid #bcb88a",
-                                background: "#fffbe9",
-                            }}
+                            className="standard-modal-related-photo"
                         />
-                        <span style={{ fontSize: 15, fontWeight: 500, whiteSpace: "nowrap" }}>
+                        <span className="standard-modal-related-name">
                             {fm.firstName} {fm.lastName}
                         </span>
                     </label>
@@ -115,16 +88,6 @@ RelationSelector.propTypes = {
 
 /**
  * FamilyMemberEdit component allows editing or creating a family member.
- * Handles form state, image upload, and relationship selection.
- *
- * @component
- * @param {Object} props
- * @param {Object} [props.initialMember] - The member to edit (if any)
- * @param {Array} props.familyMembers - All family members for relationship selection
- * @param {Function} props.onSave - Callback after saving
- * @param {Function} props.onCancel - Callback for cancel action
- * @param {Object} [props.addContext] - Context for adding parent/child
- * @returns {JSX.Element}
  */
 const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel, addContext }) => {
     const [member, setMember] = useState(initialMember ? { ...defaultMember, ...initialMember } : defaultMember);
@@ -153,8 +116,6 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
 
     /**
      * Updates a form field value
-     * @param {string} field - Field name to update
-     * @param {any} value - New field value
      */
     const handleChange = (field, value) => {
         setMember(prev => ({ ...prev, [field]: value }));
@@ -162,7 +123,6 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
 
     /**
      * Uploads a profile image
-     * @param {Event} e - File input change event
      */
     const handleImageChange = async (e) => {
         const file = e.target.files[0];
@@ -182,21 +142,16 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
 
     /**
      * Handles mutually exclusive relationship selection (parent/child)
-     * @param {string} field - Relationship field name
-     * @param {string|number} id - ID of the related member
-     * @param {boolean} checked - Whether relation is selected
      */
     const handleRelationSelect = (field, id, checked) => {
         setMember(prev => {
             let update = { ...prev };
             if (field === "parentsIds") {
-                // Remove from childrenIds if present
                 update.childrenIds = (update.childrenIds || []).filter(cid => cid !== id);
                 update.parentsIds = checked
                     ? [...(update.parentsIds || []), id]
                     : (update.parentsIds || []).filter(pid => pid !== id);
             } else if (field === "childrenIds") {
-                // Remove from parentsIds if present
                 update.parentsIds = (update.parentsIds || []).filter(pid => pid !== id);
                 update.childrenIds = checked
                     ? [...(update.childrenIds || []), id]
@@ -212,7 +167,6 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
 
     /**
      * Saves the member - creates new or updates existing
-     * @param {Event} e - Form submit event
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -229,15 +183,12 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
         try {
             let savedMember;
 
-            // Update existing member
             if (member.familyMemberId && member.familyMemberId !== "") {
                 savedMember = await FamilyService.updateMember(
                     member.familyMemberId,
                     payload
                 );
-            }
-            // Create new member
-            else {
+            } else {
                 savedMember = await FamilyService.createMember(payload);
             }
 
@@ -273,16 +224,16 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
     );
 
     return (
-        <div className="familymemberedit-layout familymemberedit-sleek">
+        <div className="standard-modal-container">
             <form onSubmit={handleSubmit}>
-                {/* Top section: image and main fields */}
-                <div className="familymemberedit-top">
-                    <div className="familymemberedit-image">
-                        <label style={{ cursor: "pointer" }} title="Click to upload a new image">
+                {/* Header Section */}
+                <div className="standard-modal-header">
+                    <div className="standard-modal-photo-container rectangular">
+                        <label className="standard-modal-photo-upload" title="Click to upload a new image">
                             <img
                                 src={getFullImageUrl(member.profilePictureUrl)}
                                 alt="Profile"
-                                className="familymemberedit-img-preview"
+                                className="standard-modal-photo"
                             />
                             <input
                                 type="file"
@@ -292,14 +243,15 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
                                 style={{ display: "none" }}
                             />
                         </label>
-                        {uploading && <p className="familymemberedit-uploading">Uploading image...</p>}
-                        {uploadError && <p className="error-text">{uploadError}</p>}
+                        {uploading && <p className="standard-modal-uploading">Uploading image...</p>}
+                        {uploadError && <p className="standard-error-text">{uploadError}</p>}
                     </div>
-                    <div className="familymemberedit-mainfields">
-                        <div className="form-row">
+
+                    <div className="standard-modal-primary-info">
+                        <div className="standard-form-row name-inputs">
                             <input
                                 type="text"
-                                className="familymemberedit-title"
+                                className="standard-modal-title editable"
                                 value={member.firstName}
                                 onChange={e => handleChange("firstName", e.target.value)}
                                 placeholder="First Name"
@@ -308,7 +260,7 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
                             />
                             <input
                                 type="text"
-                                className="familymemberedit-title"
+                                className="standard-modal-title editable"
                                 value={member.lastName}
                                 onChange={e => handleChange("lastName", e.target.value)}
                                 placeholder="Last Name"
@@ -316,105 +268,126 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
                                 required
                             />
                         </div>
-                        <div className="form-row">
+                        <div className="standard-form-row">
                             <input
                                 type="text"
                                 value={member.relationshipType}
                                 onChange={e => handleChange("relationshipType", e.target.value)}
-                                placeholder="Relationship Type"
+                                placeholder="Relationship Type (e.g., Father, Mother, Sister...)"
                                 disabled={saving}
+                                className="standard-modal-description editable"
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* Main fields: details */}
-                <div className="familymemberedit-mainfields">
-                    <div className="form-row">
-                        <b>Date of Birth:</b>
-                        <input
-                            type="date"
-                            value={toDateInputValue(member.dateOfBirth)}
-                            onChange={e => handleChange("dateOfBirth", e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="form-row">
-                        <b>Date of Death:</b>
-                        <input
-                            type="date"
-                            value={toDateInputValue(member.dateOfDeath)}
-                            onChange={e => handleChange("dateOfDeath", e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="form-row">
-                        <b>Occupation:</b>
-                        <input
-                            type="text"
-                            value={member.occupation || ""}
-                            onChange={e => handleChange("occupation", e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="form-row">
-                        <b>Place of Birth:</b>
-                        <input
-                            type="text"
-                            value={member.placeOfBirth || ""}
-                            onChange={e => handleChange("placeOfBirth", e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="form-row">
-                        <b>Place of Death:</b>
-                        <input
-                            type="text"
-                            value={member.placeOfDeath || ""}
-                            onChange={e => handleChange("placeOfDeath", e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="form-row">
-                        <b>Nationality:</b>
-                        <input
-                            type="text"
-                            value={member.nationality || ""}
-                            onChange={e => handleChange("nationality", e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="form-row">
-                        <b>Religion:</b>
-                        <input
-                            type="text"
-                            value={member.religion || ""}
-                            onChange={e => handleChange("religion", e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="form-row">
-                        <b>Marital Status:</b>
-                        <input
-                            type="text"
-                            value={member.maritalStatus || ""}
-                            onChange={e => handleChange("maritalStatus", e.target.value)}
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="form-row">
-                        <b>Gender:</b>
-                        <input
-                            type="text"
-                            value={member.gender || ""}
-                            onChange={e => handleChange("gender", e.target.value)}
-                            disabled={saving}
-                        />
+                {/* Content Section */}
+                <div className="standard-modal-content">
+                    <div className="standard-modal-details-grid">
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Date of Birth</div>
+                            <input
+                                type="date"
+                                value={toDateInputValue(member.dateOfBirth)}
+                                onChange={e => handleChange("dateOfBirth", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
+
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Date of Death</div>
+                            <input
+                                type="date"
+                                value={toDateInputValue(member.dateOfDeath)}
+                                onChange={e => handleChange("dateOfDeath", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
+
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Place of Birth</div>
+                            <input
+                                type="text"
+                                value={member.placeOfBirth || ""}
+                                onChange={e => handleChange("placeOfBirth", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
+
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Place of Death</div>
+                            <input
+                                type="text"
+                                value={member.placeOfDeath || ""}
+                                onChange={e => handleChange("placeOfDeath", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
+
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Occupation</div>
+                            <input
+                                type="text"
+                                value={member.occupation || ""}
+                                onChange={e => handleChange("occupation", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
+
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Nationality</div>
+                            <input
+                                type="text"
+                                value={member.nationality || ""}
+                                onChange={e => handleChange("nationality", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
+
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Religion</div>
+                            <input
+                                type="text"
+                                value={member.religion || ""}
+                                onChange={e => handleChange("religion", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
+
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Marital Status</div>
+                            <input
+                                type="text"
+                                value={member.maritalStatus || ""}
+                                onChange={e => handleChange("maritalStatus", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
+
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Gender</div>
+                            <input
+                                type="text"
+                                value={member.gender || ""}
+                                onChange={e => handleChange("gender", e.target.value)}
+                                disabled={saving}
+                                className="standard-field-input"
+                            />
+                        </div>
                     </div>
                 </div>
 
-                {/* Relationship selectors */}
-                <div className="familymemberedit-mainfields">
+                {/* Family Relationships Section */}
+                <div className="standard-modal-related-section">
+                    <h3 className="standard-modal-related-title">Family Relationships</h3>
                     <RelationSelector
                         label="Parents"
                         options={relationOptions}
@@ -438,14 +411,14 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
                     />
                 </div>
 
-                {/* Action buttons */}
-                <div className="familymemberedit-actions">
+                {/* Actions Section */}
+                <div className="standard-modal-actions">
                     <Button
-                        type="submit"
-                        isLoading={saving}
-                        loadingText="Saving..."
+                        variant="secondary"
+                        onClick={onCancel}
+                        disabled={saving}
                     >
-                        Save
+                        Cancel
                     </Button>
 
                     {member.familyMemberId && member.userId !== localStorage.getItem("userId") && (
@@ -459,11 +432,12 @@ const FamilyMemberEdit = ({ initialMember, familyMembers = [], onSave, onCancel,
                     )}
 
                     <Button
-                        variant="secondary"
-                        onClick={onCancel}
-                        disabled={saving}
+                        type="submit"
+                        isLoading={saving}
+                        loadingText="Saving..."
+                        variant="primary"
                     >
-                        Cancel
+                        Save Family Member
                     </Button>
                 </div>
             </form>

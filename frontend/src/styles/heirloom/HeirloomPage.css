@@ -11,12 +11,12 @@
 
 /* Grid layout for heirloom cards */
 .heirloom-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2.5rem;
-  justify-items: flex-start;
+  display: flex;
+  /*grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));*/
+  gap: 2rem;
+  justify-items: center;
   width: 100%;
-  padding: 1.5rem 1.5rem;
+  padding: 1.5rem;
   box-sizing: border-box;
 }
 

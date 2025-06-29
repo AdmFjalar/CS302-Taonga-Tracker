@@ -87,7 +87,7 @@ const HeirloomPage = () => {
 
   // Show loading screen while fetching data
   if (loading) {
-    return <LoadingScreen message="Loading your precious heirlooms..." />;
+    return <LoadingScreen message="Loading your heirlooms..." />;
   }
 
   // Show error state

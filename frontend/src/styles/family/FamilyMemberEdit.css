@@ -1,102 +1,253 @@
-.familymemberedit-layout {
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.4rem;
-    background-color: var(--color-primary-100);
-    height: 100%;
-    font-family: var(--font-primary);
-    position: relative;
-    margin-top: 0;
-    padding-top: 0.5rem;
-}
+/* Family Member Edit Layout - Matching Family Member View */
 
-.familymemberedit-sleek form {
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
+.familymemberedit-layout {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--color-secondary-100);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-primary);
 }
 
 .familymemberedit-top {
-    display: flex;
-    gap: 2.5rem;
-    align-items: flex-start;
-    background: var(--color-primary-100);
-    border-radius: 10px;
-    padding: 1.5rem 1rem 1.5rem 0;
-    border-bottom: 1px solid var(--color-secondary-300);
-    flex-wrap: wrap;
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--color-secondary-300);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .familymemberedit-image {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 180px;
-    max-width: 220px;
-    gap: 0.7rem;
+  flex-shrink: 0;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--color-primary-300);
+  background: var(--color-secondary-200);
+  position: relative;
 }
 
 .familymemberedit-img-preview {
-    width: 180px;
-    height: 180px;
-    object-fit: cover;
-    border: 1px solid var(--color-neutral-900);
-    border-radius: 8px;
-    background: var(--color-neutral-white);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
 }
 
 .familymemberedit-uploading {
-    font-size: var(--text-sm);
-    color: var(--color-neutral-500);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 0.25rem;
 }
 
 .familymemberedit-mainfields {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
+  flex: 1;
+  min-width: 250px;
 }
 
 .familymemberedit-title {
-    font-size: var(--text-xl);
-    font-weight: var(--weight-bold);
-    border: none;
-    border-bottom: 2px solid var(--color-primary-700);
-    background: none;
-    width: 100%;
-    font-family: var(--font-primary);
-    padding: 0.3rem 0.5rem;
+  font-size: 1.4rem;
+  font-weight: 600;
+  border: 2px solid var(--color-primary-300);
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-right: 0.5rem;
+  background: white;
+  flex: 1;
+  min-width: 150px;
+}
+
+.familymemberedit-title:focus {
+  outline: none;
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 2px rgba(188, 184, 138, 0.2);
 }
 
 .familymemberedit-actions {
-    display: flex;
-    gap: 1.2rem;
-    justify-content: flex-end;
-    margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-secondary-300);
+  margin-top: 2rem;
 }
 
+/* Match the FamilyMemberView detail fields styling */
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-secondary-200);
+}
+
+.detail-field:last-child {
+  border-bottom: none;
+}
+
+.detail-field b {
+  font-weight: 600;
+  color: var(--color-secondary-700);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-field input {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  line-height: 1.4;
+  border: 1px solid var(--color-secondary-300);
+  border-radius: 4px;
+  padding: 0.5rem;
+  background: white;
+}
+
+.detail-field input:focus {
+  outline: none;
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 2px rgba(188, 184, 138, 0.2);
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+/* Form row styling for name inputs */
 .form-row {
-    display: flex;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-row.name-row {
+  gap: 0.5rem;
+}
+
+.error-text {
+  color: var(--color-error);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Relationship selector styling */
+.relationship-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--color-secondary-300);
+}
+
+.relationship-section h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-primary-700);
+  margin-bottom: 1rem;
+}
+
+.relation-selector {
+  margin-bottom: 1.5rem;
+}
+
+.relation-selector b {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--color-secondary-700);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.relation-search {
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--color-secondary-300);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.relation-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.relation-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--color-primary-100);
+  border: 1px solid var(--color-primary-300);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.relation-tag:hover {
+  background: var(--color-primary-200);
+}
+
+.relation-tag.selected {
+  background: var(--color-primary-300);
+}
+
+.relation-tag img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--color-primary-400);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .familymemberedit-top {
+    flex-direction: column;
     align-items: center;
+    text-align: center;
     gap: 1rem;
-    margin-bottom: 1rem;
-    width: 100%;
-}
+  }
 
-.form-row b {
+  .familymemberedit-image {
     width: 120px;
-    display: inline-block;
-    text-align: left;
-}
+    height: 120px;
+  }
 
-.form-row input[type="text"],
-.form-row input[type="date"] {
-    flex: 1;
-    padding: 0.25rem;
-    font-size: var(--text-base);
-    border: none;
-    border-bottom: 1px solid var(--color-primary-700);
-    background: none;
-    font-family: var(--font-primary);
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .familymemberedit-actions {
+    flex-direction: column;
+  }
+
+  .form-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .familymemberedit-title {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
 }
