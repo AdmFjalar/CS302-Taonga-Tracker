@@ -2,12 +2,13 @@ import React from 'react';
 import '../../styles/ui/LoadingScreen.css';
 
 /**
- * Reusable LoadingScreen component for consistent loading states
- * @component
- * @param {Object} props Component props
- * @param {string} props.message - Loading message to display
- * @param {boolean} props.overlay - Whether to show as full-screen overlay (default: false)
- * @param {string} props.size - Size of spinner: 'small', 'medium', 'large' (default: 'medium')
+ * Reusable loading screen component with configurable display options.
+ *
+ * @param {Object} props - Component props
+ * @param {string} [props.message='Loading...'] - Loading message to display
+ * @param {boolean} [props.overlay=false] - Whether to show as full-screen overlay
+ * @param {string} [props.size='medium'] - Spinner size: 'small', 'medium', 'large'
+ * @returns {JSX.Element} Loading screen component
  */
 const LoadingScreen = ({ 
   message = "Loading...", 

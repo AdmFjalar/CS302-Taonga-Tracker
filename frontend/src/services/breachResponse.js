@@ -1,6 +1,6 @@
 /**
- * Data Breach Response and Security Incident Management
- * Handles security incidents, breach detection, and automated responses
+ * Data breach response and security incident management.
+ * Handles breach detection, incident response, and automated security measures.
  */
 
 import { securityLogger } from './securityMonitoring';
@@ -8,11 +8,11 @@ import { tokenManager } from './security';
 import { gdprManager } from './gdpr';
 
 /**
- * Breach Detection System
+ * Breach detection and response system.
  */
 export const breachDetector = {
   /**
-   * Monitor for suspicious activities
+   * Monitor for suspicious activities and potential breaches.
    */
   monitorSuspiciousActivity: () => {
     // Monitor for multiple failed login attempts
@@ -38,7 +38,7 @@ export const breachDetector = {
   },
 
   /**
-   * Validate token integrity
+   * Validate JWT token integrity.
    * @param {string} token - JWT token to validate
    * @returns {boolean} True if token appears valid
    */
@@ -47,328 +47,125 @@ export const breachDetector = {
       const parts = token.split('.');
       if (parts.length !== 3) return false;
       
-      // Basic JWT structure validation
       const payload = JSON.parse(atob(parts[1]));
-      return payload.exp && payload.iat && payload.sub;
-    } catch {
+      return payload.exp && payload.iat && payload.exp > payload.iat;
+    } catch (error) {
       return false;
     }
   },
 
   /**
-   * Handle security incidents
+   * Check API response for signs of compromise.
+   * @param {Response} response - Fetch response object
+   */
+  checkResponse: (response) => {
+    // Check for suspicious headers
+    const suspiciousHeaders = ['x-powered-by', 'server'];
+    suspiciousHeaders.forEach(header => {
+      const value = response.headers.get(header);
+      if (value && value.includes('hack')) {
+        breachDetector.handleSecurityIncident('suspicious_response_header', {
+          header,
+          value
+        });
+      }
+    });
+
+    // Monitor for unusual status codes
+    if (response.status === 418) { // I'm a teapot - often used by attackers
+      breachDetector.handleSecurityIncident('unusual_status_code', {
+        status: response.status,
+        url: response.url
+      });
+    }
+  },
+
+  /**
+   * Handle security incidents with appropriate response.
    * @param {string} incidentType - Type of security incident
    * @param {Object} details - Incident details
    */
   handleSecurityIncident: (incidentType, details) => {
-    const incident = {
-      id: crypto.randomUUID(),
-      type: incidentType,
-      timestamp: new Date().toISOString(),
-      details,
-      severity: breachDetector.calculateSeverity(incidentType),
-      status: 'detected'
-    };
+    securityLogger.logSecurityEvent(incidentType, details, 'high');
 
-    // Log the incident
-    securityLogger.logSecurityEvent(incidentType, details, incident.severity);
-
-    // Store incident for tracking
-    const incidents = JSON.parse(localStorage.getItem('security_incidents') || '[]');
-    incidents.push(incident);
-    localStorage.setItem('security_incidents', JSON.stringify(incidents));
-
-    // Automated response based on severity
-    switch (incident.severity) {
-      case 'critical':
-        breachDetector.criticalIncidentResponse(incident);
+    // Implement response based on incident severity
+    switch (incidentType) {
+      case 'multiple_failed_logins':
+        breachDetector.lockAccount();
         break;
-      case 'high':
-        breachDetector.highSeverityResponse(incident);
+      case 'token_tampering':
+        breachDetector.invalidateSession();
         break;
-      case 'medium':
-        breachDetector.mediumSeverityResponse(incident);
+      case 'data_exfiltration':
+        breachDetector.emergencyLockdown();
+        break;
+      default:
+        // Log and continue monitoring
         break;
     }
   },
 
   /**
-   * Calculate incident severity
-   * @param {string} incidentType - Type of incident
-   * @returns {string} Severity level
+   * Temporarily lock user account.
    */
-  calculateSeverity: (incidentType) => {
-    const severityMap = {
-      'multiple_failed_logins': 'medium',
-      'token_tampering': 'critical',
-      'suspicious_file_upload': 'high',
-      'xss_attempt': 'high',
-      'csrf_attempt': 'high',
-      'data_exfiltration_attempt': 'critical',
-      'unauthorized_api_access': 'high'
-    };
-
-    return severityMap[incidentType] || 'medium';
+  lockAccount: () => {
+    localStorage.setItem('account_locked', Date.now().toString());
+    alert('Account temporarily locked due to suspicious activity. Please contact support.');
   },
 
   /**
-   * Critical incident response
-   * @param {Object} incident - Incident details
+   * Invalidate current session and force re-authentication.
    */
-  criticalIncidentResponse: (incident) => {
-    // Immediately force logout
+  invalidateSession: () => {
     tokenManager.clearToken();
-    
-    // Clear all sensitive data
-    ['user_data', 'family_data', 'heirloom_data'].forEach(key => {
-      localStorage.removeItem(key);
-    });
-
-    // Redirect to security notice page
-    window.location.href = '/security-notice';
+    window.dispatchEvent(new CustomEvent('securityBreach'));
+    window.location.href = '/login';
   },
 
   /**
-   * High severity incident response
-   * @param {Object} incident - Incident details
+   * Emergency lockdown procedure.
    */
-  highSeverityResponse: (incident) => {
-    // Show security warning
-    if (window.confirm('Security alert: Suspicious activity detected. Logout for safety?')) {
-      tokenManager.clearToken();
-      window.location.href = '/login';
-    }
-  },
-
-  /**
-   * Medium severity incident response
-   * @param {Object} incident - Incident details
-   */
-  mediumSeverityResponse: (incident) => {
-    // Log for monitoring, no immediate action
-    console.warn('Security incident detected:', incident);
+  emergencyLockdown: () => {
+    gdprManager.clearLocalData();
+    tokenManager.clearToken();
+    alert('Security breach detected. All data has been cleared for your protection.');
+    window.location.href = '/';
   }
 };
 
 /**
- * GDPR Breach Notification System
+ * Incident response coordinator.
  */
-export const gdprBreachNotification = {
+export const incidentResponse = {
   /**
-   * Assess if a breach requires GDPR notification
-   * @param {Object} incident - Security incident
-   * @returns {Object} Assessment result
+   * Report security incident to authorities.
+   * @param {Object} incident - Incident details
    */
-  assessBreachNotification: (incident) => {
-    const personalDataInvolved = gdprBreachNotification.checkPersonalDataInvolvement(incident);
-    const riskLevel = gdprBreachNotification.assessRisk(incident);
-    
-    return {
-      requiresNotification: personalDataInvolved && (riskLevel === 'high' || riskLevel === 'critical'),
-      timelineForNotification: personalDataInvolved ? '72 hours to DPA' : 'Not required',
-      userNotificationRequired: riskLevel === 'critical',
-      mitigationSteps: gdprBreachNotification.getMitigationSteps(incident.type)
-    };
+  reportIncident: (incident) => {
+    // In production, this would integrate with incident management systems
+    console.error('SECURITY INCIDENT REPORTED:', incident);
+
+    securityLogger.logSecurityEvent('incident_reported', {
+      incidentId: Date.now(),
+      reportedAt: new Date().toISOString(),
+      ...incident
+    }, 'critical');
   },
 
   /**
-   * Check if personal data is involved in the incident
-   * @param {Object} incident - Security incident
-   * @returns {boolean} True if personal data is involved
+   * Notify users of security incidents.
+   * @param {string} message - Notification message
+   * @param {string} [severity='medium'] - Incident severity
    */
-  checkPersonalDataInvolvement: (incident) => {
-    const personalDataIncidentTypes = [
-      'data_exfiltration_attempt',
-      'unauthorized_api_access',
-      'token_tampering',
-      'database_breach'
-    ];
+  notifyUsers: (message, severity = 'medium') => {
+    // Display user notification
+    const notification = document.createElement('div');
+    notification.className = `security-notification severity-${severity}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
 
-    return personalDataIncidentTypes.includes(incident.type);
-  },
-
-  /**
-   * Assess risk level of the incident
-   * @param {Object} incident - Security incident
-   * @returns {string} Risk level
-   */
-  assessRisk: (incident) => {
-    const criticalTypes = ['data_exfiltration_attempt', 'database_breach'];
-    const highTypes = ['unauthorized_api_access', 'token_tampering'];
-    
-    if (criticalTypes.includes(incident.type)) return 'critical';
-    if (highTypes.includes(incident.type)) return 'high';
-    return 'medium';
-  },
-
-  /**
-   * Get mitigation steps for incident type
-   * @param {string} incidentType - Type of incident
-   * @returns {string[]} List of mitigation steps
-   */
-  getMitigationSteps: (incidentType) => {
-    const mitigationMap = {
-      'token_tampering': [
-        'Force logout all sessions',
-        'Regenerate authentication tokens',
-        'Review access logs',
-        'Update security policies'
-      ],
-      'data_exfiltration_attempt': [
-        'Block suspicious IP addresses',
-        'Audit data access logs',
-        'Notify affected users',
-        'Review data protection measures'
-      ],
-      'unauthorized_api_access': [
-        'Review API access controls',
-        'Update authentication mechanisms',
-        'Monitor API usage patterns',
-        'Implement additional rate limiting'
-      ]
-    };
-
-    return mitigationMap[incidentType] || ['Review security measures', 'Monitor for similar incidents'];
-  }
-};
-
-/**
- * Automated Security Scanning
- */
-export const securityScanner = {
-  /**
-   * Perform comprehensive security scan
-   * @returns {Object} Scan results
-   */
-  performSecurityScan: () => {
-    const results = {
-      timestamp: new Date().toISOString(),
-      vulnerabilities: [],
-      recommendations: [],
-      score: 100
-    };
-
-    // Check for insecure storage
-    const insecureItems = securityScanner.checkInsecureStorage();
-    if (insecureItems.length > 0) {
-      results.vulnerabilities.push({
-        type: 'insecure_storage',
-        severity: 'medium',
-        description: 'Sensitive data stored insecurely',
-        items: insecureItems
-      });
-      results.score -= 20;
-    }
-
-    // Check for expired tokens
-    if (securityScanner.checkExpiredTokens()) {
-      results.vulnerabilities.push({
-        type: 'expired_tokens',
-        severity: 'low',
-        description: 'Expired authentication tokens found'
-      });
-      results.score -= 10;
-    }
-
-    // Check browser security
-    const browserSecurityIssues = securityScanner.checkBrowserSecurity();
-    if (browserSecurityIssues.length > 0) {
-      results.vulnerabilities.push({
-        type: 'browser_security',
-        severity: 'medium',
-        description: 'Browser security concerns detected',
-        issues: browserSecurityIssues
-      });
-      results.score -= 15;
-    }
-
-    // Generate recommendations
-    results.recommendations = securityScanner.generateRecommendations(results.vulnerabilities);
-
-    return results;
-  },
-
-  /**
-   * Check for insecurely stored data
-   * @returns {string[]} List of insecure storage items
-   */
-  checkInsecureStorage: () => {
-    const insecureItems = [];
-    const sensitiveKeys = ['password', 'secret', 'key', 'token'];
-    
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
-        const value = localStorage.getItem(key);
-        if (value && !value.startsWith('encrypted_')) {
-          insecureItems.push(key);
-        }
-      }
-    }
-
-    return insecureItems;
-  },
-
-  /**
-   * Check for expired tokens
-   * @returns {boolean} True if expired tokens found
-   */
-  checkExpiredTokens: () => {
-    const expiration = localStorage.getItem('token_expiration');
-    return expiration && Date.now() > parseInt(expiration);
-  },
-
-  /**
-   * Check browser security settings
-   * @returns {string[]} List of security issues
-   */
-  checkBrowserSecurity: () => {
-    const issues = [];
-
-    // Check if HTTPS is being used
-    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-      issues.push('Not using HTTPS');
-    }
-
-    // Check for mixed content
-    if (window.location.protocol === 'https:' && document.querySelectorAll('img[src^="http:"]').length > 0) {
-      issues.push('Mixed content detected');
-    }
-
-    // Check for inline scripts (basic check)
-    if (document.querySelectorAll('script:not([src])').length > 2) {
-      issues.push('Multiple inline scripts detected');
-    }
-
-    return issues;
-  },
-
-  /**
-   * Generate security recommendations
-   * @param {Array} vulnerabilities - List of vulnerabilities
-   * @returns {string[]} List of recommendations
-   */
-  generateRecommendations: (vulnerabilities) => {
-    const recommendations = [];
-
-    vulnerabilities.forEach(vuln => {
-      switch (vuln.type) {
-        case 'insecure_storage':
-          recommendations.push('Implement client-side encryption for sensitive data');
-          break;
-        case 'expired_tokens':
-          recommendations.push('Implement automatic token refresh mechanism');
-          break;
-        case 'browser_security':
-          recommendations.push('Review Content Security Policy and HTTPS implementation');
-          break;
-      }
-    });
-
-    if (recommendations.length === 0) {
-      recommendations.push('Security posture looks good! Continue monitoring.');
-    }
-
-    return [...new Set(recommendations)]; // Remove duplicates
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 10000);
   }
 };

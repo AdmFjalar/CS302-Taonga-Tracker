@@ -1,10 +1,18 @@
+/**
+ * Application entry point with React DOM rendering and URL fix interceptor.
+ * Sets up BrowserRouter and applies server URL corrections for deployment compatibility.
+ */
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 
-// URL fix interceptor - this will run as soon as the application loads
+/**
+ * URL fix interceptor - corrects hardcoded server URLs for proper routing.
+ * Runs immediately when the application loads to override fetch and XMLHttpRequest.
+ */
 (function() {
   // Override fetch API
   const originalFetch = window.fetch;

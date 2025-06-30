@@ -1,4 +1,7 @@
-/* About Page Styles */
+/**
+ * About page styles with company information and team presentation.
+ * Inherits gradient animations from StaticPage.css base styles.
+ */
 
 .about-page {
   max-width: 900px;

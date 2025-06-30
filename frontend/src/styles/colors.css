@@ -1,65 +1,54 @@
-/* Color variables for the entire application */
+/**
+ * Color system and design tokens for the Taonga Tracker application.
+ * Provides consistent color variables across all components and pages.
+ */
 
 :root {
-  /* Primary Colors - Green tones for main brand identity */
-  --color-primary-100: #f6f9f3;      /* Lightest green, used for backgrounds */
-  --color-primary-200: #e3e9dc;      /* Light green for hover states and soft elements */
-  --color-primary-300: #d1dbc7;      /* Medium-light green */
-  --color-primary-400: #7c9a7a;      /* Medium green for accents and secondary elements */
-  --color-primary-500: #4a5240;      /* Medium-dark green */
-  --color-primary-600: #2e4d2a;      /* Darker green for hover states */
-  --color-primary-700: #1e321c;      /* Darkest green for buttons and important elements */
+  /* Primary brand colors - Green heritage theme */
+  --color-primary-100: #f6f9f3;
+  --color-primary-200: #e3e9dc;
+  --color-primary-300: #d1dbc7;
+  --color-primary-400: #7c9a7a;
+  --color-primary-500: #4a5240;
+  --color-primary-600: #2e4d2a;
+  --color-primary-700: #1e321c;
 
-  /* Secondary Colors - Earth tones for warmth and heritage feel */
-  --color-secondary-100: #fffbe9;    /* Lightest cream, used for backgrounds */
-  --color-secondary-200: #e3e7d3;    /* Light cream for highlighting */
-  --color-secondary-300: #bcb88a;    /* Medium beige for borders and separators */
-  --color-secondary-400: #a2a078;    /* Medium-dark beige for accents */
-  --color-secondary-500: #6b5843;    /* Brown for headings and special elements */
+  /* Secondary colors - Earth tones for heritage feel */
+  --color-secondary-100: #fffbe9;
+  --color-secondary-200: #e3e7d3;
+  --color-secondary-300: #bcb88a;
+  --color-secondary-400: #a2a078;
+  --color-secondary-500: #6b5843;
 
-  /* Neutral Colors */
-  --color-neutral-white: #ffffff;    /* White */
-  --color-neutral-100: #f5f5f5;      /* Off-white */
-  --color-neutral-200: #e5e5e5;      /* Light gray */
-  --color-neutral-300: #d4d4d4;      /* Medium light gray */
-  --color-neutral-400: #a3a3a3;      /* Medium gray */
-  --color-neutral-500: #737373;      /* Medium dark gray */
-  --color-neutral-600: #525252;      /* Dark gray */
-  --color-neutral-700: #404040;      /* Very dark gray */
-  --color-neutral-800: #222222;      /* Nearly black */
-  --color-neutral-900: #171717;      /* Black */
+  /* Neutral color scale */
+  --color-neutral-white: #ffffff;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #222222;
+  --color-neutral-900: #171717;
 
-  /* Semantic Colors */
-  --color-success: #28a745;          /* Success green */
-  --color-warning: #ffc107;          /* Warning yellow/amber */
-  --color-error: #dc3545;            /* Error red */
-  --color-error-dark: #a94442;       /* Dark error red for hover states */
-  --color-info: #17a2b8;             /* Info blue */
+  /* Semantic state colors */
+  --color-success: #28a745;
+  --color-warning: #ffc107;
+  --color-error: #dc3545;
+  --color-error-dark: #a94442;
+  --color-info: #17a2b8;
 
-  /* Specific UI Colors */
-  --color-shadow-light: rgba(30, 50, 28, 0.08);    /* Light shadows */
-  --color-shadow-medium: rgba(30, 50, 28, 0.10);   /* Medium shadows */
-  --color-shadow-dark: rgba(30, 50, 28, 0.16);     /* Dark shadows */
-  --color-overlay: rgba(30, 50, 28, 0.18);         /* Modal overlays */
+  /* Shadow and overlay utilities */
+  --color-shadow-light: rgba(30, 50, 28, 0.08);
+  --color-shadow-medium: rgba(30, 50, 28, 0.10);
+  --color-shadow-dark: rgba(30, 50, 28, 0.16);
+  --color-overlay: rgba(30, 50, 28, 0.18);
 
-  /* Gradient Colors */
+  /* Gradient backgrounds */
   --gradient-primary: linear-gradient(135deg, var(--color-primary-100), var(--color-primary-200), var(--color-secondary-200), var(--color-secondary-300));
-
-  /* Gradient Component Colors - For creating complex gradients */
-  --gradient-spot-light-1: rgba(240, 245, 235, 0.7);  /* Lighter version */
-  --gradient-spot-light-2: rgba(230, 240, 225, 0.7);  /* Lighter version */
-  --gradient-spot-medium-1: rgba(220, 218, 180, 0.4); /* Lighter version */
-  --gradient-spot-medium-2: rgba(210, 210, 170, 0.3); /* Lighter version */
-
-  /* Enhanced Gradient Colors for Global Background */
-  --gradient-vibrant-green: rgba(124, 154, 122, 0.4);     /* Primary green with opacity */
-  --gradient-warm-beige: rgba(188, 184, 138, 0.3);        /* Secondary beige with opacity */
-  --gradient-heritage-brown: rgba(107, 88, 67, 0.2);      /* Secondary brown with opacity */
-  --gradient-soft-cream: rgba(227, 233, 220, 0.4);        /* Primary light with opacity */
-  --gradient-accent-green: rgba(162, 160, 120, 0.3);      /* Secondary accent with opacity */
-  --gradient-highlight-green: rgba(124, 154, 122, 0.2);   /* Primary green lighter with opacity */
-
-  /* UI Component Colors */
-  --color-background-translucent: rgba(255, 255, 255, 0.2);
-  --color-background-translucent-focus: rgba(255, 255, 255, 0.3);
+  --gradient-spot-light-1: rgba(240, 245, 235, 0.7);
+  --gradient-spot-light-2: rgba(230, 240, 225, 0.7);
+  --gradient-spot-medium-1: rgba(220, 218, 180, 0.4);
+  --gradient-spot-medium-2: rgba(210, 210, 170, 0.3);
 }

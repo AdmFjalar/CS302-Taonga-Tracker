@@ -6,64 +6,167 @@ using TaongaTrackerAPI.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using System.Text;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Enhanced logging configuration
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+if (builder.Environment.IsProduction())
+{
+    builder.Logging.AddEventSourceLogger();
+}
+
+// Security headers and CORS configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() 
+                        ?? new[] { "http://localhost:3000", "https://localhost:3001", "http://taongatracker.com", "https://taongatracker.com", "http://www.taongatracker.com", "https://www.taongatracker.com" };
+    
+    options.AddPolicy("SecureCors", policy =>
     {
-        builder.AllowAnyOrigin() //WithOrigins("http://localhost:3000") // React app origin
-            .AllowAnyHeader() // Allow any headers (e.g., Content-Type)
-            .AllowAnyMethod(); // Allow any HTTP method (POST, GET, etc.)
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
 
-builder.Services.AddControllers();
+// Rate limiting configuration
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("AuthPolicy", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 5;
+    });
+    
+    options.AddFixedWindowLimiter("GeneralPolicy", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 100;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 10;
+    });
+});
+
+// Enhanced JSON configuration for performance and security
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;
+    options.SerializerOptions.MaxDepth = 32; // Prevent JSON depth attacks
+});
+
+builder.Services.AddControllers(options =>
+{
+    options.ModelValidatorProviders.Clear(); // Remove default validators for performance
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    options.JsonSerializerOptions.MaxDepth = 32;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 
+// Enhanced Identity configuration with stronger security
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
-    {
-        options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 8;
-        options.Password.RequireNonAlphanumeric = true;
-        options.Password.RequireUppercase = true;
-        options.Password.RequireLowercase = true;
-        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-        options.Lockout.MaxFailedAccessAttempts = 5;
-        options.Lockout.AllowedForNewUsers = false;
-    })
-    .AddUserStore<UserStore>()
-    .AddRoleStore<RoleStore>()
-    .AddDefaultTokenProviders();
+{
+    // Password policy
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 12;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequiredUniqueChars = 4;
+    
+    // Lockout policy - enhanced security
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); // Increased from 5
+    options.Lockout.MaxFailedAccessAttempts = 3; // Reduced from 5
+    options.Lockout.AllowedForNewUsers = true; // Changed to true for security
+    
+    // User policy
+    options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+    
+    // Sign-in policy
+    options.SignIn.RequireConfirmedEmail = false; // Set to true in production
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddUserStore<UserStore>()
+.AddRoleStore<RoleStore>()
+.AddDefaultTokenProviders()
+.AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(TokenOptions.DefaultProvider);
 
+// Enhanced JWT authentication
 builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        RequireExpirationTime = true,
+        RequireSignedTokens = true,
+        ClockSkew = TimeSpan.FromMinutes(1), // Reduced clock skew
+        ValidIssuer = builder.Configuration["JWT:Issuer"],
+        ValidAudience = builder.Configuration["JWT:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"] ?? 
+                throw new InvalidOperationException("JWT:Secret is required")))
+    };
+    
+    options.Events = new JwtBearerEvents
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        OnAuthenticationFailed = context =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["JWT:Issuer"],
-            ValidAudience = builder.Configuration["JWT:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
-        };
-    });
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("JWT authentication failed: {Exception}", context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogDebug("JWT token validated for user: {UserId}", 
+                context.Principal?.FindFirst("sub")?.Value);
+            return Task.CompletedTask;
+        }
+    };
+});
 
-// Add HTTP Context Accessor for authorization handlers
+// Services registration
 builder.Services.AddHttpContextAccessor();
-
-// Add authorization services
 builder.Services.AddScoped<IAuthorizationHandler, ResourceOwnershipHandler>();
+builder.Services.AddScoped<INeo4jService, Neo4jService>();
 
+// Enhanced authorization policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("FamilyTreeOwnership", policy =>
@@ -71,21 +174,93 @@ builder.Services.AddAuthorization(options =>
     
     options.AddPolicy("FamilyMemberOwnership", policy =>
         policy.Requirements.Add(new ResourceOwnershipRequirement("familymember")));
+        
+    options.AddPolicy("VaultOwnership", policy =>
+        policy.Requirements.Add(new ResourceOwnershipRequirement("vault")));
+        
+    options.AddPolicy("RequireAuthentication", policy =>
+        policy.RequireAuthenticatedUser());
 });
 
-builder.Services.AddScoped<INeo4jService, Neo4jService>();
+// Security headers middleware
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
 
+// Configure forwarded headers for reverse proxy scenarios
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// Enhanced Kestrel configuration for performance
 builder.WebHost.ConfigureKestrel((context, options) =>
 {
+    options.Limits.MaxConcurrentConnections = 1000;
+    options.Limits.MaxConcurrentUpgradedConnections = 1000;
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB limit
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    
     options.Configure(context.Configuration.GetSection("Kestrel"));
 });
 
 var app = builder.Build();
 
-app.UseCors("AllowAll");
+// Configure security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+        context.Response.Headers.Append("Content-Security-Policy", 
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';");
+    }
+    
+    await next();
+});
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+// Middleware pipeline order is important for security and performance
+app.UseForwardedHeaders();
+app.UseHttpsRedirection();
+app.UseRateLimiter();
+app.UseCors("SecureCors");
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseStaticFiles();
 
-app.MapControllers();
+// Static files with caching for performance
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        if (!app.Environment.IsDevelopment())
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");
+        }
+    }
+});
+
+app.MapControllers().RequireRateLimiting("GeneralPolicy");
+
 app.Run();

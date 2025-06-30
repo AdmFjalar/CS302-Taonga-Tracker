@@ -1,188 +1,138 @@
-/* Static pages general styling */
+/**
+ * Static page styles for informational content pages.
+ * Provides consistent layout for About, Terms, Privacy, FAQ, and Sitemap pages.
+ */
+
 .static-page {
   max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
   font-family: var(--font-primary);
   min-height: calc(100vh - 200px);
-  background: linear-gradient(135deg, var(--color-secondary-50) 0%, var(--color-primary-50) 100%);
 }
 
 .static-content {
   background: var(--color-neutral-white);
   padding: 3rem;
-  border-radius: 20px;
-  box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.1),
-    0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: var(--color-shadow-light);
+  border: 1px solid var(--color-neutral-200);
 }
 
 .static-content h1 {
-  color: var(--color-primary-800);
-  font-size: 2.5rem;
+  color: var(--color-primary-700);
+  font-size: var(--text-3xl);
   font-weight: var(--weight-bold);
   margin-bottom: 0.5rem;
   text-align: center;
-  background: linear-gradient(135deg, var(--color-primary-700), var(--color-primary-500));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-family: var(--font-secondary);
 }
 
 .static-content > p {
   text-align: center;
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   color: var(--color-primary-600);
   margin-bottom: 3rem;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  line-height: var(--leading-normal);
 }
 
 .static-content h2 {
   color: var(--color-primary-700);
-  font-size: 1.4rem;
+  font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
   margin-top: 2.5rem;
   margin-bottom: 1.5rem;
   padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-secondary-100), var(--color-primary-100));
-  border-radius: 12px;
-  border-left: 4px solid var(--color-primary-400);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  background: var(--color-secondary-100);
+  border-radius: 8px;
+  border-left: 4px solid var(--color-primary-500);
 }
 
-.static-content h2::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  background: var(--color-primary-400);
-  border-radius: 50%;
-  flex-shrink: 0;
+.static-content h3 {
+  color: var(--color-primary-600);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.static-content p {
+  color: var(--color-neutral-700);
+  line-height: var(--leading-relaxed);
+  margin-bottom: 1rem;
+}
+
+.static-content ul,
+.static-content ol {
+  color: var(--color-neutral-700);
+  line-height: var(--leading-relaxed);
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+.static-content li {
+  margin-bottom: 0.5rem;
+}
+
+.static-content strong {
+  color: var(--color-primary-700);
+  font-weight: var(--weight-semibold);
+}
+
+.static-content a {
+  color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.static-content a:hover {
+  color: var(--color-primary-700);
+  text-decoration: underline;
+}
+
+.last-updated {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-500);
+  font-style: italic;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 /* Sitemap specific styles */
 .sitemap-section {
-  margin-bottom: 2.5rem;
-  background: var(--color-neutral-white);
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--color-secondary-200);
+  margin-bottom: 2rem;
 }
 
 .sitemap-list {
   list-style: none;
-  padding: 1.5rem;
-  margin: 0;
-  background: var(--color-neutral-white);
+  padding-left: 0;
 }
 
 .sitemap-list li {
-  margin-bottom: 1rem;
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-secondary-50), var(--color-primary-50));
-  border-radius: 10px;
-  border: 1px solid var(--color-secondary-200);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-neutral-200);
 }
 
-.sitemap-list li::before {
-  content: "→";
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-primary-400);
-  font-weight: bold;
-  font-size: 1.2rem;
-  transition: transform 0.3s ease;
+.sitemap-list li:last-child {
+  border-bottom: none;
 }
 
-.sitemap-list li:hover {
-  transform: translateX(8px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, var(--color-primary-100), var(--color-secondary-100));
-  border-color: var(--color-primary-300);
-}
-
-.sitemap-list li:hover::before {
-  transform: translateY(-50%) translateX(4px);
-  color: var(--color-primary-600);
-}
-
-.sitemap-list a {
-  color: var(--color-primary-700);
-  text-decoration: none;
-  font-weight: var(--weight-semibold);
-  font-size: 1.05rem;
-  margin-left: 2rem;
-  display: block;
-  transition: color 0.3s ease;
-}
-
-.sitemap-list a:hover {
-  color: var(--color-primary-800);
-}
-
-.sitemap-list li:hover a {
-  color: var(--color-primary-800);
-}
-
-/* Description text styling */
-.sitemap-list li {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sitemap-list a + span {
-  font-size: 0.9rem;
-  color: var(--color-primary-500);
-  margin-left: 2rem;
-  font-style: italic;
-}
-
-.sitemap-note {
-  background: linear-gradient(135deg, var(--color-secondary-100), var(--color-primary-100));
-  border: 2px solid var(--color-primary-200);
-  border-radius: 15px;
+.academic-note {
+  background: var(--color-info);
+  color: white;
   padding: 1.5rem;
-  margin-top: 3rem;
-  position: relative;
-  overflow: hidden;
+  border-radius: 8px;
+  margin-top: 2rem;
 }
 
-.sitemap-note::before {
-  content: "ℹ";
-  position: absolute;
-  top: 1rem;
-  left: 1.5rem;
-  font-size: 1.5rem;
-  color: var(--color-primary-500);
-  font-weight: bold;
-}
-
-.sitemap-note p {
-  margin: 0 0 0 2.5rem;
-  color: var(--color-primary-700);
-  font-style: italic;
-  font-weight: var(--weight-medium);
-}
-
-/* Enhanced visual hierarchy */
-.sitemap-section:first-of-type {
-  border-top: 3px solid var(--color-primary-400);
-}
-
-.sitemap-section:nth-child(2n) {
-  background: linear-gradient(135deg, var(--color-secondary-25), var(--color-primary-25));
+.academic-note h2 {
+  color: white;
+  margin-top: 0;
+  background: none;
+  padding: 0;
+  border: none;
 }
 
 /* Responsive design */
@@ -193,53 +143,14 @@
 
   .static-content {
     padding: 2rem;
-    border-radius: 15px;
   }
 
   .static-content h1 {
-    font-size: 2rem;
+    font-size: var(--text-2xl);
   }
 
   .static-content h2 {
-    font-size: 1.2rem;
+    font-size: var(--text-lg);
     padding: 0.75rem 1rem;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-  }
-
-  .sitemap-list {
-    padding: 1rem;
-  }
-
-  .sitemap-list li {
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .sitemap-list a {
-    margin-left: 1.5rem;
-    font-size: 1rem;
-  }
-
-  .sitemap-list a + span {
-    margin-left: 1.5rem;
-  }
-
-  .sitemap-note {
-    padding: 1rem;
-  }
-
-  .sitemap-note p {
-    margin-left: 2rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .static-content h1 {
-    font-size: 1.75rem;
-  }
-
-  .sitemap-list li:hover {
-    transform: translateX(4px);
   }
 }

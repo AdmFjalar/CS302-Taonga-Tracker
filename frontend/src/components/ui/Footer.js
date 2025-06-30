@@ -2,6 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/ui/Footer.css';
 
+/**
+ * Application footer component with links and contact information.
+ *
+ * @returns {JSX.Element} Footer component
+ */
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   
@@ -15,16 +20,16 @@ const Footer = () => {
         <div className="footer-section">
           <h4>Quick Links</h4>
           <ul>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/faq">FAQ</Link></li>
-              <li><Link to="/terms">Terms & Conditions</Link></li>
-              <li><Link to="/privacy">Privacy Policy</Link></li>
-              <li><Link to="/sitemap">Sitemap</Link></li>
+            <li><Link to="/about">About Us</Link></li>
+            <li><Link to="/faq">FAQ</Link></li>
+            <li><Link to="/terms">Terms &amp; Conditions</Link></li>
+            <li><Link to="/privacy">Privacy Policy</Link></li>
+            <li><Link to="/sitemap">Sitemap</Link></li>
           </ul>
         </div>
         <div className="footer-section">
           <h4>Contact</h4>
-          <p>Email: <Link to={"mailto:support@taongatracker.com"}>support@taongatracker.com</Link></p>
+          <p>Email: <Link to="mailto:support@taongatracker.com">support@taongatracker.com</Link></p>
         </div>
       </div>
       <div className="footer-bottom">

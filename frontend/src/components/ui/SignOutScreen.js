@@ -2,8 +2,9 @@ import React from 'react';
 import LoadingScreen from './LoadingScreen';
 
 /**
- * SignOutScreen component - Shows a loading screen during the sign-out process
- * @component
+ * Sign out screen component that displays during the logout process.
+ *
+ * @returns {JSX.Element} Sign out loading screen
  */
 const SignOutScreen = () => {
   return (

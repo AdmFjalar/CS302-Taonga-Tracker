@@ -107,7 +107,9 @@
 .item-edit-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.2rem 2.5rem;
+  gap: 1.2rem 1.5rem; /* Reduced horizontal gap from 2.5rem to 1.5rem */
+  max-width: 100%;
+  overflow: hidden;
 }
 
 @media (max-width: 900px) {
@@ -118,6 +120,7 @@
   }
   .item-edit-grid {
     grid-template-columns: 1fr;
+    gap: 1.2rem;
   }
 }
 
@@ -153,28 +156,66 @@
 
 }
 
+/* Form row layout for label-input pairs - prevent overflow */
 .form-row {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden; /* Prevent content from overflowing */
 }
 
 .form-row b {
   width: 120px;
+  min-width: 120px;
   display: inline-block;
   text-align: left;
+  flex-shrink: 0;
 }
 
-.form-row input {
+.form-row input,
+.form-row select {
   flex: 1;
+  min-width: 0; /* Allow flex items to shrink below content size */
+  max-width: 100%; /* Ensure elements don't exceed container width */
   padding: 0.25rem;
   font-size: var(--text-base);
   border: none;
   border-bottom: 1px solid var(--color-primary-700);
   background: none;
   font-family: var(--font-primary);
+  box-sizing: border-box;
+  overflow: hidden; /* Prevent text overflow */
+}
+
+/* Specific styling for currency value input container */
+.form-row .currency-input-container {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 0.3rem; /* Reduced from 0.5rem to 0.3rem */
+  align-items: center;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure currency input and selector stay within bounds */
+.form-row .currency-input-container input {
+  flex: 1; /* Changed from flex: 2 to flex: 1 for more balanced sizing */
+  min-width: 0;
+  max-width: none;
+}
+
+.form-row .currency-input-container select {
+  flex: 0 0 85px; /* Reduced from 100px to 85px */
+  min-width: fit-content;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.85rem; /* Slightly smaller font to fit better */
 }
 
 .tabs {

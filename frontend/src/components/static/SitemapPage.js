@@ -41,6 +41,7 @@ const SitemapPage = () => {
           <h2>User Settings</h2>
           <ul className="sitemap-list">
             <li><Link to="/settings">Account Settings</Link> - Manage your profile and preferences</li>
+            <li><Link to="/security">Security Settings</Link> - Manage security and privacy preferences</li>
           </ul>
         </div>
 

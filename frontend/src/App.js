@@ -6,6 +6,7 @@ import LoginPage from "./components/auth/LoginPage";
 import RegisterPage from "./components/auth/RegisterPage";
 import HeirloomPage from "./components/heirloom/HeirloomPage";
 import SettingsPage from "./components/user/SettingsPage";
+import SecuritySettings from "./components/user/SecuritySettings";
 import Header from "./components/ui/Header";
 import Footer from "./components/ui/Footer";
 import CookieConsent from "./components/ui/CookieConsent";
@@ -20,29 +21,25 @@ import { STORAGE_KEYS } from "./services/constants";
 import "./App.css";
 
 /**
- * Main application component.
- * Uses consolidated Header that automatically shows appropriate content based on auth state.
- * Header now includes navigation links for authenticated users.
+ * Main application component that handles routing and layout structure.
+ * Provides different layouts based on authentication state and page requirements.
  *
- * @returns {JSX.Element} The app component
+ * @returns {JSX.Element} The main application component
  */
 function App() {
     const location = useLocation();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isSigningOut, setIsSigningOut] = useState(false);
 
-    // Check if user is logged in
+    // Monitor authentication state on route changes
     useEffect(() => {
         const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
         setIsLoggedIn(!!token);
-    }, [location.pathname]); // Re-check on route changes
+    }, [location.pathname]);
 
-    // Listen for sign out events
+    // Handle sign out process with loading screen
     useEffect(() => {
-        const handleSignOut = () => {
-            setIsSigningOut(true);
-        };
-
+        const handleSignOut = () => setIsSigningOut(true);
         const handleSignOutComplete = () => {
             setIsSigningOut(false);
             setIsLoggedIn(false);
@@ -57,29 +54,24 @@ function App() {
         };
     }, []);
 
-    // Show sign out screen if user is signing out
     if (isSigningOut) {
         return <SignOutScreen />;
     }
 
-    // Pages that always show auth layout regardless of login status
+    // Define page categories for layout determination
     const alwaysAuthPages = ["/login", "/register"];
-
-    // Pages that show auth layout when not logged in, but main layout when logged in
     const conditionalPages = ["/about", "/terms", "/faq"];
 
     const isAlwaysAuthPage = alwaysAuthPages.includes(location.pathname);
     const isConditionalAuthPage = conditionalPages.includes(location.pathname);
     const isRootPath = location.pathname === "/";
 
-    // Show auth layout only for:
-    // 1. Always auth pages (login, register) OR
-    // 2. Conditional pages (about, terms, faq) when user is NOT logged in
-    // 3. Root path when user is NOT logged in
-    const showAuthLayout = isAlwaysAuthPage || (isConditionalAuthPage && !isLoggedIn) || (isRootPath && !isLoggedIn);
+    // Determine layout: auth layout for unauthenticated users on specific pages
+    const showAuthLayout = isAlwaysAuthPage ||
+                          (isConditionalAuthPage && !isLoggedIn) ||
+                          (isRootPath && !isLoggedIn);
 
     if (showAuthLayout) {
-        // Authentication pages layout - Header handles auth state automatically
         return (
             <div className="auth-page-container">
                 <Header />
@@ -101,7 +93,7 @@ function App() {
         );
     }
 
-    // Main app layout: header is now sticky and contains navigation
+    // Main authenticated user layout
     return (
         <div className="layout">
             <Header />
@@ -112,6 +104,7 @@ function App() {
                     <Route path="/heirloom" element={<HeirloomPage />} />
                     <Route path="/family" element={<FamilyTreePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/security" element={<SecuritySettings />} />
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/faq" element={<FAQPage />} />

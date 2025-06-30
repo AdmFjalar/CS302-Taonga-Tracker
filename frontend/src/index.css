@@ -1,7 +1,13 @@
+/**
+ * Global styles and design system imports for the Taonga Tracker application.
+ * Sets up base styling, typography, and animated background.
+ */
+
 /* Import design system */
 @import './styles/fonts.css';
 @import './styles/colors.css';
 
+/* Global reset and base styles */
 * {
   margin: 0;
   padding: 0;

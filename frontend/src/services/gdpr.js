@@ -1,18 +1,17 @@
 /**
- * GDPR Data Management Utilities
- * Handles user data requests, deletion, and export functionality
+ * GDPR compliance utilities for data export, deletion, and consent management.
  */
 
 import { authAPI } from './api';
 import { STORAGE_KEYS } from './constants';
 
 /**
- * GDPR compliance utilities
+ * GDPR data management functions.
  */
 export const gdprManager = {
   /**
-   * Export all user data in JSON format
-   * @returns {Promise<Object>} User's complete data
+   * Export all user data in structured format.
+   * @returns {Promise<Object>} Complete user data export
    */
   exportUserData: async () => {
     try {
@@ -20,7 +19,7 @@ export const gdprManager = {
       const familyData = await authAPI.getFamilyMembers?.() || [];
       const heirloomData = await authAPI.getHeirlooms?.() || [];
       
-      const exportData = {
+      return {
         personal_information: {
           id: userData.id,
           username: userData.username,
@@ -33,8 +32,6 @@ export const gdprManager = {
         export_date: new Date().toISOString(),
         export_version: '1.0'
       };
-
-      return exportData;
     } catch (error) {
       console.error('Error exporting user data:', error);
       throw new Error('Failed to export user data');
@@ -42,7 +39,7 @@ export const gdprManager = {
   },
 
   /**
-   * Download user data as JSON file
+   * Download user data as JSON file.
    */
   downloadUserData: async () => {
     try {
@@ -52,106 +49,78 @@ export const gdprManager = {
       });
       
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `taonga-tracker-data-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `taonga-trove-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading user data:', error);
-      throw error;
+      throw new Error('Failed to download user data');
     }
   },
 
   /**
-   * Request account deletion (GDPR Right to Erasure)
-   * @param {string} reason - Reason for deletion
-   * @returns {Promise<void>}
+   * Request account deletion with confirmation.
+   * @returns {Promise<boolean>} True if deletion was successful
    */
-  requestAccountDeletion: async (reason = '') => {
+  requestAccountDeletion: async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone.'
+    );
+
+    if (!confirmed) return false;
+
     try {
-      const response = await fetch('/api/gdpr/delete-request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)}`
-        },
-        body: JSON.stringify({
-          reason,
-          requested_at: new Date().toISOString()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to request account deletion');
-      }
-
-      return await response.json();
+      await authAPI.deleteAccount?.();
+      localStorage.clear();
+      window.location.href = '/';
+      return true;
     } catch (error) {
-      console.error('Error requesting account deletion:', error);
-      throw error;
+      console.error('Error deleting account:', error);
+      throw new Error('Failed to delete account');
     }
   },
 
   /**
-   * Update consent preferences
-   * @param {Object} preferences - Consent preferences
+   * Check if user has given cookie consent.
+   * @returns {boolean} True if consent given
    */
-  updateConsentPreferences: (preferences) => {
-    const consentData = {
-      ...preferences,
-      timestamp: new Date().toISOString(),
-      version: '1.0'
-    };
-    
-    localStorage.setItem('gdpr_consent', JSON.stringify(consentData));
-    localStorage.setItem('cookie_consent', JSON.stringify(consentData));
-    
-    // Trigger consent update events
-    window.dispatchEvent(new CustomEvent('consentUpdated', { 
-      detail: consentData 
-    }));
+  hasConsent: () => {
+    return localStorage.getItem('cookie_consent') === 'true';
   },
 
   /**
-   * Get current consent status
-   * @returns {Object|null} Current consent preferences
+   * Record user's cookie consent.
+   * @param {boolean} [consent=true] - Consent status
    */
-  getConsentStatus: () => {
-    const consent = localStorage.getItem('gdpr_consent') || 
-                   localStorage.getItem('cookie_consent');
-    return consent ? JSON.parse(consent) : null;
+  setConsent: (consent = true) => {
+    localStorage.setItem('cookie_consent', consent.toString());
+    localStorage.setItem('consent_date', new Date().toISOString());
   },
 
   /**
-   * Check if user has given specific consent
-   * @param {string} type - Type of consent (analytics, marketing, etc.)
-   * @returns {boolean}
+   * Show cookie consent banner.
    */
-  hasConsent: (type) => {
-    const consent = gdprManager.getConsentStatus();
-    return consent ? Boolean(consent[type]) : false;
+  showConsentBanner: () => {
+    // Trigger cookie consent banner display
+    window.dispatchEvent(new CustomEvent('showCookieConsent'));
   },
 
   /**
-   * Record data processing activity for compliance audit
-   * @param {string} activity - Description of processing activity
-   * @param {string} lawfulBasis - Legal basis for processing
-   * @param {Object} data - Data being processed
+   * Clear all user data from local storage.
    */
-  recordProcessingActivity: (activity, lawfulBasis, data = {}) => {
-    const record = {
-      activity,
-      lawfulBasis,
-      timestamp: new Date().toISOString(),
-      dataTypes: Object.keys(data),
-      userId: localStorage.getItem(STORAGE_KEYS.USER_ID)
-    };
+  clearLocalData: () => {
+    const keysToKeep = ['cookie_consent', 'consent_date'];
+    const allKeys = Object.keys(localStorage);
 
-    // In a real application, this would be sent to a compliance logging system
-    console.log('GDPR Processing Record:', record);
+    allKeys.forEach(key => {
+      if (!keysToKeep.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    });
   }
 };
 

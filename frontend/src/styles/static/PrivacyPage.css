@@ -1,4 +1,8 @@
-/* Privacy Policy Page Styles */
+/**
+ * Privacy policy page styles with structured content sections.
+ * Provides clear typography hierarchy for legal document presentation.
+ */
+
 .privacy-page {
   max-width: 900px;
   margin: 1rem auto;

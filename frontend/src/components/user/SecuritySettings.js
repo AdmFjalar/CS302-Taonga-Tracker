@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import StandardModal from '../shared/StandardModal';
+import Button from '../shared/Button';
 import { gdprManager } from '../../services/gdpr';
 import { securityScanner, breachDetector } from '../../services/breachResponse';
 import { tokenManager } from '../../services/security';
+import { authAPI } from '../../services/api';
+import { getFullImageUrl } from '../../services/utils';
 import '../../styles/user/SecuritySettings.css';
 
 /**
@@ -19,8 +24,49 @@ const SecuritySettings = () => {
   const [loading, setLoading] = useState(false);
   const [dataExportStatus, setDataExportStatus] = useState('');
   const [deletionRequestStatus, setDeletionRequestStatus] = useState('');
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('');
+  
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
+  const [passwordChangeStatus, setPasswordChangeStatus] = useState('');
+  const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+
+  // User data state
+  const [user, setUser] = useState({
+    firstName: "",
+    lastName: "",
+    userName: "",
+    profilePictureUrl: "",
+  });
+  const [userLoading, setUserLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch user data
+    const fetchUser = async () => {
+      try {
+        setUserLoading(true);
+        const data = await authAPI.getCurrentUser();
+        setUser({
+          firstName: data.firstName || "",
+          lastName: data.lastName || "",
+          userName: data.userName || "",
+          profilePictureUrl: data.profilePictureUrl || "",
+        });
+      } catch (err) {
+        console.error("Failed to load user data:", err);
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    fetchUser();
+
     // Load current consent preferences
     const currentConsent = gdprManager.getConsentStatus();
     if (currentConsent) {
@@ -63,23 +109,28 @@ const SecuritySettings = () => {
   };
 
   const handleAccountDeletion = async () => {
-    const reason = prompt('Please provide a reason for account deletion (optional):');
-
-    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      return;
-    }
-
+    setShowDeleteConfirmModal(false);
     setLoading(true);
     setDeletionRequestStatus('Processing deletion request...');
 
     try {
-      await gdprManager.requestAccountDeletion(reason);
+      await gdprManager.requestAccountDeletion(deletionReason);
       setDeletionRequestStatus('Account deletion request submitted successfully. You will receive confirmation within 30 days.');
     } catch (error) {
       setDeletionRequestStatus('Error submitting deletion request: ' + error.message);
     } finally {
       setLoading(false);
+      setDeletionReason('');
     }
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmModal(false);
+    setDeletionReason('');
   };
 
   const handleSecurityIncidentCheck = () => {
@@ -93,52 +144,78 @@ const SecuritySettings = () => {
     return 'security-score-danger';
   };
 
+  const handlePasswordChange = async () => {
+    setPasswordChangeLoading(true);
+    setPasswordChangeStatus('');
+
+    // Validate passwords match
+    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+      setPasswordChangeStatus('New password and confirmation do not match.');
+      setPasswordChangeLoading(false);
+      return;
+    }
+
+    // Validate password requirements
+    if (passwordData.newPassword.length < 12) {
+      setPasswordChangeStatus('New password must be at least 12 characters long.');
+      setPasswordChangeLoading(false);
+      return;
+    }
+
+    try {
+      await authAPI.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmNewPassword: passwordData.confirmNewPassword
+      });
+
+      setPasswordChangeStatus('Password changed successfully! You will be logged out for security.');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
+      setShowPasswordForm(false);
+
+      // Log out user after successful password change for security
+      setTimeout(() => {
+        tokenManager.clearToken();
+        window.location.href = '/login';
+      }, 2000);
+
+    } catch (error) {
+      setPasswordChangeStatus('Error changing password: ' + error.message);
+    } finally {
+      setPasswordChangeLoading(false);
+    }
+  };
+
+  const actions = [
+    <Link key="back" to="/settings">
+      <Button variant="outline">
+        ← Back to Settings
+      </Button>
+    </Link>
+  ];
+
   return (
-    <div className="security-settings">
-      <h1>Security & Privacy Settings</h1>
+    <StandardModal
+      isEdit={true}
+      title="Security & Privacy Settings"
+      photo={getFullImageUrl(user.profilePictureUrl)}
+      photoAlt="Profile Picture"
+      photoShape="rectangular"
+      actions={actions}
+      className="security-settings-modal"
+    >
+      {/* Cookie Preferences Section */}
+      <div className="standard-modal-section">
+        <h3 className="standard-section-title">Cookie Preferences</h3>
+        <p className="standard-field-description">Manage your cookie and tracking preferences:</p>
 
-      {/* GDPR Rights Section */}
-      <section className="settings-section">
-        <h2>Your Privacy Rights (GDPR)</h2>
-        <p>Under GDPR, you have the following rights regarding your personal data:</p>
-
-        <div className="gdpr-rights">
-          <div className="gdpr-right">
-            <h3>Right to Access</h3>
-            <p>Download a copy of all your personal data we have stored.</p>
-            <button
-              onClick={handleDataExport}
-              disabled={loading}
-              className="btn-primary"
-            >
-              {loading ? 'Exporting...' : 'Export My Data'}
-            </button>
-            {dataExportStatus && <p className="status-message">{dataExportStatus}</p>}
-          </div>
-
-          <div className="gdpr-right">
-            <h3>Right to Erasure</h3>
-            <p>Request complete deletion of your account and all associated data.</p>
-            <button
-              onClick={handleAccountDeletion}
-              disabled={loading}
-              className="btn-danger"
-            >
-              Delete My Account
-            </button>
-            {deletionRequestStatus && <p className="status-message">{deletionRequestStatus}</p>}
-          </div>
-        </div>
-      </section>
-
-      {/* Cookie Consent Management */}
-      <section className="settings-section">
-        <h2>Cookie Preferences</h2>
-        <p>Manage your cookie and tracking preferences:</p>
-
-        <div className="cookie-preferences">
-          <div className="cookie-category">
-            <div className="cookie-header">
+        <div className="standard-modal-details-grid">
+          <div className="standard-field-row">
+            <div className="standard-field-label">
+              <strong>Necessary Cookies</strong>
+              <span className="required-badge">Required</span>
+            </div>
+            <div className="standard-field-value">
               <input
                 type="checkbox"
                 id="necessary"
@@ -146,149 +223,202 @@ const SecuritySettings = () => {
                 disabled={true}
                 onChange={() => {}}
               />
-              <label htmlFor="necessary">
-                <strong>Necessary Cookies</strong>
-                <span className="required">Required</span>
+              <label htmlFor="necessary" className="checkbox-label">
+                Essential for website functionality
               </label>
             </div>
-            <p>Essential for website functionality. Cannot be disabled.</p>
           </div>
 
-          <div className="cookie-category">
-            <div className="cookie-header">
+          <div className="standard-field-row">
+            <div className="standard-field-label">
+              <strong>Functional Cookies</strong>
+            </div>
+            <div className="standard-field-value">
               <input
                 type="checkbox"
                 id="functional"
                 checked={consentPreferences.functional}
                 onChange={() => handleConsentChange('functional')}
               />
-              <label htmlFor="functional">
-                <strong>Functional Cookies</strong>
+              <label htmlFor="functional" className="checkbox-label">
+                Remember your preferences and settings
               </label>
             </div>
-            <p>Remember your preferences and settings.</p>
           </div>
 
-          <div className="cookie-category">
-            <div className="cookie-header">
+          <div className="standard-field-row">
+            <div className="standard-field-label">
+              <strong>Analytics Cookies</strong>
+            </div>
+            <div className="standard-field-value">
               <input
                 type="checkbox"
                 id="analytics"
                 checked={consentPreferences.analytics}
                 onChange={() => handleConsentChange('analytics')}
               />
-              <label htmlFor="analytics">
-                <strong>Analytics Cookies</strong>
+              <label htmlFor="analytics" className="checkbox-label">
+                Help us understand how you use our website
               </label>
             </div>
-            <p>Help us understand how you use our website.</p>
           </div>
 
-          <div className="cookie-category">
-            <div className="cookie-header">
+          <div className="standard-field-row">
+            <div className="standard-field-label">
+              <strong>Marketing Cookies</strong>
+            </div>
+            <div className="standard-field-value">
               <input
                 type="checkbox"
                 id="marketing"
                 checked={consentPreferences.marketing}
                 onChange={() => handleConsentChange('marketing')}
               />
-              <label htmlFor="marketing">
-                <strong>Marketing Cookies</strong>
+              <label htmlFor="marketing" className="checkbox-label">
+                Used for targeted advertising and communications
               </label>
             </div>
-            <p>Used for targeted advertising and marketing communications.</p>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Security Dashboard */}
-      <section className="settings-section">
-        <h2>Security Dashboard</h2>
-
-        {securityScan && (
-          <div className="security-dashboard">
-            <div className={`security-score ${getSecurityScoreColor(securityScan.score)}`}>
-              <h3>Security Score: {securityScan.score}/100</h3>
-            </div>
-
-            {securityScan.vulnerabilities.length > 0 && (
-              <div className="security-vulnerabilities">
-                <h4>Security Issues Found:</h4>
-                {securityScan.vulnerabilities.map((vuln, index) => (
-                  <div key={index} className={`vulnerability vulnerability-${vuln.severity}`}>
-                    <strong>{vuln.description}</strong>
-                    <p>Severity: {vuln.severity}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {securityScan.recommendations.length > 0 && (
-              <div className="security-recommendations">
-                <h4>Security Recommendations:</h4>
-                <ul>
-                  {securityScan.recommendations.map((rec, index) => (
-                    <li key={index}>{rec}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <button
-              onClick={handleSecurityIncidentCheck}
-              className="btn-secondary"
+      {/* Password Change Section */}
+      <div className="standard-modal-section">
+        <h3 className="standard-section-title">Change Password</h3>
+        <div className="standard-modal-details-grid">
+          <div className="standard-field-row">
+            <Button
+              variant={showPasswordForm ? "outline" : "primary"}
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
             >
-              Run Security Check
-            </button>
+              {showPasswordForm ? 'Cancel' : 'Change Password'}
+            </Button>
           </div>
-        )}
-      </section>
 
-      {/* Session Management */}
-      <section className="settings-section">
-        <h2>Session Management</h2>
-        <div className="session-info">
-          <p>Current session expires: {tokenManager.getToken() ? 'Active' : 'Not logged in'}</p>
-          <button
-            onClick={() => {
-              tokenManager.clearToken();
-              window.location.reload();
-            }}
-            className="btn-outline"
-          >
-            End All Sessions
-          </button>
+          {showPasswordForm && (
+            <>
+              <div className="standard-field-row">
+                <div className="standard-field-label">Current Password</div>
+                <input
+                  type="password"
+                  className="standard-field-input"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  placeholder="Enter current password"
+                  required
+                />
+              </div>
+
+              <div className="standard-field-row">
+                <div className="standard-field-label">New Password</div>
+                <input
+                  type="password"
+                  className="standard-field-input"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  placeholder="Enter new password (12+ characters)"
+                  required
+                />
+              </div>
+
+              <div className="standard-field-row">
+                <div className="standard-field-label">Confirm New Password</div>
+                <input
+                  type="password"
+                  className="standard-field-input"
+                  value={passwordData.confirmNewPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmNewPassword: e.target.value })}
+                  placeholder="Confirm new password"
+                  required
+                />
+              </div>
+
+              <div className="standard-field-row">
+                <div className="standard-field-label"></div>
+                <Button
+                  variant="primary"
+                  onClick={handlePasswordChange}
+                  disabled={passwordChangeLoading}
+                >
+                  {passwordChangeLoading ? 'Changing...' : 'Update Password'}
+                </Button>
+              </div>
+
+              {passwordChangeStatus && (
+                <div className="standard-field-row">
+                  <div className="standard-field-label"></div>
+                  <div className={`status-message ${passwordChangeStatus.includes('successfully') ? 'success' : 'error'}`}>
+                    {passwordChangeStatus}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      </section>
+      </div>
 
-      {/* Data Processing Information */}
-      <section className="settings-section">
-        <h2>Data Processing Information</h2>
-        <div className="data-processing-info">
-          <h4>What data do we collect?</h4>
-          <ul>
-            <li>Account information (name, email, username)</li>
-            <li>Family tree data you provide</li>
-            <li>Heirloom information and images</li>
-            <li>Usage analytics (if consented)</li>
-          </ul>
+      {/* Session Management Section */}
+      {/*<div className="standard-modal-section">*/}
+      {/*  <h3 className="standard-section-title">Session Management</h3>*/}
+      {/*  <div className="standard-modal-details-grid">*/}
+      {/*    <div className="standard-field-row">*/}
+      {/*      <div className="standard-field-label">Current Session</div>*/}
+      {/*      <div className="standard-field-value">*/}
+      {/*        {tokenManager.getToken() ? 'Active' : 'Not logged in'}*/}
+      {/*      </div>*/}
+      {/*    </div>*/}
 
-          <h4>Legal basis for processing:</h4>
-          <ul>
-            <li><strong>Contract:</strong> To provide our family heritage service</li>
-            <li><strong>Consent:</strong> For analytics and marketing (optional)</li>
-            <li><strong>Legitimate Interest:</strong> For security and service improvement</li>
-          </ul>
+      {/*    <div className="standard-field-row">*/}
+      {/*      <div className="standard-field-label">End All Sessions</div>*/}
+      {/*      <Button*/}
+      {/*        variant="outline"*/}
+      {/*        onClick={() => {*/}
+      {/*          tokenManager.clearToken();*/}
+      {/*          window.location.reload();*/}
+      {/*        }}*/}
+      {/*      >*/}
+      {/*        Sign Out Everywhere*/}
+      {/*      </Button>*/}
+      {/*    </div>*/}
+      {/*  </div>*/}
+      {/*</div>*/}
 
-          <p>
-            For detailed information, please read our{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer">
-              Privacy Policy
+      {/* Data Processing Information Section */}
+      <div className="standard-modal-section">
+        <h3 className="standard-section-title">Data Processing Information</h3>
+        <div className="standard-modal-details-grid">
+          <div className="standard-field-row vertical">
+            <div className="standard-field-label">What data do we collect?</div>
+            <div className="standard-field-value">
+              <ul>
+                <li>Account information (name, email, username)</li>
+                <li>Family tree information and images</li>
+                <li>Heirloom information and images</li>
+                <li>Usage analytics (if consented)</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="standard-field-row vertical">
+            <div className="standard-field-label">Legal basis for processing</div>
+            <div className="standard-field-value">
+              <ul>
+                <li><strong>Contract:</strong> To provide our family heritage service</li>
+                <li><strong>Consent:</strong> For analytics and marketing (optional)</li>
+                <li><strong>Legitimate Interest:</strong> For security and service improvement</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="standard-field-row">
+            <div className="standard-field-label">Privacy Policy</div>
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="standard-field-link">
+              Read our detailed Privacy Policy
             </a>
-          </p>
+          </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </StandardModal>
   );
 };
 

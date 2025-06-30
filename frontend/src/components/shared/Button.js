@@ -3,15 +3,17 @@ import PropTypes from 'prop-types';
 import '../../styles/shared.css';
 
 /**
- * Reusable Button component with consistent styling across the application
+ * Reusable button component with consistent styling and loading states.
  *
  * @param {Object} props - Component props
- * @param {string} [props.variant="primary"] - Button style variant (primary, secondary, delete)
- * @param {boolean} [props.isLoading=false] - Whether the button is in loading state
- * @param {string} [props.loadingText] - Text to display when loading
- * @param {function} props.onClick - Click handler function
- * @param {string} [props.type="button"] - HTML button type
- * @param {React.ReactNode} props.children - Button label content
+ * @param {string} [props.variant='primary'] - Button style variant
+ * @param {boolean} [props.isLoading=false] - Loading state
+ * @param {string} [props.loadingText] - Text shown during loading
+ * @param {function} [props.onClick] - Click handler
+ * @param {string} [props.type='button'] - HTML button type
+ * @param {string} [props.className=''] - Additional CSS classes
+ * @param {boolean} [props.disabled=false] - Disabled state
+ * @param {React.ReactNode} props.children - Button content
  * @returns {JSX.Element} Button component
  */
 const Button = ({
@@ -25,10 +27,7 @@ const Button = ({
   children,
   ...rest
 }) => {
-  // Generate CSS class based on variant
-  const baseClass = 'btn';
-  const variantClass = `btn-${variant}`;
-  const buttonClasses = [baseClass, variantClass, className].filter(Boolean).join(' ');
+  const buttonClasses = ['btn', `btn-${variant}`, className].filter(Boolean).join(' ');
 
   return (
     <button

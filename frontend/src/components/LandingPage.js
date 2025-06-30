@@ -2,6 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/LandingPage.css";
 
+/**
+ * Landing page component for unauthenticated visitors.
+ * Displays the main value proposition and call-to-action for registration.
+ *
+ * @returns {JSX.Element} Landing page component
+ */
 const LandingPage = () => {
   return (
     <div className="landing-layout">

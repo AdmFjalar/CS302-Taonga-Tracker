@@ -9,11 +9,16 @@ namespace TaongaTrackerAPI.Services
     public Task<IdentityResult> CreateUserAsync(ApplicationUser user, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task<ApplicationUser> FindUserByEmailAsync(string normalizedEmail, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task<IdentityResult> UpdateUserAsync(ApplicationUser user, CancellationToken cancellationToken) => throw new NotImplementedException();
+    public Task<IdentityResult> UpdateUserProfileAsync(string userId, ApplicationUser user, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task<IdentityResult> DeleteUserAsync(ApplicationUser user, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task<ApplicationUser?> FindUserByIdAsync(string userId, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task<ApplicationUser?> FindUserByNameAsync(string normalizedUserName, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task<IdentityResult> CreateRoleAsync(ApplicationRole role, CancellationToken cancellationToken) => throw new NotImplementedException();
     public Task<List<ApplicationUser>> SearchUsersAsync(string query, int limit = 10) => throw new NotImplementedException();
+    
+    // User validation
+    public Task<bool> IsEmailAvailableAsync(string email, string? excludeUserId = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+    public Task<bool> IsUsernameAvailableAsync(string username, string? excludeUserId = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     
     // Vault
     public Task CreateVaultAsync(VaultDto vault, string ownerId) => throw new NotImplementedException();

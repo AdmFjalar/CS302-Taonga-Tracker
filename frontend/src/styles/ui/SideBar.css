@@ -1,22 +1,33 @@
+/**
+ * Sidebar navigation component styles for main application navigation.
+ * Provides sticky positioning and clean navigation links layout.
+ */
+
 .sidebar {
   width: fit-content;
-  background-color: transparent; /* Made transparent */
+  background-color: transparent;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: sticky;
-  top: 80px; /* Distance from viewport top when stuck at header */
-  bottom: 80px; /* Distance from viewport bottom when stuck at footer */
+  top: 80px;
+  bottom: 80px;
   left: 0;
-  height: calc(100vh - 160px); /* Available height between constraints */
+  height: calc(100vh - 160px);
   max-height: calc(100vh - 160px);
   overflow-y: auto;
   z-index: 1000;
-  pointer-events: auto; /* Re-enable pointer events for sidebar itself */
-  align-self: flex-start; /* Important: makes sticky behavior work properly */
-  float: left; /* This helps with the sticky behavior */
-  margin-right: -200px; /* Negative margin to not affect layout flow */
+  pointer-events: auto;
+  align-self: flex-start;
+  float: left;
+  margin-right: -200px;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .sidebar-title {
@@ -24,14 +35,13 @@
   font-size: var(--text-2xl);
   font-weight: var(--weight-bold);
   color: var(--color-primary-500);
-  margin-bottom: 11.8rem;
-  width: auto;
+  margin-bottom: 2rem;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 2.7rem;
+  gap: 1.5rem;
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
   color: var(--color-primary-500);
@@ -40,21 +50,25 @@
 .nav-link {
   text-decoration: none;
   color: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
 }
 
 .nav-link.active {
-  text-decoration: underline;
+  background: var(--color-primary-200);
+  color: var(--color-primary-700);
+  font-weight: var(--weight-bold);
 }
 
-.signout-button {
-  background-color: var(--color-primary-700);
-  color: var(--color-neutral-white);
-  border-radius: 9999px;
-  padding: 0.5rem 1.5rem;
-  font-size: var(--text-md);
-  transition: background 0.2s ease;
-}
-
-.signout-button:hover {
-  background-color: var(--color-primary-600);
+/* Responsive design */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
 }

@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { getFullImageUrl, formatDate, formatCurrency, truncateText } from "../../services/utils";
+import { authAPI, familyAPI } from "../../services/api";
 import Button from "../shared/Button";
 import "../../styles/shared/StandardModal.css";
+
+const placeholderImg = "https://placehold.co/40x40";
 
 /**
  * A field row for displaying item details
@@ -18,6 +21,124 @@ ItemDetailField.propTypes = {
   label: PropTypes.string.isRequired,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   formatter: PropTypes.func
+};
+
+/**
+ * Component to display shared users with profile pictures
+ */
+const SharedUsersDisplay = ({ userIds }) => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!userIds || userIds.length === 0) {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch user details for each ID
+        const userPromises = userIds.map(async (userId) => {
+          try {
+            const userDetails = await authAPI.getUserById(userId);
+            return userDetails;
+          } catch (error) {
+            console.error(`Error fetching user ${userId}:`, error);
+            return null;
+          }
+        });
+
+        const userResults = await Promise.all(userPromises);
+        setUsers(userResults.filter(user => user !== null));
+      } catch (error) {
+        console.error("Error fetching shared users:", error);
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [userIds]);
+
+  if (loading) {
+    return <div className="standard-field-value">Loading shared users...</div>;
+  }
+
+  if (users.length === 0) {
+    return <div className="standard-field-value">No users shared with</div>;
+  }
+
+  return (
+    <div className="standard-modal-related-list">
+      {users.map(user => (
+        <div key={user.userId} className="standard-modal-related-tag">
+          <img
+            src={user.profilePictureUrl ? getFullImageUrl(user.profilePictureUrl) : placeholderImg}
+            alt={user.email}
+            className="standard-modal-related-photo"
+          />
+          <span className="standard-modal-related-name">{user.email}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/**
+ * Component to display family member creator with profile picture
+ */
+const CreatorDisplay = ({ creatorId }) => {
+  const [creator, setCreator] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCreator = async () => {
+      if (!creatorId) {
+        setCreator(null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const familyMembers = await familyAPI.getAll();
+        const foundCreator = familyMembers.find(member => member.familyMemberId === creatorId);
+        setCreator(foundCreator || null);
+      } catch (error) {
+        console.error("Error fetching creator:", error);
+        setCreator(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCreator();
+  }, [creatorId]);
+
+  if (loading) {
+    return <div className="standard-field-value">Loading creator...</div>;
+  }
+
+  if (!creator) {
+    return <div className="standard-field-value">No creator specified</div>;
+  }
+
+  return (
+    <div className="standard-modal-related-list">
+      <div className="standard-modal-related-tag">
+        <img
+          src={creator.profilePictureUrl ? getFullImageUrl(creator.profilePictureUrl) : placeholderImg}
+          alt={`${creator.firstName} ${creator.lastName}`}
+          className="standard-modal-related-photo"
+        />
+        <span className="standard-modal-related-name">
+          {creator.firstName} {creator.lastName}
+        </span>
+      </div>
+    </div>
+  );
 };
 
 /**
@@ -58,7 +179,7 @@ const ItemView = ({ item, onBack, onEdit }) => (
         <ItemDetailField
           label="Estimated Value"
           value={item.estimatedValue}
-          formatter={(val) => formatCurrency(val)}
+          formatter={(val) => formatCurrency(val, item.currency)}
         />
         <ItemDetailField
           label="Creation Date"
@@ -80,11 +201,24 @@ const ItemView = ({ item, onBack, onEdit }) => (
           label="Craft Type"
           value={item.craftType?.join(", ")}
         />
-        <ItemDetailField
-          label="Shared With"
-          value={item.sharedWithIds?.join(", ")}
-        />
       </div>
+    </div>
+
+    {/* Creator and Shared Users Section */}
+    <div className="standard-modal-related-section">
+      {item.creatorId && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div className="standard-modal-related-title">Creator</div>
+          <CreatorDisplay creatorId={item.creatorId} />
+        </div>
+      )}
+
+      {item.sharedWithIds && item.sharedWithIds.length > 0 && (
+        <div>
+          <div className="standard-modal-related-title">Shared With</div>
+          <SharedUsersDisplay userIds={item.sharedWithIds} />
+        </div>
+      )}
     </div>
 
     {/* Metadata section with collapsible details */}
@@ -98,6 +232,7 @@ const ItemView = ({ item, onBack, onEdit }) => (
           <p><strong>Current Owner ID:</strong> {item.currentOwnerId || "N/A"}</p>
           <p><strong>Creator ID:</strong> {item.creatorId || "N/A"}</p>
           <p><strong>Previous Owner IDs:</strong> {item.previousOwnerIds?.join(", ") || "N/A"}</p>
+          <p><strong>Shared With IDs:</strong> {item.sharedWithIds?.join(", ") || "N/A"}</p>
         </div>
       </details>
     </div>
@@ -121,6 +256,7 @@ ItemView.propTypes = {
     description: PropTypes.string,
     photoUrl: PropTypes.string,
     estimatedValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    currency: PropTypes.string,
     creationDate: PropTypes.string,
     dateAcquired: PropTypes.string,
     creationPlace: PropTypes.string,

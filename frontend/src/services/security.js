@@ -1,17 +1,17 @@
 /**
- * Security utilities for enhanced application security
+ * Security utilities for token management, input validation, and rate limiting.
  */
 
 import { STORAGE_KEYS } from './constants';
 
 /**
- * Token management with enhanced security
+ * Token management with expiration handling.
  */
 export const tokenManager = {
   /**
-   * Set token with expiration time
+   * Store token with expiration time.
    * @param {string} token - JWT token
-   * @param {number} expiresIn - Expiration time in seconds
+   * @param {number} [expiresIn=3600] - Expiration time in seconds
    */
   setToken: (token, expiresIn = 3600) => {
     const expirationTime = Date.now() + (expiresIn * 1000);
@@ -20,8 +20,8 @@ export const tokenManager = {
   },
 
   /**
-   * Get token if still valid
-   * @returns {string|null} Valid token or null
+   * Retrieve token if still valid.
+   * @returns {string|null} Valid token or null if expired
    */
   getToken: () => {
     const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -38,7 +38,7 @@ export const tokenManager = {
   },
 
   /**
-   * Clear all auth-related data
+   * Clear all authentication data from storage.
    */
   clearToken: () => {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -47,26 +47,38 @@ export const tokenManager = {
   },
 
   /**
-   * Check if token is about to expire (within 5 minutes)
+   * Check if token expires within 5 minutes.
    * @returns {boolean} True if token expires soon
    */
   isTokenExpiringSoon: () => {
     const expiration = localStorage.getItem('token_expiration');
-    if (!expiration) return true;
-    
-    const fiveMinutes = 5 * 60 * 1000;
-    return Date.now() > (parseInt(expiration) - fiveMinutes);
+    if (!expiration) return false;
+
+    const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000);
+    return parseInt(expiration) < fiveMinutesFromNow;
   }
 };
 
 /**
- * Input validation utilities
+ * Input validation and sanitization utilities.
  */
 export const validator = {
   /**
-   * Validate email format
-   * @param {string} email
-   * @returns {boolean}
+   * Sanitize string input by removing potentially harmful characters.
+   * @param {string} input - Input string to sanitize
+   * @returns {string} Sanitized string
+   */
+  sanitizeInput: (input) => {
+    if (typeof input !== 'string') return '';
+    return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/[<>]/g, '')
+                .trim();
+  },
+
+  /**
+   * Validate email format.
+   * @param {string} email - Email to validate
+   * @returns {boolean} True if valid email format
    */
   isValidEmail: (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -74,79 +86,60 @@ export const validator = {
   },
 
   /**
-   * Validate password strength
-   * @param {string} password
-   * @returns {{isValid: boolean, errors: string[]}}
+   * Validate password strength.
+   * @param {string} password - Password to validate
+   * @returns {Object} Validation results object
    */
   validatePassword: (password) => {
-    const errors = [];
-    
-    if (password.length < 8) {
-      errors.push('Password must be at least 8 characters long');
-    }
-    if (!/[A-Z]/.test(password)) {
-      errors.push('Password must contain at least one uppercase letter');
-    }
-    if (!/[a-z]/.test(password)) {
-      errors.push('Password must contain at least one lowercase letter');
-    }
-    if (!/\d/.test(password)) {
-      errors.push('Password must contain at least one number');
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      errors.push('Password must contain at least one special character');
-    }
-    
     return {
-      isValid: errors.length === 0,
-      errors
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      isValid: password.length >= 8 &&
+               /[A-Z]/.test(password) &&
+               /[a-z]/.test(password) &&
+               /\d/.test(password) &&
+               /[!@#$%^&*(),.?":{}|<>]/.test(password)
     };
-  },
-
-  /**
-   * Sanitize user input to prevent XSS
-   * @param {string} input
-   * @returns {string}
-   */
-  sanitizeInput: (input) => {
-    if (typeof input !== 'string') return input;
-    
-    return input
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;')
-      .replace(/\//g, '&#x2F;');
   }
 };
 
 /**
- * Rate limiting for API calls
+ * Rate limiting utility to prevent abuse.
  */
 export const rateLimiter = {
-  requests: new Map(),
-  
+  attempts: new Map(),
+
   /**
-   * Check if request is allowed based on rate limit
-   * @param {string} key - Unique identifier for the request type
-   * @param {number} limit - Max requests allowed
+   * Check if action is allowed based on rate limits.
+   * @param {string} key - Identifier for the action
+   * @param {number} maxAttempts - Maximum allowed attempts
    * @param {number} windowMs - Time window in milliseconds
-   * @returns {boolean} True if request is allowed
+   * @returns {boolean} True if action is allowed
    */
-  isAllowed: (key, limit = 10, windowMs = 60000) => {
+  isAllowed: (key, maxAttempts, windowMs) => {
     const now = Date.now();
-    const requests = rateLimiter.requests.get(key) || [];
-    
-    // Filter out old requests
-    const recentRequests = requests.filter(time => now - time < windowMs);
-    
-    if (recentRequests.length >= limit) {
+    const attempts = rateLimiter.attempts.get(key) || [];
+
+    // Remove expired attempts
+    const validAttempts = attempts.filter(time => now - time < windowMs);
+
+    if (validAttempts.length >= maxAttempts) {
       return false;
     }
     
-    recentRequests.push(now);
-    rateLimiter.requests.set(key, recentRequests);
+    validAttempts.push(now);
+    rateLimiter.attempts.set(key, validAttempts);
     return true;
+  },
+
+  /**
+   * Clear rate limit data for a key.
+   * @param {string} key - Identifier to clear
+   */
+  clear: (key) => {
+    rateLimiter.attempts.delete(key);
   }
 };

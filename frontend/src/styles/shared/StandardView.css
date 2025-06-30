@@ -1,4 +1,7 @@
-/* Standardized View Layout for Family Members and Heirlooms */
+/**
+ * Standardized view layout component for family members and heirlooms.
+ * Provides consistent structure with photo display, content sections, and responsive design.
+ */
 
 /* Base container - ensures proper containment within layout */
 .standard-view-container {

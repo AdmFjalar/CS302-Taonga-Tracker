@@ -4,7 +4,7 @@ using TaongaTrackerAPI.Services;
 
 namespace TaongaTrackerAPI.Data;
 
-public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>, IUserEmailStore<ApplicationUser>
+public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>, IUserEmailStore<ApplicationUser>, IUserSecurityStampStore<ApplicationUser>
 {
     private readonly INeo4jService Neo4jService;
 
@@ -144,5 +144,16 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
     public Task<string> GetLastNameAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
         return Task.FromResult(user.LastName);
+    }
+
+    public Task<string> GetSecurityStampAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(user.SecurityStamp);
+    }
+
+    public Task SetSecurityStampAsync(ApplicationUser user, string stamp, CancellationToken cancellationToken)
+    {
+        user.SecurityStamp = stamp;
+        return Task.CompletedTask;
     }
 }

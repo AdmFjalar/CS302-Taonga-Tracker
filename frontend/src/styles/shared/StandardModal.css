@@ -35,7 +35,7 @@
 /* Photo containers */
 .standard-modal-photo-container {
   flex-shrink: 0;
-  border: 3px solid var(--color-primary-300);
+  /*border: 3px solid var(--color-primary-300);*/
   background: var(--color-secondary-200);
   overflow: hidden;
   position: relative;
@@ -329,11 +329,25 @@
 }
 
 .standard-form-row.name-inputs {
+  display: flex;
   gap: 0.5rem;
+  width: 100%;
+  align-items: center;
 }
 
 .standard-form-row.name-inputs .standard-modal-title.editable {
-  margin-right: 0.5rem;
+  flex: 1;
+  min-width: 0; /* Allow flex items to shrink below their content size */
+  max-width: none;
+  margin-right: 0;
+  box-sizing: border-box;
+}
+
+/* Ensure name inputs don't overflow their container */
+.standard-form-row.name-inputs input.standard-modal-title.editable {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* =================================

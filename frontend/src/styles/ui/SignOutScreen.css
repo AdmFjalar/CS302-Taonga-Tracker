@@ -1,4 +1,8 @@
-/* Sign Out Screen Styles */
+/**
+ * Sign out screen styles for displaying loading state during logout process.
+ * Provides full-screen overlay with centered spinner and status message.
+ */
+
 .signout-screen {
   position: fixed;
   top: 0;
@@ -11,6 +15,7 @@
   justify-content: center;
   z-index: 9999;
   font-family: var(--font-primary);
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .signout-container {
@@ -50,14 +55,4 @@
   font-size: var(--text-sm);
   margin: 0;
   line-height: 1.5;
-}
-
-/* Fade in animation */
-.signout-screen {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }

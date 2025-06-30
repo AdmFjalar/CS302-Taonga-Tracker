@@ -1,6 +1,6 @@
 /**
- * API service module providing centralized functions for making HTTP requests.
- * This separates data fetching logic from UI components for better maintainability.
+ * Centralized API service for making HTTP requests with security features.
+ * Handles authentication, rate limiting, and error management.
  */
 
 import {
@@ -15,74 +15,59 @@ import { tokenManager, validator, rateLimiter } from './security';
 import { securityLogger } from './securityMonitoring';
 import { breachDetector } from './breachResponse';
 
-// Global flag to track logout state
 let isLoggingOut = false;
 
-// Listen for logout events
+// Track logout state to prevent API calls during logout
 window.addEventListener('userLogout', () => {
   isLoggingOut = true;
-
-  // Reset the flag after a short delay to allow navigation to complete
-  setTimeout(() => {
-    isLoggingOut = false;
-  }, 2000); // 2 seconds should be enough for navigation
+  setTimeout(() => { isLoggingOut = false; }, 2000);
 });
 
-// Also listen for successful login to reset the flag
 window.addEventListener('userLogin', () => {
   isLoggingOut = false;
 });
 
 /**
- * Enhanced API call function with comprehensive security features
- * @param {string} url - API endpoint to call
- * @param {Object} options - Fetch options (method, headers, etc.)
+ * Makes secure API calls with authentication and error handling.
+ * @param {string} url - API endpoint URL
+ * @param {Object} options - Fetch options
  * @returns {Promise<any>} Response data
- * @throws {Error} If the request fails
+ * @throws {Error} Network or authentication errors
  */
 async function apiCall(url, options = {}) {
   try {
-    // Skip API calls if user is logging out
     if (isLoggingOut) {
       throw new Error('User is logging out');
     }
 
-    // Rate limiting check
+    // Rate limiting
     const endpoint = url.split('/').pop();
-    if (!rateLimiter.isAllowed(`api_${endpoint}`, 30, 60000)) { // 30 calls per minute
+    if (!rateLimiter.isAllowed(`api_${endpoint}`, 30, 60000)) {
       throw new Error('Rate limit exceeded. Please try again later.');
     }
 
-    // Get secure token
     const token = tokenManager.getToken();
-
-    // Check if this is a public endpoint that doesn't require authentication
-    const publicEndpoints = [
-      AUTH_ENDPOINTS.LOGIN,
-      AUTH_ENDPOINTS.REGISTER
-    ];
+    const publicEndpoints = [AUTH_ENDPOINTS.LOGIN, AUTH_ENDPOINTS.REGISTER];
     const isPublicEndpoint = publicEndpoints.some(endpoint => url.includes(endpoint));
 
-    // If no token and not a public endpoint and user is not logging out, this is an auth error
     if (!token && !isPublicEndpoint && !isLoggingOut) {
       throw new Error('Authentication required. Please log in again.');
     }
 
-    const headers = options.headers || {};
+    const headers = { ...options.headers };
 
     if (!headers.Authorization && token) {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    // Add security headers
     headers['X-Requested-With'] = 'XMLHttpRequest';
 
-    // Only set Content-Type if not FormData (let browser set it for FormData)
+    // Let browser set Content-Type for FormData
     if (!(options.body instanceof FormData)) {
       headers['Content-Type'] = headers['Content-Type'] || 'application/json';
     }
 
-    // Log API call for security monitoring (but not during logout)
+    // Security logging
     if (!isLoggingOut) {
       securityLogger.logSecurityEvent('api_call', {
         url,
@@ -91,9 +76,9 @@ async function apiCall(url, options = {}) {
       }, 'low');
     }
 
-    // Make request with timeout
+    // Request with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const response = await fetch(url, {
       ...options,
@@ -103,64 +88,28 @@ async function apiCall(url, options = {}) {
 
     clearTimeout(timeoutId);
 
+    // Security breach detection
+    breachDetector.checkResponse(response);
+
     // Handle authentication errors
     if (response.status === 401) {
-      // Don't clear token if user is already logging out
       if (!isLoggingOut) {
         tokenManager.clearToken();
-        securityLogger.logSecurityEvent('unauthorized_access', { url }, 'medium');
+        window.dispatchEvent(new CustomEvent('authenticationFailed'));
       }
-      throw new Error('Authentication required. Please log in again.');
+      throw new Error('Authentication failed. Please log in again.');
     }
 
-    // Handle other error scenarios
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-
-      // Log security-relevant errors (but not during logout)
-      if (response.status === 403 && !isLoggingOut) {
-        securityLogger.logSecurityEvent('forbidden_access', { url, status: response.status }, 'medium');
-      }
-
-      // Handle registration errors specifically (array of error messages)
-      if (errorData.errors && Array.isArray(errorData.errors)) {
-        throw new Error(errorData.errors.join('. '));
-      }
-
-      throw new Error(errorData.message || `API call failed: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`API Error: ${response.status} - ${errorText}`);
     }
 
-    // Handle empty responses (like for DELETE)
-    if (response.status === 204) {
-      return null;
-    }
-
-    const data = await response.json();
-
-    // Check for suspicious response patterns (but not during logout)
-    if (typeof data === 'string' && data.includes('<script>') && !isLoggingOut) {
-      securityLogger.logSecurityEvent('suspicious_response', { url }, 'high');
-      throw new Error('Invalid response format');
-    }
-
-    return data;
+    return await response.json();
   } catch (error) {
-    // Enhanced error logging (but not during logout)
-    if (error.name === 'AbortError' && !isLoggingOut) {
-      securityLogger.logSecurityEvent('request_timeout', { url }, 'low');
-      throw new Error('Request timed out. Please try again.');
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout. Please try again.');
     }
-
-    // Check for potential security incidents (but not during logout)
-    if ((error.message.includes('network') || error.message.includes('fetch')) && !isLoggingOut) {
-      breachDetector.monitorSuspiciousActivity();
-    }
-
-    // Don't log errors during logout process
-    if (!isLoggingOut) {
-      console.error("API call error:", error);
-    }
-
     throw error;
   }
 }
@@ -219,7 +168,22 @@ export const authAPI = {
    * @returns {Promise<Array>} Matching users
    */
   searchUsers: (query) =>
-    apiCall(`${AUTH_ENDPOINTS.SEARCH_USERS}?q=${encodeURIComponent(query)}`)
+    apiCall(`${AUTH_ENDPOINTS.SEARCH_USERS}?q=${encodeURIComponent(query)}`),
+
+  /**
+   * Change user password
+   * @param {Object} passwordData - Password change data
+   * @param {string} passwordData.currentPassword - Current password
+   * @param {string} passwordData.newPassword - New password
+   * @param {string} passwordData.confirmNewPassword - Confirm new password
+   * @returns {Promise<Object>} Success response
+   */
+  changePassword: (passwordData) =>
+    apiCall(`${API_BASE_URL}/api/auth/change-password`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(passwordData)
+    })
 };
 
 /**

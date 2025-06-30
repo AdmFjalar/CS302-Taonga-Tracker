@@ -4,8 +4,24 @@ import Button from "./Button";
 import "../../styles/shared/StandardModal.css";
 
 /**
- * Standardized modal container for both viewing and editing family members and heirlooms
- * Provides consistent layout, background, width, and containment across all modals
+ * Standardized modal container for viewing and editing content.
+ * Provides consistent layout with photo upload, form handling, and action buttons.
+ *
+ * @param {Object} props - Component props
+ * @param {boolean} [props.isEdit=false] - Whether modal is in edit mode
+ * @param {string} props.title - Modal title
+ * @param {string} [props.subtitle] - Optional subtitle
+ * @param {string} props.photo - Photo URL to display
+ * @param {string} props.photoAlt - Alt text for photo
+ * @param {string} [props.photoShape='circular'] - Photo shape: 'circular' or 'rectangular'
+ * @param {function} [props.onPhotoUpload] - Photo upload handler for edit mode
+ * @param {boolean} [props.uploading=false] - Upload loading state
+ * @param {string} [props.uploadError] - Upload error message
+ * @param {React.ReactNode} props.children - Modal content
+ * @param {React.ReactNode} props.actions - Action buttons
+ * @param {function} [props.onSubmit] - Form submit handler
+ * @param {string} [props.className=''] - Additional CSS classes
+ * @returns {JSX.Element} Standard modal component
  */
 const StandardModal = ({
   isEdit = false,
@@ -13,7 +29,7 @@ const StandardModal = ({
   subtitle,
   photo,
   photoAlt,
-  photoShape = "circular", // "circular" for family members, "rectangular" for heirlooms
+  photoShape = "circular",
   onPhotoUpload,
   uploading = false,
   uploadError,
@@ -31,7 +47,7 @@ const StandardModal = ({
 
   const content = (
     <div className={`standard-modal-container ${className}`}>
-      {/* Header section with photo and primary info */}
+      {/* Header with photo and title */}
       <div className="standard-modal-header">
         <div className={`standard-modal-photo-container ${photoShape}`}>
           {isEdit && onPhotoUpload ? (
@@ -56,30 +72,22 @@ const StandardModal = ({
               className="standard-modal-photo"
             />
           )}
-          {uploading && <p className="standard-modal-uploading">Uploading...</p>}
-          {uploadError && <p className="standard-modal-error">{uploadError}</p>}
         </div>
 
-        <div className="standard-modal-primary-info">
-          {title && (
-            <div className="standard-modal-title-container">
-              {title}
-            </div>
-          )}
-          {subtitle && (
-            <div className="standard-modal-subtitle">
-              {subtitle}
-            </div>
-          )}
+        <div className="standard-modal-title-section">
+          <h2 className="standard-modal-title">{title}</h2>
+          {subtitle && <p className="standard-modal-subtitle">{subtitle}</p>}
+          {uploading && <p className="upload-status">Uploading image...</p>}
+          {uploadError && <p className="upload-error">{uploadError}</p>}
         </div>
       </div>
 
-      {/* Content section - flexible for different field layouts */}
+      {/* Main content */}
       <div className="standard-modal-content">
         {children}
       </div>
 
-      {/* Actions section */}
+      {/* Action buttons */}
       {actions && (
         <div className="standard-modal-actions">
           {actions}
@@ -88,25 +96,33 @@ const StandardModal = ({
     </div>
   );
 
-  // Wrap in form if it's an edit modal with onSubmit
+  // Wrap in form if edit mode with submit handler
   if (isEdit && onSubmit) {
     return (
-      <form onSubmit={handleSubmit}>
-        {content}
-      </form>
+      <div className="standard-modal-overlay">
+        <form onSubmit={handleSubmit} className="standard-modal">
+          {content}
+        </form>
+      </div>
     );
   }
 
-  return content;
+  return (
+    <div className="standard-modal-overlay">
+      <div className="standard-modal">
+        {content}
+      </div>
+    </div>
+  );
 };
 
 StandardModal.propTypes = {
   isEdit: PropTypes.bool,
-  title: PropTypes.node,
-  subtitle: PropTypes.node,
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
   photo: PropTypes.string.isRequired,
   photoAlt: PropTypes.string.isRequired,
-  photoShape: PropTypes.oneOf(["circular", "rectangular"]),
+  photoShape: PropTypes.oneOf(['circular', 'rectangular']),
   onPhotoUpload: PropTypes.func,
   uploading: PropTypes.bool,
   uploadError: PropTypes.string,

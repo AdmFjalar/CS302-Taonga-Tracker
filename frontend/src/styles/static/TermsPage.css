@@ -1,4 +1,7 @@
-/* Terms Page Styles */
+/**
+ * Terms of service page styles with centered content layout.
+ * Inherits gradient animations from StaticPage.css base styles.
+ */
 
 .terms-page {
   max-width: 900px;

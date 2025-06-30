@@ -1,20 +1,18 @@
 /**
- * Application constants for API endpoints, configuration options,
- * and other values that should be centralized and easily updatable.
+ * Application constants and configuration values.
+ * Centralizes API endpoints, storage keys, and other shared constants.
  */
 
-// Base API URL - Use environment variable if available, or use relative URL for production
-// This ensures API calls will be routed through our Nginx proxy to avoid mixed content issues
+// API Configuration
 export const API_BASE_URL = process.env.NODE_ENV === 'development'
   ? (process.env.REACT_APP_API_URL || "http://localhost:8080")
-  : ""; // Empty string means use relative URLs in production (which go through our proxy)
+  : ""; // Use relative URLs in production for proxy routing
 
-// Uploads URL base - Make sure images are loaded through our proxy
 export const UPLOADS_BASE_URL = process.env.NODE_ENV === 'development'
   ? (process.env.REACT_APP_API_URL || "http://localhost:8080")
   : "";
 
-// Authentication endpoints
+// API Endpoints
 export const AUTH_ENDPOINTS = {
   LOGIN: `/api/Auth/login`,
   REGISTER: `/api/Auth/register`,
@@ -22,33 +20,34 @@ export const AUTH_ENDPOINTS = {
   SEARCH_USERS: `/api/auth/search-users`,
 };
 
-// Family member endpoints
 export const FAMILY_ENDPOINTS = {
   ALL: `/api/familymember`,
   DETAIL: (id) => `/api/familymember/${id}`,
   UPLOAD_IMAGE: `/api/familymember/upload-image`,
 };
 
-// Vault item (heirloom) endpoints
 export const VAULT_ENDPOINTS = {
   ALL: `/api/vaultitem`,
   DETAIL: (id) => `/api/vaultitem/${id}`,
   UPLOAD_IMAGE: `/api/vaultitem/upload-image`,
 };
 
-// Placeholder image URLs
+// Default Images
 export const PLACEHOLDER_IMAGES = {
   PROFILE: "https://placehold.co/275",
   THUMBNAIL: "https://placehold.co/40x40",
 };
 
-// Local storage keys
+// Local Storage Keys
 export const STORAGE_KEYS = {
   AUTH_TOKEN: "authToken",
   USER_ID: "userId",
 };
 
-// Common request options
+/**
+ * Returns authorization header with current token.
+ * @returns {Object} Authorization header object
+ */
 export const getAuthHeader = () => {
   const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   return { Authorization: `Bearer ${token}` };

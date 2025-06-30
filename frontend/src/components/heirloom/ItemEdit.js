@@ -17,6 +17,7 @@ const defaultItem = {
     creatorId: null,
     previousOwnerIds: [],
     estimatedValue: null,
+    currency: "NZD", // Default currency
     creationDate: null,
     dateAcquired: null,
     creationPlace: "",
@@ -113,6 +114,8 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
     const [suggestionLoading, setSuggestionLoading] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const suggestionBoxRef = useRef(null);
+    // Add state to track email-to-ID mapping
+    const [emailToIdMap, setEmailToIdMap] = useState(new Map());
 
     const [localFamilyMembers, setLocalFamilyMembers] = useState(familyMembers);
 
@@ -189,11 +192,15 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         }
     };
 
-    const handleSuggestionClick = (email) => {
+    const handleSuggestionClick = (email, userId) => {
         const parts = sharedWithInput.split(",");
         parts[parts.length - 1] = ` ${email}`;
         const newValue = parts.join(",").replace(/^ /, "");
         setSharedWithInput(autoSpaceComma(newValue));
+
+        // Store email-to-ID mapping
+        setEmailToIdMap(prev => new Map(prev).set(email, userId));
+
         setShowSuggestions(false);
         setUserSuggestions([]);
     };
@@ -230,12 +237,37 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Convert emails to user IDs for sharedWithIds
+        const emailList = sharedWithInput.split(",").map((v) => v.trim()).filter(Boolean);
+        const sharedUserIds = [];
+
+        for (const email of emailList) {
+            if (emailToIdMap.has(email)) {
+                // Use cached ID if available
+                sharedUserIds.push(emailToIdMap.get(email));
+            } else {
+                // Try to find user by email if not in cache
+                try {
+                    const users = await authAPI.searchUsers(email);
+                    const user = users.find(u => u.email === email);
+                    if (user) {
+                        sharedUserIds.push(user.userId);
+                    } else {
+                        console.warn(`User not found for email: ${email}`);
+                    }
+                } catch (error) {
+                    console.error(`Error finding user for email ${email}:`, error);
+                }
+            }
+        }
+
         const updatedItem = {
             ...item,
             estimatedValue: item.estimatedValue ? Number(item.estimatedValue) : null,
             materials: materialsInput.split(",").map((v) => v.trim()).filter(Boolean),
             craftType: craftTypeInput.split(",").map((v) => v.trim()).filter(Boolean),
-            sharedWithIds: sharedWithInput.split(",").map((v) => v.trim()).filter(Boolean),
+            sharedWithIds: sharedUserIds, // Use converted user IDs instead of emails
         };
 
         // If editing (existing item), use vaultAPI to update
@@ -325,14 +357,37 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                     <div className="item-edit-grid">
                         <div className="form-row">
                             <b>Estimated Value:</b>
-                            <input
-                                type="number"
-                                value={item.estimatedValue || ""}
-                                onChange={e => handleChange("estimatedValue", e.target.value)}
-                                min={0}
-                                step={0.01}
-                                placeholder="e.g. 1000"
-                            />
+                            <div className="currency-input-container">
+                                <input
+                                    type="number"
+                                    value={item.estimatedValue || ""}
+                                    onChange={e => handleChange("estimatedValue", e.target.value)}
+                                    min={0}
+                                    step={0.01}
+                                    placeholder="e.g. 1000"
+                                />
+                                <select
+                                    value={item.currency || "NZD"}
+                                    onChange={e => handleChange("currency", e.target.value)}
+                                >
+                                    <option value="USD">🇺🇸 USD</option>
+                                    <option value="EUR">🇪🇺 EUR</option>
+                                    <option value="GBP">🇬🇧 GBP</option>
+                                    <option value="JPY">🇯🇵 JPY</option>
+                                    <option value="CAD">🇨🇦 CAD</option>
+                                    <option value="AUD">🇦🇺 AUD</option>
+                                    <option value="CHF">🇨🇭 CHF</option>
+                                    <option value="CNY">🇨🇳 CNY</option>
+                                    <option value="SEK">🇸🇪 SEK</option>
+                                    <option value="NOK">🇳🇴 NOK</option>
+                                    <option value="MXN">🇲🇽 MXN</option>
+                                    <option value="INR">🇮🇳 INR</option>
+                                    <option value="BRL">🇧🇷 BRL</option>
+                                    <option value="KRW">🇰🇷 KRW</option>
+                                    <option value="SGD">🇸🇬 SGD</option>
+                                    <option value="NZD">🇳🇿 NZD</option>
+                                </select>
+                            </div>
                         </div>
                         <div className="form-row">
                             <b>Creation Date:</b>
@@ -424,7 +479,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                                                     borderBottom: "1px solid #eee",
                                                     width: "fit-content",
                                                 }}
-                                                onMouseDown={() => handleSuggestionClick(user.email)}
+                                                onMouseDown={() => handleSuggestionClick(user.email, user.userId)}
                                             >
                                                 {user.email}
                                             </div>
