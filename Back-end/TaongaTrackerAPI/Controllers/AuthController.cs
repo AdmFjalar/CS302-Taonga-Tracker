@@ -183,7 +183,8 @@ public class AuthController : ControllerBase
                 NormalizedEmail = model.Email.Trim().ToUpperInvariant(),
                 FirstName = model.FirstName?.Trim() ?? string.Empty,
                 LastName = model.LastName?.Trim() ?? string.Empty,
-                EmailConfirmed = false // Require email confirmation for security
+                EmailConfirmed = false, 
+                PasswordChangedAt = DateTime.UtcNow
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -445,6 +446,10 @@ public class AuthController : ControllerBase
                 return BadRequest(new { Errors = errors });
             }
 
+            // Update password change timestamp
+            user.PasswordChangedAt = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
+
             // Update security stamp to invalidate existing tokens
             await _userManager.UpdateSecurityStampAsync(user);
 
@@ -484,7 +489,7 @@ public class AuthController : ControllerBase
             
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expiration = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["JWT:ExpirationInDays"] ?? "7"));
+            var expiration = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["JWT:ExpirationInDays"] ?? "1"));
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["JWT:Issuer"],

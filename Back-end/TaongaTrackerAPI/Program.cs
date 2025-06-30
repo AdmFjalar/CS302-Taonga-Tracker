@@ -87,6 +87,15 @@ builder.Services.AddRateLimiter(options =>
         limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         limiterOptions.QueueLimit = 10;
     });
+    
+    // GDPR and Security endpoints rate limiting - more restrictive for sensitive operations
+    options.AddFixedWindowLimiter("GdprSecurityPolicy", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 30;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 5;
+    });
 });
 
 // ==================== JSON CONFIGURATION ====================
@@ -185,6 +194,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthorizationHandler, ResourceOwnershipHandler>();
 builder.Services.AddScoped<INeo4jService, Neo4jService>();
 builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+builder.Services.AddScoped<IImageCleanupService, ImageCleanupService>();
+
+// ==================== BACKGROUND SERVICES ====================
+builder.Services.AddHostedService<ImageCleanupBackgroundService>();
 
 // ==================== AUTHORIZATION POLICIES ====================
 builder.Services.AddAuthorization(options =>

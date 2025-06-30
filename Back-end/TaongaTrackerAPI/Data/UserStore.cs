@@ -4,7 +4,7 @@ using TaongaTrackerAPI.Services;
 
 namespace TaongaTrackerAPI.Data;
 
-public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>, IUserEmailStore<ApplicationUser>, IUserSecurityStampStore<ApplicationUser>
+public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>, IUserEmailStore<ApplicationUser>, IUserSecurityStampStore<ApplicationUser>, IUserTwoFactorStore<ApplicationUser>
 {
     private readonly INeo4jService Neo4jService;
 
@@ -155,5 +155,17 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
     {
         user.SecurityStamp = stamp;
         return Task.CompletedTask;
+    }
+
+    // IUserTwoFactorStore implementation
+    public Task SetTwoFactorEnabledAsync(ApplicationUser user, bool enabled, CancellationToken cancellationToken)
+    {
+        user.TwoFactorEnabled = enabled;
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> GetTwoFactorEnabledAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(user.TwoFactorEnabled);
     }
 }

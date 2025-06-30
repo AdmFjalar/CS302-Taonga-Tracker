@@ -6,7 +6,9 @@ import { securityScanner, breachDetector } from '../../services/breachResponse';
 import { tokenManager } from '../../services/security';
 import { authAPI } from '../../services/api';
 import { getFullImageUrl } from '../../services/utils';
+import { SECURITY_ENDPOINTS } from '../../services/constants';
 import StandardModal from '../shared/StandardModal';
+import LoadingScreen from '../ui/LoadingScreen';
 import '../../styles/shared/StandardModal.css';
 
 const SecuritySettings = () => {
@@ -22,6 +24,7 @@ const SecuritySettings = () => {
   const [deletionRequestStatus, setDeletionRequestStatus] = useState('');
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [deletionReason, setDeletionReason] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -107,12 +110,15 @@ const SecuritySettings = () => {
 
   const handleAccountDeletion = async () => {
     try {
+      setDeletingAccount(true);
       setDeletionRequestStatus('Processing deletion request...');
       await gdprManager.requestAccountDeletion();
       setDeletionRequestStatus('Account deletion completed');
       setShowDeleteConfirmModal(false);
     } catch (error) {
       setDeletionRequestStatus('Deletion failed. Please contact support.');
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -121,120 +127,55 @@ const SecuritySettings = () => {
     setSecurityScan(null);
 
     try {
+      // Call the actual security scan API endpoint
+      const response = await fetch(SECURITY_ENDPOINTS.SCAN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tokenManager.getToken()}`
+        },
+        body: JSON.stringify({
+          scanType: 'comprehensive',
+          includeVulnerabilities: true,
+          includePermissions: true,
+          includeDataAccess: true
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Security scan failed: ${response.status}`);
+      }
+
+      const apiResult = await response.json();
+
+      // Transform API response to match UI expectations
       const scanResults = {
-        lastScan: new Date().toISOString(),
+        lastScan: apiResult.scanTimestamp,
         issues: [],
         warnings: [],
         status: 'secure',
-        score: 100
+        score: Math.max(0, 100 - Math.round(apiResult.riskScore)) // Convert risk score to security score
       };
 
-      // Check password strength (if we can access password metadata)
-      try {
-        const passwordInfo = await authAPI.getPasswordMetadata();
-        if (passwordInfo.lastChanged) {
-          const daysSinceChange = Math.floor((Date.now() - new Date(passwordInfo.lastChanged)) / (1000 * 60 * 60 * 24));
-          if (daysSinceChange > 180) {
-            scanResults.warnings.push({
-              type: 'password_age',
-              message: `Password is ${daysSinceChange} days old. Consider changing it.`,
-              severity: 'medium'
-            });
-            scanResults.score -= 10;
+      // Process vulnerabilities from API
+      if (apiResult.vulnerabilities && apiResult.vulnerabilities.length > 0) {
+        apiResult.vulnerabilities.forEach(vuln => {
+          const vulnerability = {
+            type: vuln.type.toLowerCase(),
+            message: `${vuln.description}. ${vuln.recommendation}`,
+            severity: vuln.severity
+          };
+
+          // Categorize by severity
+          if (vuln.severity === 'critical' || vuln.severity === 'high') {
+            scanResults.issues.push(vulnerability);
+          } else {
+            scanResults.warnings.push(vulnerability);
           }
-        }
-
-        if (passwordInfo.strength && passwordInfo.strength < 3) {
-          scanResults.issues.push({
-            type: 'weak_password',
-            message: 'Your password could be stronger. Consider using a longer password with mixed characters.',
-            severity: 'high'
-          });
-          scanResults.score -= 25;
-        }
-      } catch (error) {
-        console.log('Password metadata not available');
-      }
-
-      // Check for recent login anomalies
-      try {
-        const loginHistory = await authAPI.getRecentLogins();
-        const suspiciousLogins = loginHistory.filter(login =>
-          login.flagged ||
-          (login.location && login.location !== user.lastKnownLocation)
-        );
-
-        if (suspiciousLogins.length > 0) {
-          scanResults.warnings.push({
-            type: 'suspicious_login',
-            message: `${suspiciousLogins.length} potentially suspicious login(s) detected in the last 30 days.`,
-            severity: 'medium'
-          });
-          scanResults.score -= 15;
-        }
-      } catch (error) {
-        console.log('Login history not available');
-      }
-
-      // Check session security
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        try {
-          const tokenData = JSON.parse(atob(token.split('.')[1]));
-          const expirationTime = tokenData.exp * 1000;
-          const timeUntilExpiration = expirationTime - Date.now();
-
-          if (timeUntilExpiration > 24 * 60 * 60 * 1000) {
-            scanResults.warnings.push({
-              type: 'long_session',
-              message: 'Your session is set to last more than 24 hours. Consider shorter sessions for better security.',
-              severity: 'low'
-            });
-            scanResults.score -= 5;
-          }
-        } catch (error) {
-          scanResults.issues.push({
-            type: 'invalid_token',
-            message: 'Your authentication token appears to be corrupted.',
-            severity: 'high'
-          });
-          scanResults.score -= 30;
-        }
-      }
-
-      // Check browser security features
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        scanResults.issues.push({
-          type: 'insecure_connection',
-          message: 'You are not using a secure HTTPS connection.',
-          severity: 'critical'
         });
-        scanResults.score -= 40;
       }
 
-      // Check for shared account indicators
-      if (user.email && user.email.includes('shared') || user.email.includes('team')) {
-        scanResults.warnings.push({
-          type: 'shared_account',
-          message: 'This appears to be a shared account. Consider using individual accounts for better security.',
-          severity: 'medium'
-        });
-        scanResults.score -= 10;
-      }
-
-      // Check cookie security
-      const cookies = document.cookie.split(';');
-      const secureCookies = cookies.filter(cookie => cookie.includes('Secure'));
-      if (cookies.length > 0 && secureCookies.length === 0) {
-        scanResults.warnings.push({
-          type: 'insecure_cookies',
-          message: 'Some cookies are not marked as secure.',
-          severity: 'low'
-        });
-        scanResults.score -= 5;
-      }
-
-      // Determine overall status
+      // Determine overall status based on vulnerabilities
       if (scanResults.issues.length > 0) {
         const criticalIssues = scanResults.issues.filter(issue => issue.severity === 'critical');
         const highIssues = scanResults.issues.filter(issue => issue.severity === 'high');
@@ -253,6 +194,7 @@ const SecuritySettings = () => {
       }
 
       setSecurityScan(scanResults);
+
     } catch (error) {
       console.error('Security scan failed:', error);
       setSecurityScan({
@@ -506,30 +448,116 @@ const SecuritySettings = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmModal && (
-        <div className="standard-modal-container" style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1000, background: 'white', border: '2px solid #ccc' }}>
-          <div className="standard-modal-content">
-            <h3>Confirm Account Deletion</h3>
-            <p>This action cannot be undone. All your data will be permanently deleted.</p>
-            <div className="standard-field-row">
-              <div className="standard-field-label">Reason for deletion (optional):</div>
-              <textarea
-                className="standard-field-input"
-                value={deletionReason}
-                onChange={(e) => setDeletionReason(e.target.value)}
-                placeholder="Tell us why you're leaving..."
-                rows={3}
-              />
+        <div
+          className="delete-modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            className="delete-modal-content"
+            style={{
+              background: 'white',
+              borderRadius: '0.5rem',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              maxWidth: '500px',
+              width: '100%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}
+          >
+            <div
+              style={{
+                padding: '1.5rem',
+                borderBottom: '1px solid #e5e7eb',
+                flexShrink: 0
+              }}
+            >
+              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.25rem', fontWeight: 'bold' }}>
+                Confirm Account Deletion
+              </h3>
+              <p style={{ margin: '0', color: '#6b7280' }}>
+                This action cannot be undone. All your data will be permanently deleted including:
+              </p>
+              <ul style={{ margin: '0.75rem 0', paddingLeft: '1.25rem', color: '#6b7280' }}>
+                <li>Your user profile and account information</li>
+                <li>All family member records you've created</li>
+                <li>All heirloom records and associated media</li>
+                <li>All uploaded images and documents</li>
+                <li>Your activity and security logs</li>
+              </ul>
+            </div>
+
+            <div
+              style={{
+                padding: '1.5rem',
+                flexGrow: 1,
+                overflow: 'auto'
+              }}
+            >
+              <div className="standard-field-row">
+                <div className="standard-field-label" style={{ marginBottom: '0.5rem' }}>
+                  Reason for deletion (optional):
+                </div>
+                <textarea
+                  className="standard-field-input"
+                  value={deletionReason}
+                  onChange={(e) => setDeletionReason(e.target.value)}
+                  placeholder="Tell us why you're leaving..."
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div
+              style={{
+                padding: '1rem 1.5rem 1.5rem',
+                borderTop: '1px solid #e5e7eb',
+                display: 'flex',
+                gap: '0.75rem',
+                justifyContent: 'flex-end',
+                flexShrink: 0
+              }}
+            >
+              <Button
+                onClick={() => setShowDeleteConfirmModal(false)}
+                variant="secondary"
+                disabled={deletingAccount}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAccountDeletion}
+                variant="delete"
+                disabled={deletingAccount}
+              >
+                {deletingAccount ? 'Deleting...' : 'Confirm Deletion'}
+              </Button>
             </div>
           </div>
-          <div className="standard-modal-actions">
-            <Button onClick={handleAccountDeletion} variant="delete">
-              Confirm Deletion
-            </Button>
-            <Button onClick={() => setShowDeleteConfirmModal(false)} variant="secondary">
-              Cancel
-            </Button>
-          </div>
         </div>
+      )}
+
+      {/* Loading Screen for Account Deletion */}
+      {(deletionRequestStatus.includes('Processing') || deletingAccount) && (
+        <LoadingScreen message={deletionRequestStatus} />
       )}
     </StandardModal>
   );

@@ -71,6 +71,11 @@ const Header = () => {
             checkAuthAndFetchUser();
         };
 
+        // Listen for profile picture updates
+        const handleProfileUpdate = () => {
+            checkAuthAndFetchUser();
+        };
+
         // Listen for logout events to update state immediately
         const handleStorageChange = (e) => {
             if (e.key === STORAGE_KEYS.AUTH_TOKEN) {
@@ -88,6 +93,7 @@ const Header = () => {
 
         window.addEventListener("storage", handleStorageChange);
         window.addEventListener("userLogin", handleLogin);
+        window.addEventListener("profileUpdated", handleProfileUpdate);
 
         // Custom event listener for same-tab logout
         const handleLogout = () => {
@@ -101,6 +107,7 @@ const Header = () => {
         return () => {
             window.removeEventListener("storage", handleStorageChange);
             window.removeEventListener("userLogin", handleLogin);
+            window.removeEventListener("profileUpdated", handleProfileUpdate);
             window.removeEventListener("userLogout", handleLogout);
         };
     }, [isLoggingOut]);

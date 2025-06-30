@@ -3,9 +3,10 @@
  */
 
 import { authAPI, familyAPI, vaultAPI } from './api';
-import { GDPR_ENDPOINTS } from './constants';
+import { GDPR_ENDPOINTS, STORAGE_KEYS } from './constants';
 import { securityLogger } from './securityMonitoring';
 import { SECURITY_EVENT_TYPES, SECURITY_RISK_LEVELS } from './constants';
+import { tokenManager } from './security';
 
 /**
  * GDPR compliance service
@@ -160,7 +161,7 @@ export const gdprService = {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${tokenManager.getToken()}`
         },
         body: JSON.stringify({
           confirmDeletion: true,
@@ -211,7 +212,7 @@ export const gdprService = {
     try {
       const response = await fetch(GDPR_ENDPOINTS.CONSENT_STATUS, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${tokenManager.getToken()}`
         }
       });
 
@@ -237,7 +238,7 @@ export const gdprService = {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${tokenManager.getToken()}`
         },
         body: JSON.stringify(consentData)
       });
@@ -273,7 +274,7 @@ export const gdprService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          'Authorization': `Bearer ${tokenManager.getToken()}`
         },
         body: JSON.stringify({ format })
       });
@@ -306,5 +307,58 @@ export const gdprService = {
       console.error('Error with data portability request:', error);
       throw error;
     }
-  }
+  },
+
+  /**
+   * Alias for exportUserData to match expected interface
+   * @returns {Promise<void>} Downloads a complete data export
+   */
+  downloadUserData: async () => {
+    return gdprService.exportUserData();
+  },
+
+  /**
+   * Record processing activity for GDPR compliance
+   * @param {string} activity - Description of the processing activity
+   * @param {string} legalBasis - Legal basis for processing (consent, contract, etc.)
+   * @param {Object} metadata - Additional metadata about the processing
+   */
+  recordProcessingActivity: (activity, legalBasis, metadata = {}) => {
+    try {
+      const processingRecord = {
+        timestamp: new Date().toISOString(),
+        activity,
+        legalBasis,
+        metadata,
+        userAgent: navigator.userAgent,
+        url: window.location.href
+      };
+
+      // Store processing activity record
+      const records = JSON.parse(localStorage.getItem('gdpr_processing_records') || '[]');
+      records.push(processingRecord);
+
+      // Keep only last 100 records to prevent storage overflow
+      if (records.length > 100) {
+        records.splice(0, records.length - 100);
+      }
+
+      localStorage.setItem('gdpr_processing_records', JSON.stringify(records));
+
+      // Log as security event
+      securityLogger.logSecurityEvent(
+        SECURITY_EVENT_TYPES.API_CALL,
+        {
+          action: 'gdpr_processing_recorded',
+          activity,
+          legalBasis
+        },
+        SECURITY_RISK_LEVELS.LOW
+      );
+    } catch (error) {
+      console.warn('Failed to record GDPR processing activity:', error);
+    }
+  },
 };
+
+export const gdprManager = gdprService;

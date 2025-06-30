@@ -68,5 +68,83 @@ namespace TaongaTrackerAPI.Services
         /// Gets the user's family tree with all members and relationships
         /// </summary>
         Task<FamilyTreeDto> GetUserFamilyTreeAsync(string userId);
+        
+        // GDPR operations
+        /// <summary>
+        /// Delete all user data for GDPR compliance
+        /// </summary>
+        Task DeleteUserDataAsync(string userId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Get user's consent preferences
+        /// </summary>
+        Task<ConsentDto?> GetUserConsentAsync(string userId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Update user's consent preferences
+        /// </summary>
+        Task UpdateUserConsentAsync(string userId, ConsentDto consent, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Export all user data for GDPR data portability
+        /// </summary>
+        Task<UserDataExport?> GetUserDataExportAsync(string userId, CancellationToken cancellationToken = default);
+        
+        // Security operations
+        /// <summary>
+        /// Log a security event
+        /// </summary>
+        Task LogSecurityEventAsync(SecurityEventDto securityEvent, string? userId = null, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Get security activity for a user
+        /// </summary>
+        Task<List<SecurityActivityDto>> GetSecurityActivityAsync(string userId, string? eventType = null, string? riskLevel = null, DateTime? fromDate = null, DateTime? toDate = null, int limit = 100, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Get vulnerabilities for a user
+        /// </summary>
+        Task<List<VulnerabilityDto>> GetUserVulnerabilitiesAsync(string userId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Check if user has recent suspicious activity
+        /// </summary>
+        Task<bool> HasRecentSuspiciousActivityAsync(string userId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Store a breach report
+        /// </summary>
+        Task StoreBreachReportAsync(string reportId, BreachReportDto breachReport, string userId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Get user's security settings
+        /// </summary>
+        Task<SecuritySettingsDto?> GetSecuritySettingsAsync(string userId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Update user's security settings
+        /// </summary>
+        Task UpdateSecuritySettingsAsync(string userId, SecuritySettingsDto settings, CancellationToken cancellationToken = default);
+        
+        // Image cleanup operations
+        /// <summary>
+        /// Get all image paths referenced in the database
+        /// </summary>
+        Task<HashSet<string>> GetAllReferencedImagePathsAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Check if a specific image path is referenced in the database
+        /// </summary>
+        Task<bool> IsImageReferencedAsync(string relativePath, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Log image cleanup statistics
+        /// </summary>
+        Task LogImageCleanupStatsAsync(ImageCleanupResult cleanupResult, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Get the last image cleanup timestamp
+        /// </summary>
+        Task<DateTime?> GetLastImageCleanupTimeAsync(CancellationToken cancellationToken = default);
     }
 }

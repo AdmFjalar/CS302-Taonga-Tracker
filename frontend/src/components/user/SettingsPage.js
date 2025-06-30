@@ -84,6 +84,10 @@ const SettingsPage = () => {
       };
       await authAPI.updateCurrentUser(payload);
       setUnsavedChanges(false);
+
+      // Dispatch event to update header profile picture
+      window.dispatchEvent(new CustomEvent("profileUpdated"));
+
       alert("Profile updated!");
     } catch (err) {
       alert("Profile update failed: " + err.message);

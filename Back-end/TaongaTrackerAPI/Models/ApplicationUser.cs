@@ -29,6 +29,11 @@ public class ApplicationUser : IdentityUser
     /// </summary>
     public string ProfilePictureUrl { get; set; } = string.Empty;
     
+    /// <summary>
+    /// Date and time when the password was last changed
+    /// </summary>
+    public DateTime? PasswordChangedAt { get; set; }
+    
     // Override base class properties to match base nullability
     public override string? Email { get; set; }
     public override string? NormalizedEmail { get; set; }
