@@ -50,40 +50,15 @@ export const gdprService = {
         },
         familyMembers: familyMembers.map(member => ({
           ...member,
-          // Include all family member data
-          id: member.id,
-          name: member.name,
-          relationship: member.relationship,
-          birthDate: member.birthDate,
-          deathDate: member.deathDate,
-          biography: member.biography,
-          profileImage: member.profileImage,
-          contactInfo: member.contactInfo,
-          additionalNotes: member.additionalNotes,
-          createdAt: member.createdAt,
-          updatedAt: member.updatedAt
+          // Remove any sensitive fields if they exist
+          password: undefined,
+          passwordHash: undefined
         })),
         heirlooms: heirlooms.map(heirloom => ({
           ...heirloom,
-          // Include all heirloom data
-          id: heirloom.id,
-          name: heirloom.name,
-          description: heirloom.description,
-          category: heirloom.category,
-          estimatedValue: heirloom.estimatedValue,
-          currency: heirloom.currency,
-          acquisitionDate: heirloom.acquisitionDate,
-          currentLocation: heirloom.currentLocation,
-          condition: heirloom.condition,
-          images: heirloom.images,
-          documents: heirloom.documents,
-          provenance: heirloom.provenance,
-          insuranceInfo: heirloom.insuranceInfo,
-          associatedFamilyMembers: heirloom.associatedFamilyMembers,
-          tags: heirloom.tags,
-          isPublic: heirloom.isPublic,
-          createdAt: heirloom.createdAt,
-          updatedAt: heirloom.updatedAt
+          // Remove any sensitive fields if they exist
+          password: undefined,
+          passwordHash: undefined
         })),
         metadata: {
           totalFamilyMembers: familyMembers.length,
