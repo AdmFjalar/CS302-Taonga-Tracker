@@ -1,21 +1,38 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TaongaTrackerAPI.Models;
 
-public record RegisterDto()
+/// <summary>
+/// Data transfer object for user registration requests
+/// </summary>
+public record RegisterDto
 {
-    public string UserName { get; set; }
-    public string Email { get; set; }
-    public string Password { get; set; }
-    public string? FirstName { get; set; }
-    //public string? MiddleNames { get; set; }
-    public string? LastName { get; set; }
+    /// <summary>
+    /// Desired username for the new account
+    /// </summary>
+    [Required]
+    public required string UserName { get; init; }
     
-    public RegisterDto(string username, string email, string password, string firstName, /*string middleNames, */string lastName) : this()
-    {
-        UserName = username;
-        Email = email;
-        Password = password;
-        FirstName = firstName;
-        //MiddleNames = middleNames;
-        LastName = lastName;
-    }
+    /// <summary>
+    /// Email address for the new account
+    /// </summary>
+    [Required]
+    [EmailAddress]
+    public required string Email { get; init; }
+    
+    /// <summary>
+    /// Password for the new account
+    /// </summary>
+    [Required]
+    public required string Password { get; init; }
+    
+    /// <summary>
+    /// User's first name (optional)
+    /// </summary>
+    public string? FirstName { get; init; }
+    
+    /// <summary>
+    /// User's last name (optional)
+    /// </summary>
+    public string? LastName { get; init; }
 }

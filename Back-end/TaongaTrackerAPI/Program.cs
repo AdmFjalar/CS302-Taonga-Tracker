@@ -8,13 +8,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.DataProtection;
 using System.Threading.RateLimiting;
 using System.Text;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Enhanced logging configuration
+// ==================== LOGGING CONFIGURATION ====================
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
@@ -24,7 +25,7 @@ if (builder.Environment.IsProduction())
     builder.Logging.AddEventSourceLogger();
 }
 
-// Security headers and CORS configuration
+// ==================== CORS CONFIGURATION ====================
 builder.Services.AddCors(options =>
 {
     var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() 
@@ -48,7 +49,27 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Rate limiting configuration
+// ==================== DATA PROTECTION CONFIGURATION ====================
+var encryptionKey = builder.Configuration["DataProtection:EncryptionKey"];
+var dataProtectionBuilder = builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/app/keys"))
+    .SetApplicationName("TaongaTrackerAPI")
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
+
+if (!string.IsNullOrEmpty(encryptionKey))
+{
+    try
+    {
+        // Use encryption key as additional entropy for application isolation
+        dataProtectionBuilder.SetApplicationName($"TaongaTrackerAPI-{encryptionKey.GetHashCode()}");
+    }
+    catch (Exception)
+    {
+        // Fallback to basic configuration - already configured above
+    }
+}
+
+// ==================== RATE LIMITING CONFIGURATION ====================
 builder.Services.AddRateLimiter(options =>
 {
     options.AddFixedWindowLimiter("AuthPolicy", limiterOptions =>
@@ -68,7 +89,7 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
-// Enhanced JSON configuration for performance and security
+// ==================== JSON CONFIGURATION ====================
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -87,12 +108,10 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.MaxDepth = 32;
 });
 
-builder.Services.AddEndpointsApiExplorer();
-
-// Enhanced Identity configuration with stronger security
+// ==================== IDENTITY CONFIGURATION ====================
 builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 {
-    // Password policy
+    // Password requirements
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 12;
     options.Password.RequireNonAlphanumeric = true;
@@ -100,16 +119,16 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequiredUniqueChars = 4;
     
-    // Lockout policy - enhanced security
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); // Increased from 5
-    options.Lockout.MaxFailedAccessAttempts = 3; // Reduced from 5
-    options.Lockout.AllowedForNewUsers = true; // Changed to true for security
+    // Account lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts = 3;
+    options.Lockout.AllowedForNewUsers = true;
     
-    // User policy
+    // User account settings
     options.User.RequireUniqueEmail = true;
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
     
-    // Sign-in policy
+    // Sign-in requirements
     options.SignIn.RequireConfirmedEmail = false; // Set to true in production
     options.SignIn.RequireConfirmedAccount = false;
 })
@@ -118,7 +137,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
 .AddDefaultTokenProviders()
 .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(TokenOptions.DefaultProvider);
 
-// Enhanced JWT authentication
+// ==================== JWT AUTHENTICATION CONFIGURATION ====================
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -135,7 +154,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         RequireExpirationTime = true,
         RequireSignedTokens = true,
-        ClockSkew = TimeSpan.FromMinutes(1), // Reduced clock skew
+        ClockSkew = TimeSpan.FromMinutes(1),
         ValidIssuer = builder.Configuration["JWT:Issuer"],
         ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
@@ -161,12 +180,13 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Services registration
+// ==================== SERVICE REGISTRATION ====================
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthorizationHandler, ResourceOwnershipHandler>();
 builder.Services.AddScoped<INeo4jService, Neo4jService>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 
-// Enhanced authorization policies
+// ==================== AUTHORIZATION POLICIES ====================
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("FamilyTreeOwnership", policy =>
@@ -182,7 +202,7 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser());
 });
 
-// Security headers middleware
+// ==================== SECURITY CONFIGURATION ====================
 builder.Services.AddHsts(options =>
 {
     options.Preload = true;
@@ -190,7 +210,6 @@ builder.Services.AddHsts(options =>
     options.MaxAge = TimeSpan.FromDays(365);
 });
 
-// Configure forwarded headers for reverse proxy scenarios
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -198,7 +217,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// Enhanced Kestrel configuration for performance
+// ==================== KESTREL CONFIGURATION ====================
 builder.WebHost.ConfigureKestrel((context, options) =>
 {
     options.Limits.MaxConcurrentConnections = 1000;
@@ -212,7 +231,7 @@ builder.WebHost.ConfigureKestrel((context, options) =>
 
 var app = builder.Build();
 
-// Configure security headers
+// ==================== SECURITY HEADERS MIDDLEWARE ====================
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-Frame-Options", "DENY");
@@ -230,7 +249,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Configure the HTTP request pipeline
+// ==================== REQUEST PIPELINE CONFIGURATION ====================
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -241,7 +260,6 @@ else
     app.UseHsts();
 }
 
-// Middleware pipeline order is important for security and performance
 app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseRateLimiter();
@@ -249,11 +267,43 @@ app.UseCors("SecureCors");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Static files with caching for performance
+// ==================== STATIC FILES CONFIGURATION ====================
+app.UseStaticFiles(new StaticFileOptions
+{
+    RequestPath = "/uploads",
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(
+        Path.Combine(app.Environment.WebRootPath, "uploads")),
+    ServeUnknownFileTypes = false,
+    DefaultContentType = "application/octet-stream",
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        ctx.Context.Response.Headers.Append("X-Frame-Options", "DENY");
+        
+        if (!app.Environment.IsDevelopment())
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");
+        }
+        
+        // Only allow image files from uploads directory
+        var extension = Path.GetExtension(ctx.Context.Request.Path.Value?.ToLowerInvariant());
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        
+        if (!allowedExtensions.Contains(extension))
+        {
+            ctx.Context.Response.StatusCode = 404;
+            ctx.Context.Response.ContentLength = 0;
+            ctx.Context.Response.Body = Stream.Null;
+        }
+    }
+});
+
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
+        ctx.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        
         if (!app.Environment.IsDevelopment())
         {
             ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");

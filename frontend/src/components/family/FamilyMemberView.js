@@ -135,17 +135,21 @@ const FamilyMemberView = ({ member, familyMembers = [], onBack, onEdit, onViewMe
             {member.dateOfBirth ? formatDate(member.dateOfBirth) : "Not specified"}
           </DetailField>
 
-          <DetailField label="Date of Death">
-            {member.dateOfDeath ? formatDate(member.dateOfDeath) : "N/A"}
-          </DetailField>
+          {member.familyMemberId && member.userId !== localStorage.getItem("userId") && (
+            <DetailField label="Date of Death">
+              {member.dateOfDeath ? formatDate(member.dateOfDeath) : "N/A"}
+            </DetailField>
+            )}
 
           <DetailField label="Place of Birth">
             {member.placeOfBirth || "Not specified"}
           </DetailField>
 
-          <DetailField label="Place of Death">
-            {member.placeOfDeath || "N/A"}
-          </DetailField>
+          {member.familyMemberId && member.userId !== localStorage.getItem("userId") && (
+            <DetailField label="Place of Death">
+              {member.placeOfDeath || "N/A"}
+            </DetailField>
+          )}
 
           <DetailField label="Occupation">
             {member.occupation || "Not specified"}

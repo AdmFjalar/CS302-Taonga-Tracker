@@ -12,10 +12,17 @@ namespace TaongaTrackerAPI.Controllers
     public class FamilyMemberController : ControllerBase
     {
         private readonly INeo4jService _neo4jService;
+        private readonly IFileUploadService _fileUploadService;
+        private readonly ILogger<FamilyMemberController> _logger;
 
-        public FamilyMemberController(INeo4jService neo4jService)
+        public FamilyMemberController(
+            INeo4jService neo4jService,
+            IFileUploadService fileUploadService,
+            ILogger<FamilyMemberController> logger)
         {
             _neo4jService = neo4jService;
+            _fileUploadService = fileUploadService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -68,22 +75,42 @@ namespace TaongaTrackerAPI.Controllers
         }
         
         [HttpPost("upload-image")]
-        public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
+        [RequestSizeLimit(5 * 1024 * 1024)] // 5MB limit
+        [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
+        public async Task<IActionResult> UploadImage([FromForm] IFormFile file, CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file uploaded.");
-
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            Directory.CreateDirectory(uploadsFolder);
-            var filePath = Path.Combine(uploadsFolder, Guid.NewGuid() + Path.GetExtension(file.FileName));
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            try
             {
-                await file.CopyToAsync(stream);
-            }
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    _logger.LogWarning("File upload attempt without valid user ID");
+                    return Unauthorized();
+                }
 
-            var url = $"/uploads/{Path.GetFileName(filePath)}";
-            return Ok(new { url });
+                if (file == null || file.Length == 0)
+                {
+                    return BadRequest(new { Message = "No file provided or file is empty" });
+                }
+
+                // Use the secure file upload service
+                var imageUrl = await _fileUploadService.UploadImageAsync(file, userId, cancellationToken);
+
+                _logger.LogInformation("Family member image uploaded successfully by user: {UserId}, URL: {ImageUrl}", 
+                    userId, imageUrl);
+
+                return Ok(new { url = imageUrl });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning("File upload validation failed: {Message}", ex.Message);
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during family member image upload");
+                return StatusCode(500, new { Message = "An error occurred while uploading the image" });
+            }
         }
     }
 }

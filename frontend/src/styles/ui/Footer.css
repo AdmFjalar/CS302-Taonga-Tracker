@@ -1,15 +1,10 @@
-/**
- * Footer component styles with site links and contact information.
- * Provides consistent bottom navigation and branding across all pages.
- */
-
 .footer {
   background-color: var(--color-neutral-800);
   color: var(--color-neutral-white);
   padding: 2rem 0 1rem;
-  margin-top: auto;
+  margin-top: auto; /* Push footer to bottom on short pages */
   width: 100%;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Prevent footer from shrinking */
   font-family: var(--font-primary);
 }
 
@@ -57,64 +52,38 @@
   margin-bottom: 0.5rem;
 }
 
-.footer-section a {
+.footer-section a, .footer-bottom a {
   color: var(--color-neutral-300);
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
-.footer-section a:hover {
+.footer-section a:hover, .footer-bottom a:hover {
   color: var(--color-primary-400);
+  text-decoration: underline;
 }
 
-.footer-section p {
-  color: var(--color-neutral-300);
-  line-height: var(--leading-relaxed);
-}
-
-.footer-section i {
-  font-style: italic;
-  color: var(--color-neutral-400);
-}
-
-/* Footer bottom section */
 .footer-bottom {
-  border-top: 1px solid var(--color-neutral-700);
-  margin-top: 1.5rem;
-  padding-top: 1rem;
   text-align: center;
-}
-
-.footer-bottom p {
-  margin: 0;
-  color: var(--color-neutral-400);
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-neutral-600);
+  margin-top: 1rem;
   font-size: var(--text-sm);
+  color: var(--color-neutral-400);
 }
 
-.footer-bottom a {
-  color: var(--color-neutral-300);
-  text-decoration: none;
+/* For the main layout, offset the left side to account for sidebar */
+.layout .footer {
+  margin-left: 0; /* Override any inheritance */
+  width: 100%;
 }
 
-.footer-bottom a:hover {
-  color: var(--color-primary-400);
-}
-
-/* Responsive design */
 @media (max-width: 768px) {
   .footer-content {
     flex-direction: column;
-    padding: 0 1rem;
   }
 
   .footer-section {
-    min-width: 100%;
-    text-align: center;
-    padding: 0;
-  }
-
-  .footer-section h4::after {
-    left: 50%;
-    transform: translateX(-50%);
+    margin-bottom: 2rem;
   }
 }

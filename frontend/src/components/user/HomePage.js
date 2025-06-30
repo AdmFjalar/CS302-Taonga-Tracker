@@ -7,6 +7,7 @@ import LoadingScreen from "../ui/LoadingScreen";
 import { getFullImageUrl, toDateInputValue } from "../../services/utils";
 import { familyAPI } from "../../services/api";
 import { vaultAPI } from "../../services/api";
+import { getStandardizedValue, formatCurrency } from "../../services/currency";
 import "../../styles/user/HomePage.css";
 
 /**
@@ -77,13 +78,26 @@ const findOldestHeirloom = (items) =>
         null
     );
 
-const findMostValuableHeirloom = (items) =>
-    items.reduce((mostValuable, item) =>
-            (!mostValuable || (item.estimatedValue && item.estimatedValue > mostValuable.estimatedValue))
-                ? item
-                : mostValuable,
-        null
+const findMostValuableHeirloom = async (items) => {
+    if (!items || items.length === 0) return null;
+
+    // Filter items that have values
+    const itemsWithValues = items.filter(item => item.estimatedValue && item.estimatedValue > 0);
+    if (itemsWithValues.length === 0) return null;
+
+    // Get standardized values for all items
+    const itemsWithStandardizedValues = await Promise.all(
+        itemsWithValues.map(async (item) => ({
+            ...item,
+            standardizedValue: await getStandardizedValue(item)
+        }))
     );
+
+    // Find the most valuable using standardized USD values
+    return itemsWithStandardizedValues.reduce((mostValuable, item) => {
+        return item.standardizedValue > mostValuable.standardizedValue ? item : mostValuable;
+    });
+};
 
 const HomePage = () => {
   const [items, setItems] = useState([]);
@@ -95,6 +109,7 @@ const HomePage = () => {
   const [editingMember, setEditingMember] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mostValuableHeirloom, setMostValuableHeirloom] = useState(null);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -104,6 +119,10 @@ const HomePage = () => {
         // Using the vault API service instead of direct fetch
         const data = await vaultAPI.getAll();
         setItems(data);
+
+        // Calculate most valuable heirloom with real exchange rates
+        const mostValuable = await findMostValuableHeirloom(data);
+        setMostValuableHeirloom(mostValuable);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -128,7 +147,6 @@ const HomePage = () => {
   }, []);
 
   const oldestHeirloom = findOldestHeirloom(items);
-  const mostValuableHeirloom = findMostValuableHeirloom(items);
 
   // Save handler for heirloom
   const handleEditSave = (updatedItem) => {
@@ -282,11 +300,12 @@ const HomePage = () => {
                         <b>{mostValuableHeirloom.title}</b>
                       </p>
                       {mostValuableHeirloom.estimatedValue && (
-                          <p>Estimated Value: <strong><i>${mostValuableHeirloom.estimatedValue}</i></strong></p>
+                          <p>
+                            Estimated Value: <strong>
+                              {formatCurrency(mostValuableHeirloom.estimatedValue, mostValuableHeirloom.currency)}
+                            </strong>
+                          </p>
                       )}
-                      {/*{mostValuableHeirloom.creationDate && (*/}
-                      {/*    <p>Created: {toDateInputValue(mostValuableHeirloom.creationDate)}</p>*/}
-                      {/*)}*/}
                     </div>
                 )}
               </div>

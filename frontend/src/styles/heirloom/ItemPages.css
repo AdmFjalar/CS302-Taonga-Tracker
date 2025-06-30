@@ -73,3 +73,35 @@
 .item-toolbar .auth-button {
   margin: 0;
 }
+
+/* Currency input container for side-by-side layout */
+.currency-input-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+}
+
+.currency-input-container input[type="number"] {
+  flex: 2;
+  min-width: 0;
+}
+
+.currency-input-container select {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .currency-input-container {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .currency-input-container input[type="number"],
+  .currency-input-container select {
+    flex: none;
+    width: 100%;
+  }
+}

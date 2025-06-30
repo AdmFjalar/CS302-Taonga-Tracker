@@ -1,13 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TaongaTrackerAPI.Models;
 
-public record LoginDto()
+/// <summary>
+/// Data transfer object for user login requests
+/// </summary>
+public record LoginDto
 {
-    public string EmailOrUserName { get; set; }
-    public string Password { get; set; }
+    /// <summary>
+    /// User's email address or username
+    /// </summary>
+    [Required]
+    public required string EmailOrUserName { get; init; }
     
-    public LoginDto(string emailOrUserName, string password) : this()
-    {
-        EmailOrUserName = emailOrUserName;
-        Password = password;
-    }
+    /// <summary>
+    /// User's password
+    /// </summary>
+    [Required]
+    public required string Password { get; init; }
 }

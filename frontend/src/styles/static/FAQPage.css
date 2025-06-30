@@ -1,7 +1,4 @@
-/**
- * FAQ page styles with expandable question-answer sections.
- * Inherits gradient animations from StaticPage.css base styles.
- */
+/* FAQ Page Styles */
 
 .faq-page {
   max-width: 900px;

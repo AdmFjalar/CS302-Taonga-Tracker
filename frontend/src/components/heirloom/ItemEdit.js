@@ -2,10 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { getFullImageUrl, toDateInputValue, autoSpaceComma } from "../../services/utils";
 import { familyAPI, vaultAPI, authAPI } from "../../services/api";
 import Button from "../shared/Button";
-import "../../styles/heirloom/CreateItemPage.css";
-import "../../styles/heirloom/ItemPages.css";
 import "../../styles/shared/StandardModal.css";
-import "../../styles/shared/StandardView.css";
 
 const placeholderImg = "https://placehold.co/40x40";
 
@@ -32,11 +29,6 @@ const defaultItem = {
 /**
  * ItemEdit component for creating or editing a vault item (heirloom).
  * Handles form state, image upload, and user suggestions for sharing.
- * @param {Object} props
- * @param {Function} props.onSave - Callback after save.
- * @param {Object} [props.initialItem] - The item to edit (if any).
- * @param {Function} [props.navigateTo] - Callback to navigate after save/cancel.
- * @param {Array} [props.familyMembers] - Family members for creator selection.
  */
 
 function CreatorSelector({ familyMembers, selectedId, onSelect }) {
@@ -48,52 +40,34 @@ function CreatorSelector({ familyMembers, selectedId, onSelect }) {
         : [];
 
     return (
-        <div className="form-row" style={{ flexDirection: "column", alignItems: "flex-start", width: "100%" }}>
-            <b style={{ marginBottom: 4 }}>Creator:</b>
+        <div className="standard-field-row vertical">
+            <div className="standard-field-label">Creator:</div>
             <input
                 type="text"
+                className="standard-field-input"
                 placeholder="Search creator..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                style={{ marginBottom: 8, width: "100%", maxWidth: 320 }}
             />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {filtered.length === 0 && <span style={{ color: "#888" }}>No matches</span>}
+            <div className="standard-modal-related-list">
+                {filtered.length === 0 && <span className="standard-field-value">No matches</span>}
                 {filtered.map(fm => (
                     <label
                         key={fm.familyMemberId}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            background: selectedId === fm.familyMemberId ? "#bcb88a33" : "#fff",
-                            border: "1px solid #bcb88a",
-                            borderRadius: 8,
-                            padding: "2px 8px 2px 2px",
-                            cursor: "pointer",
-                            minWidth: 0,
-                            width: "auto",
-                        }}
+                        className={`standard-modal-related-tag ${selectedId === fm.familyMemberId ? 'selected' : ''}`}
                     >
                         <input
                             type="radio"
                             checked={selectedId === fm.familyMemberId}
                             onChange={() => onSelect(fm.familyMemberId)}
-                            style={{ marginRight: 4 }}
+                            className="standard-modal-radio-input"
                         />
                         <img
                             src={fm.profilePictureUrl ? getFullImageUrl(fm.profilePictureUrl) : placeholderImg}
                             alt={`${fm.firstName} ${fm.lastName}`}
-                            style={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                                border: "1px solid #bcb88a",
-                                background: "#fffbe9",
-                            }}
+                            className="standard-modal-related-photo"
                         />
-                        <span style={{ fontSize: 15, fontWeight: 500, whiteSpace: "nowrap" }}>
+                        <span className="standard-modal-related-name">
                             {fm.firstName} {fm.lastName}
                         </span>
                     </label>
@@ -114,15 +88,11 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
     const [suggestionLoading, setSuggestionLoading] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const suggestionBoxRef = useRef(null);
-    // Add state to track email-to-ID mapping
     const [emailToIdMap, setEmailToIdMap] = useState(new Map());
-
     const [localFamilyMembers, setLocalFamilyMembers] = useState(familyMembers);
 
-    // Modified useEffect to prevent excessive API calls
+    // Fetch family members if not provided
     useEffect(() => {
-        // Only fetch if no family members were passed as props and
-        // if we haven't already fetched them (empty array check)
         if ((!familyMembers || familyMembers.length === 0) && localFamilyMembers.length === 0) {
             const fetchFamilyMembers = async () => {
                 try {
@@ -133,12 +103,12 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                 }
             };
             fetchFamilyMembers();
-        } else if (familyMembers.length > 0 && localFamilyMembers !== familyMembers) {
-            // Update local state if props change and are not empty
+        } else if (familyMembers.length > 0) {
             setLocalFamilyMembers(familyMembers);
         }
-    }, [familyMembers]); // Only re-run if familyMembers prop changes
+    }, [familyMembers, localFamilyMembers.length]);
 
+    // Initialize form with item data
     useEffect(() => {
         if (initialItem) {
             setItem({ ...defaultItem, ...initialItem });
@@ -148,6 +118,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         }
     }, [initialItem]);
 
+    // Handle form field changes
     const handleChange = (field, value) => {
         setItem((prev) => ({ ...prev, [field]: value }));
     };
@@ -162,6 +133,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         return parts[parts.length - 1].trim();
     };
 
+    // User suggestions for sharing
     const fetchUserSuggestions = async (query) => {
         if (!query) {
             setUserSuggestions([]);
@@ -169,7 +141,6 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         }
         setSuggestionLoading(true);
         try {
-            // Using the auth API service instead of direct fetch
             const users = await authAPI.searchUsers(query);
             setUserSuggestions(users);
         } catch (error) {
@@ -197,14 +168,12 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         parts[parts.length - 1] = ` ${email}`;
         const newValue = parts.join(",").replace(/^ /, "");
         setSharedWithInput(autoSpaceComma(newValue));
-
-        // Store email-to-ID mapping
         setEmailToIdMap(prev => new Map(prev).set(email, userId));
-
         setShowSuggestions(false);
         setUserSuggestions([]);
     };
 
+    // Handle clicking outside suggestions
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (suggestionBoxRef.current && !suggestionBoxRef.current.contains(event.target)) {
@@ -215,13 +184,13 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // Image upload
     const handleImageChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         setUploading(true);
         setUploadError("");
         try {
-            // Use the same upload service as other components
             const data = await vaultAPI.uploadImage(file);
             setItem((prev) => ({ ...prev, photoUrl: data.url }));
         } catch (err) {
@@ -235,6 +204,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         setItem(prev => ({ ...prev, creatorId: familyMemberId }));
     };
 
+    // Form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -244,10 +214,8 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
 
         for (const email of emailList) {
             if (emailToIdMap.has(email)) {
-                // Use cached ID if available
                 sharedUserIds.push(emailToIdMap.get(email));
             } else {
-                // Try to find user by email if not in cache
                 try {
                     const users = await authAPI.searchUsers(email);
                     const user = users.find(u => u.email === email);
@@ -267,13 +235,12 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
             estimatedValue: item.estimatedValue ? Number(item.estimatedValue) : null,
             materials: materialsInput.split(",").map((v) => v.trim()).filter(Boolean),
             craftType: craftTypeInput.split(",").map((v) => v.trim()).filter(Boolean),
-            sharedWithIds: sharedUserIds, // Use converted user IDs instead of emails
+            sharedWithIds: sharedUserIds,
         };
 
-        // If editing (existing item), use vaultAPI to update
+        // Update or create item
         if (item.vaultItemId && item.vaultItemId !== "0") {
             try {
-                // Using the vault API service instead of direct fetch
                 const data = await vaultAPI.update(item.vaultItemId, updatedItem);
                 if (onSave) onSave(data);
                 window.location.reload();
@@ -282,7 +249,6 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                 alert("Error updating item: " + err.message);
             }
         } else {
-            // Creating new item (handled by AddItem)
             onSave(updatedItem);
         }
     };
@@ -291,7 +257,6 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
         if (!item.vaultItemId || item.vaultItemId === "0") return;
         if (!window.confirm("Are you sure you want to delete this item?")) return;
         try {
-            // Using the vault API service instead of direct fetch
             await vaultAPI.delete(item.vaultItemId);
             alert("Heirloom deleted.");
             window.location.reload();
@@ -304,61 +269,62 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
     return (
         <div className="standard-modal-container">
             <form onSubmit={handleSubmit}>
-                {/* Top Section: Image, Title, Description */}
-                <div className="item-edit-top">
-                    <div className="item-edit-image">
-                        <label style={{ cursor: "pointer" }} title="Click to upload a new image">
+                {/* Header Section */}
+                <div className="standard-modal-header">
+                    <div className="standard-modal-photo-container rectangular">
+                        <label className="standard-modal-photo-upload" title="Click to upload a new image">
                             <img
                                 src={getFullImageUrl(item.photoUrl)}
                                 alt="Heirloom"
-                                className="item-edit-img-preview"
+                                className="standard-modal-photo"
                             />
                             <input
                                 type="file"
                                 accept="image/*"
                                 onChange={handleImageChange}
                                 disabled={uploading}
-                                style={{ display: "none" }}
+                                className="standard-modal-file-input"
                             />
                         </label>
-                        {uploading && <p className="item-edit-uploading">Uploading image...</p>}
-                        {uploadError && <p className="error-text">{uploadError}</p>}
+                        {uploading && <p className="standard-modal-upload-status">Uploading image...</p>}
+                        {uploadError && <p className="standard-modal-error-text">{uploadError}</p>}
                     </div>
-                    <div className="item-edit-mainfields">
-                        <div className="form-row">
-                            <label className="form-label" htmlFor="title-input">
-                                <span className="required-field">Title</span>
+                    <div className="standard-modal-primary-info">
+                        <div className="standard-form-row-inline">
+                            <label className="standard-modal-form-label" htmlFor="title-input">
+                                Title
                             </label>
                             <input
                                 id="title-input"
                                 type="text"
-                                className="item-edit-title"
+                                className="standard-modal-title editable"
                                 value={item.title}
                                 onChange={e => handleChange("title", e.target.value)}
-                                placeholder=""
+                                placeholder="Enter title"
                                 required
                             />
-                            <small className="required-field-hint">* Required field</small>
+                            <small className="standard-modal-field-hint">* Required field</small>
                         </div>
-                        <div className="form-row">
+                        <div className="standard-form-row">
                             <textarea
-                                className="item-edit-description"
+                                className="standard-modal-description editable"
                                 value={item.description}
                                 onChange={e => handleChange("description", e.target.value)}
-                                placeholder="Description"
+                                placeholder="Enter description"
                                 rows={3}
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* Bottom Section: Details */}
-                <div className="item-edit-bottom">
-                    <div className="item-edit-grid">
-                        <div className="form-row">
-                            <b>Estimated Value:</b>
-                            <div className="currency-input-container">
+                {/* Content Section */}
+                <div className="standard-modal-content">
+                    <div className="standard-modal-details-grid">
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Estimated Value:</div>
+                            <div className="standard-modal-input-pair">
                                 <input
+                                    className="standard-field-input"
                                     type="number"
                                     value={item.estimatedValue || ""}
                                     onChange={e => handleChange("estimatedValue", e.target.value)}
@@ -367,6 +333,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                                     placeholder="e.g. 1000"
                                 />
                                 <select
+                                    className="standard-field-input"
                                     value={item.currency || "NZD"}
                                     onChange={e => handleChange("currency", e.target.value)}
                                 >
@@ -389,41 +356,46 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                                 </select>
                             </div>
                         </div>
-                        <div className="form-row">
-                            <b>Creation Date:</b>
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Creation Date:</div>
                             <input
+                                className="standard-field-input"
                                 type="date"
                                 value={toDateInputValue(item.creationDate)}
                                 onChange={e => handleChange("creationDate", e.target.value)}
                             />
                         </div>
-                        <div className="form-row">
-                            <b>Date Acquired:</b>
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Date Acquired:</div>
                             <input
+                                className="standard-field-input"
                                 type="date"
                                 value={toDateInputValue(item.dateAcquired)}
                                 onChange={e => handleChange("dateAcquired", e.target.value)}
                             />
                         </div>
-                        <div className="form-row">
-                            <b>Creation Place:</b>
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Creation Place:</div>
                             <input
+                                className="standard-field-input"
                                 type="text"
                                 value={item.creationPlace}
                                 onChange={e => handleChange("creationPlace", e.target.value)}
                             />
                         </div>
-                        <div className="form-row">
-                            <b>Item Type:</b>
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Item Type:</div>
                             <input
+                                className="standard-field-input"
                                 type="text"
                                 value={item.itemType}
                                 onChange={e => handleChange("itemType", e.target.value)}
                             />
                         </div>
-                        <div className="form-row">
-                            <b>Materials:</b>
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Materials:</div>
                             <input
+                                className="standard-field-input"
                                 type="text"
                                 value={materialsInput}
                                 onChange={e => setMaterialsInput(e.target.value)}
@@ -431,9 +403,10 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                                 placeholder="e.g. Gold, Silver"
                             />
                         </div>
-                        <div className="form-row">
-                            <b>Craft Type:</b>
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Craft Type:</div>
                             <input
+                                className="standard-field-input"
                                 type="text"
                                 value={craftTypeInput}
                                 onChange={e => setCraftTypeInput(e.target.value)}
@@ -441,52 +414,39 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                                 placeholder="e.g. Engraving, Weaving"
                             />
                         </div>
-                        <div className="form-row" style={{ position: "relative" }}>
-                            <b>Share With (emails):</b>
-                            <input
-                                type="text"
-                                value={sharedWithInput}
-                                onChange={handleSharedWithInputChange}
-                                onBlur={e => handleArrayBlur("sharedWithIds", e.target.value)}
-                                placeholder="Type email and comma to add"
-                                autoComplete="off"
-                            />
-                            {showSuggestions && userSuggestions.length > 0 && (
-                                <div
-                                    ref={suggestionBoxRef}
-                                    style={{
-                                        position: "absolute",
-                                        top: "100%",
-                                        left: 0,
-                                        background: "#fff",
-                                        border: "1px solid #bcb88a",
-                                        borderRadius: 6,
-                                        zIndex: 10,
-                                        width: "100%",
-                                        maxHeight: 120,
-                                        overflowY: "auto",
-                                    }}
-                                >
-                                    {suggestionLoading ? (
-                                        <div style={{ padding: 8 }}>Loading...</div>
-                                    ) : (
-                                        userSuggestions.map(user => (
-                                            <div
-                                                key={user.email}
-                                                style={{
-                                                    padding: 8,
-                                                    cursor: "pointer",
-                                                    borderBottom: "1px solid #eee",
-                                                    width: "fit-content",
-                                                }}
-                                                onMouseDown={() => handleSuggestionClick(user.email, user.userId)}
-                                            >
-                                                {user.email}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            )}
+                        <div className="standard-field-row">
+                            <div className="standard-field-label">Share With (emails):</div>
+                            <div className="standard-modal-autocomplete-container">
+                                <input
+                                    className="standard-field-input"
+                                    type="text"
+                                    value={sharedWithInput}
+                                    onChange={handleSharedWithInputChange}
+                                    onBlur={e => handleArrayBlur("sharedWithIds", e.target.value)}
+                                    placeholder="Type email and comma to add"
+                                    autoComplete="off"
+                                />
+                                {showSuggestions && userSuggestions.length > 0 && (
+                                    <div
+                                        ref={suggestionBoxRef}
+                                        className="standard-modal-suggestion-dropdown"
+                                    >
+                                        {suggestionLoading ? (
+                                            <div className="standard-modal-suggestion-loading">Loading...</div>
+                                        ) : (
+                                            userSuggestions.map(user => (
+                                                <div
+                                                    key={user.email}
+                                                    className="standard-modal-suggestion-item"
+                                                    onMouseDown={() => handleSuggestionClick(user.email, user.userId)}
+                                                >
+                                                    {user.email}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <CreatorSelector
                             familyMembers={localFamilyMembers || []}
@@ -497,7 +457,7 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="item-edit-actions">
+                <div className="standard-modal-actions">
                     <Button type="submit" variant="primary">
                         Save Heirloom
                     </Button>
@@ -516,4 +476,3 @@ const ItemEdit = ({ onSave, initialItem, navigateTo, familyMembers = [] }) => {
 };
 
 export default ItemEdit;
-

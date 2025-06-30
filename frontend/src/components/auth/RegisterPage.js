@@ -64,7 +64,7 @@ const RegisterPage = () => {
    */
   const validatePassword = (password) => {
     const requirements = {
-      length: password.length >= 8,
+      length: password.length >= 12,
       uppercase: /[A-Z]/.test(password),
       lowercase: /[a-z]/.test(password),
       number: /[0-9]/.test(password),
@@ -213,7 +213,7 @@ const RegisterPage = () => {
         <div className="password-requirements">
           <p>Password must include:</p>
           <ul>
-            <li className={passwordErrors.length ? "met" : ""}>At least 8 characters</li>
+            <li className={passwordErrors.length ? "met" : ""}>At least 12 characters</li>
             <li className={passwordErrors.uppercase ? "met" : ""}>At least one uppercase letter</li>
             <li className={passwordErrors.lowercase ? "met" : ""}>At least one lowercase letter</li>
             <li className={passwordErrors.number ? "met" : ""}>At least one number</li>

@@ -1,17 +1,31 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TaongaTrackerAPI.Models;
 
-public record VaultDto()
+/// <summary>
+/// Data transfer object for vault information including ownership and shared access
+/// </summary>
+public record VaultDto
 {
-    public string VaultId { get; set; }
-    public string OwnerId { get; set; }
-    public List<VaultItemDto>? VaultItemDtos { get; set; }
-    public List<string>? SharedWithIds{ get; set; }
+    /// <summary>
+    /// Unique identifier for the vault
+    /// </summary>
+    [Required]
+    public required string VaultId { get; set; }
     
-    public VaultDto(string vaultId, string ownerId, List<VaultItemDto>? vaultItemDtos = null, List<string>? sharedWithIds = null) : this()
-    {
-        VaultId = vaultId;
-        OwnerId = ownerId;
-        VaultItemDtos = vaultItemDtos;
-        SharedWithIds = sharedWithIds;
-    }
+    /// <summary>
+    /// User ID of the vault owner
+    /// </summary>
+    [Required]
+    public required string OwnerId { get; set; }
+    
+    /// <summary>
+    /// List of items stored in the vault
+    /// </summary>
+    public List<VaultItemDto>? VaultItemDtos { get; set; }
+    
+    /// <summary>
+    /// List of user IDs with whom the vault is shared
+    /// </summary>
+    public List<string>? SharedWithIds { get; set; }
 }

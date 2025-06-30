@@ -253,7 +253,7 @@ public partial class Neo4jService
         }
     }
 
-    public async Task<ApplicationUser> FindUserByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+    public async Task<ApplicationUser?> FindUserByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         await using var session = Driver.AsyncSession();
@@ -348,35 +348,45 @@ public partial class Neo4jService
             RETURN u
             LIMIT $limit";
         var result = await session.RunAsync(cypher, new { query, limit });
-        return await result.ToListAsync(record =>
+        var users = await result.ToListAsync(record =>
         {
             var node = record["u"].As<INode>();
             return MapUser(node);
         });
+        
+        // Filter out null results to match the expected return type
+        return users.Where(user => user != null).Cast<ApplicationUser>().ToList();
     }
 
     // Enhanced helper method for mapping Neo4j nodes to ApplicationUser with better null handling
-    private static ApplicationUser MapUser(INode node)
+    private static ApplicationUser? MapUser(INode? node)
     {
         if (node?.Properties == null)
-            throw new ArgumentNullException(nameof(node), "Node or its properties cannot be null");
+            return null;
 
-        return new ApplicationUser
+        try
         {
-            Id = GetPropertyOrDefault(node, "Id", node.ElementId),
-            UserName = GetPropertyOrDefault<string?>(node, "UserName", null),
-            NormalizedUserName = GetPropertyOrDefault<string?>(node, "NormalizedUserName", null),
-            Email = GetPropertyOrDefault<string?>(node, "Email", null),
-            NormalizedEmail = GetPropertyOrDefault<string?>(node, "NormalizedEmail", null),
-            PasswordHash = GetPropertyOrDefault<string?>(node, "PasswordHash", null),
-            SecurityStamp = GetPropertyOrDefault<string?>(node, "SecurityStamp", null),
-            FirstName = GetPropertyOrDefault(node, "FirstName", string.Empty),
-            MiddleNames = GetPropertyOrDefault(node, "MiddleNames", string.Empty),
-            LastName = GetPropertyOrDefault(node, "LastName", string.Empty),
-            EmailConfirmed = GetPropertyOrDefault(node, "EmailConfirmed", false),
-            ConcurrencyStamp = GetPropertyOrDefault<string?>(node, "ConcurrencyStamp", null),
-            ProfilePictureUrl = GetPropertyOrDefault(node, "ProfilePictureUrl", string.Empty)
-        };
+            return new ApplicationUser
+            {
+                Id = GetPropertyOrDefault(node, "Id", node.ElementId),
+                UserName = GetPropertyOrDefault<string?>(node, "UserName", null),
+                NormalizedUserName = GetPropertyOrDefault<string?>(node, "NormalizedUserName", null),
+                Email = GetPropertyOrDefault<string?>(node, "Email", null),
+                NormalizedEmail = GetPropertyOrDefault<string?>(node, "NormalizedEmail", null),
+                PasswordHash = GetPropertyOrDefault<string?>(node, "PasswordHash", null),
+                SecurityStamp = GetPropertyOrDefault<string?>(node, "SecurityStamp", null),
+                FirstName = GetPropertyOrDefault(node, "FirstName", string.Empty),
+                MiddleNames = GetPropertyOrDefault(node, "MiddleNames", string.Empty),
+                LastName = GetPropertyOrDefault(node, "LastName", string.Empty),
+                EmailConfirmed = GetPropertyOrDefault(node, "EmailConfirmed", false),
+                ConcurrencyStamp = GetPropertyOrDefault<string?>(node, "ConcurrencyStamp", null),
+                ProfilePictureUrl = GetPropertyOrDefault(node, "ProfilePictureUrl", string.Empty)
+            };
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static T GetPropertyOrDefault<T>(INode node, string propertyName, T defaultValue)

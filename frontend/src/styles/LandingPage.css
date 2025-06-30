@@ -1,20 +1,15 @@
-/**
- * Landing page styles with animated gradient backgrounds.
- * Creates an engaging visual experience for unauthenticated visitors.
- */
-
 .landing-layout {
   font-family: var(--font-primary);
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  /*background: rgba(255, 255, 255, 0.2);*/
   border-radius: 25px;
   padding: 2rem;
   margin: 1rem 0;
 }
 
-/* Animated gradient background layers */
 .landing-layout::before {
   content: '';
   position: absolute;
@@ -29,7 +24,7 @@
     radial-gradient(ellipse at 60% 30%, var(--gradient-spot-medium-2), transparent 45%);
   z-index: -1;
   will-change: transform;
-  animation: float-gradient 20s ease-in-out infinite alternate;
+  animation: float-gradient 2s ease-in-out infinite alternate;
 }
 
 .landing-layout::after {
@@ -48,96 +43,98 @@
   animation: float-gradient-alt 30s ease-in-out infinite alternate;
 }
 
-/* Main content area */
+.landing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-secondary-300);
+  padding: 1rem 2rem;
+  /*border-bottom: 1px solid var(--color-primary-700);*/
+}
+
+.logo {
+  font-family: var(--font-secondary);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  margin-top: auto;
+  margin-bottom: auto;
+  color: var(--color-primary-500);
+}
+
+.auth-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.signin-link {
+  color: var(--color-primary-700);
+  font-family: var(--font-secondary);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.signup-button {
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
+  padding: 0.4rem 0.9rem;
+  font-family: var(--font-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 2px 2px 0 var(--color-primary-400);
+  transition: background 0.2s ease;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.signup-button:hover {
+  background-color: var(--color-primary-600);
+}
+
 .landing-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  text-align: center;
+  justify-content: center;
   padding: 4rem 2rem;
-  min-height: 60vh;
+  text-align: center;
 }
 
-/* Typography */
 .headline {
   font-family: var(--font-secondary);
-  font-size: var(--text-4xl);
+  font-size: var(--text-5xl);
+  font-weight: var(--weight-medium);
   color: var(--color-primary-700);
-  margin-bottom: 1rem;
-  line-height: var(--leading-tight);
+  margin-bottom: 0.5rem;
 }
 
 .subhead {
-  font-size: var(--text-lg);
-  color: var(--color-primary-500);
-  margin-bottom: 3rem;
-  max-width: 600px;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  color: var(--color-primary-700);
+  margin-bottom: 2rem;
 }
 
-/* Feature highlights */
 .features-bar {
+  background-color: var(--color-secondary-400);
+  border-radius: 2rem;
+  padding: 0.75rem 1.5rem;
   display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-  justify-content: center;
-  margin-top: 2rem;
+  gap: 2rem;
+  box-shadow: 2px 4px 0 var(--color-shadow-light);
 }
 
 .feature-pill {
-  background: var(--color-secondary-200);
   color: var(--color-primary-700);
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+  text-shadow: var(--color-neutral-white);
+  font-weight: var(--weight-semibold);
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-}
-
-.signup-button {
-  background: var(--color-primary-700);
-  color: white;
-  padding: 0.75rem 2rem;
-  border-radius: 25px;
-  text-decoration: none;
-  font-weight: var(--weight-bold);
-  transition: all 0.2s ease;
-}
-
-.signup-button:hover {
-  background: var(--color-primary-600);
-  transform: translateY(-2px);
-}
-
-/* Gradient animations */
-@keyframes float-gradient {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(-10px, -10px) rotate(1deg); }
-}
-
-@keyframes float-gradient-alt {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(10px, 10px) rotate(-1deg); }
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .landing-layout {
-    padding: 1rem;
-    margin: 0.5rem 0;
-  }
-
-  .landing-main {
-    padding: 2rem 1rem;
-  }
-
-  .headline {
-    font-size: var(--text-3xl);
-  }
-
-  .features-bar {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
+  background-color: var(--color-secondary-300);
+  border-radius: 9999px;
+  padding: 0.4rem 1rem;
 }

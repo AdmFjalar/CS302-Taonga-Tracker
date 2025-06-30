@@ -1,4 +1,4 @@
-/* StandardModal.css - Unified Modal Styling */
+/* StandardModal.css - Unified Modal Styling (Updated to match FamilyMemberView design) */
 
 /* =================================
    BASE MODAL CONTAINER
@@ -16,6 +16,15 @@
   position: relative;
   min-height: 400px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  height: 100%;
+  padding-top: 0.5rem;
+}
+
+.standard-modal-container * {
+  box-sizing: border-box;
 }
 
 /* =================================
@@ -29,13 +38,13 @@
   padding-bottom: 1.5rem;
   border-bottom: 2px solid var(--color-secondary-300);
   margin-bottom: 1.5rem;
+  margin-top: 1.3rem;
   flex-wrap: wrap;
 }
 
-/* Photo containers */
 .standard-modal-photo-container {
   flex-shrink: 0;
-  /*border: 3px solid var(--color-primary-300);*/
+  border: 3px solid var(--color-primary-300);
   background: var(--color-secondary-200);
   overflow: hidden;
   position: relative;
@@ -56,7 +65,6 @@
 .standard-modal-photo {
   width: 100%;
   height: 100%;
-  border-radius: 15px;
   object-fit: cover;
   display: block;
 }
@@ -84,7 +92,6 @@
   padding: 0.25rem;
 }
 
-/* Primary info section */
 .standard-modal-primary-info {
   flex: 1;
   min-width: 250px;
@@ -98,7 +105,7 @@
   font-size: 1.8rem;
   font-weight: 600;
   color: var(--color-primary-700);
-  margin: 0;
+  margin: 0 0 0.5rem 0;
   line-height: 1.2;
   border: none;
   background: none;
@@ -148,8 +155,88 @@
 }
 
 /* =================================
-   MODAL CONTENT SECTION
+   MODAL LAYOUT SECTIONS
    ================================= */
+
+.standard-modal-top-section {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--color-secondary-300);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.standard-modal-image-section {
+  flex-shrink: 0;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--color-primary-300);
+  background: var(--color-secondary-200);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.standard-modal-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.standard-modal-upload-status {
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+}
+
+.standard-modal-main-content {
+  flex: 1;
+  min-width: 250px;
+}
+
+.standard-modal-primary-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--color-primary-700);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+  border: none;
+  background: none;
+  width: 100%;
+  font-family: var(--font-primary);
+  padding: 0;
+}
+
+.standard-modal-primary-title.editable {
+  border: 2px solid var(--color-primary-300);
+  border-radius: 4px;
+  padding: 0.5rem;
+  background: white;
+  font-size: 1.4rem;
+}
+
+.standard-modal-primary-description {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  line-height: 1.4;
+  border: 1px solid var(--color-secondary-300);
+  border-radius: 4px;
+  padding: 0.5rem;
+  background: white;
+  width: 100%;
+  font-family: var(--font-primary);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.standard-modal-details-section {
+  margin-bottom: 1.5rem;
+}
 
 .standard-modal-content {
   margin-bottom: 1.5rem;
@@ -161,37 +248,83 @@
   gap: 1rem;
 }
 
-/* =================================
-   FIELD STYLING
-   ================================= */
-
-.standard-field-row {
-  display: flex;
-  align-items: center;
+.standard-modal-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
 }
 
-.standard-field-row.vertical {
+/* =================================
+   FORM ELEMENTS
+   ================================= */
+
+.form-row {
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 0.3rem;
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--color-secondary-200);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.standard-field-row.vertical:last-child {
+.form-row:last-child {
   border-bottom: none;
 }
 
-.standard-field-label {
+.form-row label,
+.form-row b {
   font-weight: 600;
   color: var(--color-secondary-700);
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  min-width: 120px;
+  margin-bottom: 0.3rem;
+}
+
+.form-row input,
+.form-row textarea,
+.form-row select {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  line-height: 1.4;
+  border: 1px solid var(--color-secondary-300);
+  border-radius: 4px;
+  padding: 0.5rem;
+  font-family: inherit;
+  background: white;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-row input:focus,
+.form-row textarea:focus,
+.form-row select:focus {
+  outline: none;
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 2px rgba(188, 184, 138, 0.2);
+}
+
+.standard-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-secondary-200);
+}
+
+.standard-field-row:last-child {
+  border-bottom: none;
+}
+
+.standard-field-label {
+  font-weight: 600;
+  font-family: var(--font-secondary);
+  color: var(--color-secondary-700);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .standard-field-value {
@@ -201,20 +334,95 @@
 }
 
 .standard-field-input {
-  flex: 1;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  line-height: 1.4;
   border: 1px solid var(--color-secondary-300);
   border-radius: 4px;
   padding: 0.5rem;
-  font-size: 1rem;
   font-family: inherit;
   background: white;
-  min-width: 200px;
 }
 
 .standard-field-input:focus {
   outline: none;
   border-color: var(--color-primary-400);
   box-shadow: 0 0 0 2px rgba(188, 184, 138, 0.2);
+}
+
+/* =================================
+   SPECIALIZED INPUT CONTAINERS
+   ================================= */
+
+.standard-modal-input-pair {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.standard-modal-input-pair input[type="number"] {
+  flex: 2;
+  min-width: 0;
+  max-width: calc(66% - 4px);
+}
+
+.standard-modal-input-pair select {
+  flex: 1;
+  min-width: 0;
+  max-width: calc(34% - 4px);
+}
+
+.standard-modal-form-grid .form-row.full-width {
+  grid-column: 1 / -1 !important;
+  align-self: start;
+}
+
+.standard-modal-form-grid .form-row[style*="gridColumn"] {
+  grid-column: 1 / -1 !important;
+  align-self: start;
+}
+
+/* =================================
+   MODAL ACTIONS
+   ================================= */
+
+.standard-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-secondary-300);
+}
+
+/* =================================
+   FORM VALIDATION & FEEDBACK
+   ================================= */
+
+.standard-modal-required-field {
+  color: var(--color-error, #d32f2f);
+  font-weight: 600;
+}
+
+.standard-modal-field-hint {
+  font-size: 0.75rem;
+  color: var(--color-neutral-600);
+  font-style: italic;
+}
+
+.standard-modal-error-text {
+  color: var(--color-error, #d32f2f);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.standard-modal-form-label {
+  font-weight: 600;
+  color: var(--color-secondary-700);
+  font-size: 0.9rem;
 }
 
 /* =================================
@@ -305,63 +513,6 @@
 }
 
 /* =================================
-   MODAL ACTIONS
-   ================================= */
-
-.standard-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--color-secondary-300);
-  margin-top: 2rem;
-}
-
-/* =================================
-   FORM ELEMENTS
-   ================================= */
-
-.standard-form-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.standard-form-row.name-inputs {
-  display: flex;
-  gap: 0.5rem;
-  width: 100%;
-  align-items: center;
-}
-
-.standard-form-row.name-inputs .standard-modal-title.editable {
-  flex: 1;
-  min-width: 0; /* Allow flex items to shrink below their content size */
-  max-width: none;
-  margin-right: 0;
-  box-sizing: border-box;
-}
-
-/* Ensure name inputs don't overflow their container */
-.standard-form-row.name-inputs input.standard-modal-title.editable {
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* =================================
-   ERROR HANDLING
-   ================================= */
-
-.standard-error-text {
-  color: var(--color-error);
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-  text-align: center;
-}
-
-/* =================================
    METADATA SECTION
    ================================= */
 
@@ -402,24 +553,27 @@
     border-radius: 8px;
   }
 
-  .standard-modal-header {
+  .standard-modal-header,
+  .standard-modal-top-section {
     flex-direction: column;
     align-items: center;
     text-align: center;
     gap: 1rem;
   }
 
-  .standard-modal-photo-container.circular {
+  .standard-modal-photo-container.circular,
+  .standard-modal-image-section {
     width: 120px;
     height: 120px;
   }
 
   .standard-modal-photo-container.rectangular {
-    width: 180px;
-    height: 180px;
+    width: 150px;
+    height: 150px;
   }
 
-  .standard-modal-details-grid {
+  .standard-modal-details-grid,
+  .standard-modal-form-grid {
     grid-template-columns: 1fr;
   }
 
@@ -427,28 +581,16 @@
     flex-direction: column;
   }
 
-  .standard-field-row {
+  .standard-modal-input-pair {
     flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
+    gap: 4px;
   }
 
-  .standard-field-label {
-    min-width: auto;
-  }
-
-  .standard-field-input {
-    min-width: auto;
-  }
-
-  .standard-form-row.name-inputs {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .standard-modal-title.editable {
-    margin-right: 0;
-    margin-bottom: 0.5rem;
+  .standard-modal-input-pair input[type="number"],
+  .standard-modal-input-pair select {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -465,4 +607,44 @@
   .standard-modal-related-list {
     flex-direction: column;
   }
+}
+
+/* =================================
+   FORM LAYOUT UTILITIES
+   ================================= */
+
+/* Inline form row for horizontal layout with spacing */
+.standard-form-row-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-secondary-200);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.standard-form-row-inline:last-child {
+  border-bottom: none;
+}
+
+/* Flexible input for inline layouts */
+.standard-form-row-inline input {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Inline name inputs for forms */
+.standard-form-row.name-inputs {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
+}
+
+.standard-form-row.name-inputs input {
+  flex: 1;
+  min-width: 150px;
 }

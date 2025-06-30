@@ -1,26 +1,21 @@
-/**
- * Typography system and font definitions for the Taonga Tracker application.
- * Includes Google Fonts imports and standardized font variables.
- */
-
 /* Google Fonts imports */
 @import url('https://fonts.googleapis.com/css2?family=Mona+Sans:ital,wght@0,200..900;1,200..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
 
 /* Define CSS variables for font usage */
 :root {
-  /* Font families */
+  /* Font Families */
   --font-primary: 'Mona Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-secondary: 'Young Serif', Georgia, serif;
 
-  /* Font weights */
+  /* Font Weights */
   --weight-light: 300;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  /* Font size scale */
+  /* Font Sizes */
   --text-xs: 0.75rem;    /* 12px */
   --text-sm: 0.875rem;   /* 14px */
   --text-base: 1rem;     /* 16px */
@@ -32,9 +27,4 @@
   --text-4xl: 3rem;      /* 48px */
   --text-5xl: 3.75rem;   /* 60px */
   --text-6xl: 4.5rem;    /* 72px */
-
-  /* Line heights */
-  --leading-tight: 1.25;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.75;
 }

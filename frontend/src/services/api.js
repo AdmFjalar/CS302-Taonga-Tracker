@@ -8,6 +8,8 @@ import {
   AUTH_ENDPOINTS,
   FAMILY_ENDPOINTS,
   VAULT_ENDPOINTS,
+  SECURITY_ENDPOINTS,
+  GDPR_ENDPOINTS,
   STORAGE_KEYS,
   getAuthHeader
 } from './constants';
@@ -317,5 +319,167 @@ export const vaultAPI = {
       method: 'POST',
       body: formData
     });
+  },
+
+  /**
+   * Upload a vault item document
+   * @param {File} file - Document file to upload
+   * @returns {Promise<{url: string}>} URL of the uploaded document
+   */
+  uploadDocument: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiCall(VAULT_ENDPOINTS.UPLOAD_DOCUMENT, {
+      method: 'POST',
+      body: formData
+    });
   }
+};
+
+/**
+ * Security API functions for vulnerability scanning and monitoring
+ */
+export const securityAPI = {
+  /**
+   * Perform comprehensive security scan
+   * @returns {Promise<Object>} Security scan results
+   */
+  performScan: () =>
+    apiCall(SECURITY_ENDPOINTS.SCAN, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scanType: 'comprehensive',
+        includeVulnerabilities: true,
+        includePermissions: true,
+        includeDataAccess: true
+      })
+    }),
+
+  /**
+   * Get current vulnerabilities
+   * @returns {Promise<Array>} List of security vulnerabilities
+   */
+  getVulnerabilities: () =>
+    apiCall(SECURITY_ENDPOINTS.VULNERABILITIES),
+
+  /**
+   * Get security activity log
+   * @param {Object} filters - Optional filters for the log
+   * @returns {Promise<Array>} Security activity log entries
+   */
+  getActivityLog: (filters = {}) => {
+    const queryParams = new URLSearchParams(filters).toString();
+    const url = queryParams ? `${SECURITY_ENDPOINTS.ACTIVITY_LOG}?${queryParams}` : SECURITY_ENDPOINTS.ACTIVITY_LOG;
+    return apiCall(url);
+  },
+
+  /**
+   * Report a security breach
+   * @param {Object} breachData - Breach information
+   * @returns {Promise<Object>} Breach report response
+   */
+  reportBreach: (breachData) =>
+    apiCall(SECURITY_ENDPOINTS.BREACH_REPORT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(breachData)
+    }),
+
+  /**
+   * Get current security settings
+   * @returns {Promise<Object>} Security settings
+   */
+  getSecuritySettings: () =>
+    apiCall(SECURITY_ENDPOINTS.SECURITY_SETTINGS),
+
+  /**
+   * Update security settings
+   * @param {Object} settings - Security settings to update
+   * @returns {Promise<Object>} Updated security settings
+   */
+  updateSecuritySettings: (settings) =>
+    apiCall(SECURITY_ENDPOINTS.SECURITY_SETTINGS, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    }),
+
+  /**
+   * Enable two-factor authentication
+   * @param {Object} twoFactorData - 2FA setup data
+   * @returns {Promise<Object>} 2FA setup response
+   */
+  enableTwoFactor: (twoFactorData) =>
+    apiCall(SECURITY_ENDPOINTS.TWO_FACTOR, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(twoFactorData)
+    }),
+
+  /**
+   * Disable two-factor authentication
+   * @returns {Promise<Object>} 2FA disable response
+   */
+  disableTwoFactor: () =>
+    apiCall(SECURITY_ENDPOINTS.TWO_FACTOR, {
+      method: 'DELETE'
+    })
+};
+
+/**
+ * GDPR API functions for data privacy compliance
+ */
+export const gdprAPI = {
+  /**
+   * Export all user data
+   * @returns {Promise<Blob>} Data export file
+   */
+  exportData: () =>
+    apiCall(GDPR_ENDPOINTS.EXPORT_DATA, {
+      method: 'POST'
+    }),
+
+  /**
+   * Request account deletion
+   * @param {Object} deletionData - Deletion request data
+   * @returns {Promise<Object>} Deletion response
+   */
+  requestDeletion: (deletionData) =>
+    apiCall(GDPR_ENDPOINTS.DELETE_DATA, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(deletionData)
+    }),
+
+  /**
+   * Request data portability
+   * @param {string} format - Export format (json, csv, xml)
+   * @returns {Promise<Blob>} Portable data export
+   */
+  requestPortability: (format = 'json') =>
+    apiCall(GDPR_ENDPOINTS.DATA_PORTABILITY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ format })
+    }),
+
+  /**
+   * Get consent status
+   * @returns {Promise<Object>} Current consent settings
+   */
+  getConsentStatus: () =>
+    apiCall(GDPR_ENDPOINTS.CONSENT_STATUS),
+
+  /**
+   * Update consent preferences
+   * @param {Object} consentData - Consent preferences
+   * @returns {Promise<Object>} Updated consent status
+   */
+  updateConsent: (consentData) =>
+    apiCall(GDPR_ENDPOINTS.CONSENT_STATUS, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(consentData)
+    })
 };

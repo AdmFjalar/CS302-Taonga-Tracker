@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import LoadingScreen from "../ui/LoadingScreen";
+import StandardModal from "../shared/StandardModal";
 import Button from "../shared/Button";
-import "../../styles/user/SettingsPage.css";
+import "../../styles/shared/StandardModal.css";
 import { getFullImageUrl } from "../../services/utils";
 import { authAPI, vaultAPI } from "../../services/api";
+import { Link } from "react-router-dom";
 
 /**
  * SettingsPage component - user profile and account settings
@@ -24,8 +25,6 @@ const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
 
   useEffect(() => {
     // Fetch user data on component mount
@@ -53,8 +52,7 @@ const SettingsPage = () => {
     const file = e.target.files[0];
     if (file) {
       try {
-        setUploading(true);
-        setUploadError(null);
+        setSaving(true);
         const data = await vaultAPI.uploadImage(file);
         setUser((prev) => ({
           ...prev,
@@ -62,9 +60,9 @@ const SettingsPage = () => {
         }));
         setUnsavedChanges(true);
       } catch (err) {
-        setUploadError("Image upload failed: " + err.message);
+        alert("Image upload failed: " + err.message);
       } finally {
-        setUploading(false);
+        setSaving(false);
       }
     }
   };
@@ -76,7 +74,6 @@ const SettingsPage = () => {
 
   const handleSaveChanges = async () => {
     try {
-      setSaving(true);
       const payload = {
         firstName: user.firstName,
         middleNames: user.middleNames,
@@ -90,8 +87,6 @@ const SettingsPage = () => {
       alert("Profile updated!");
     } catch (err) {
       alert("Profile update failed: " + err.message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -111,198 +106,91 @@ const SettingsPage = () => {
     );
   }
 
-  const actions = [
-    ...(unsavedChanges ? [
-      <Button
-        key="save"
-        variant="primary"
-        onClick={handleSaveChanges}
-        disabled={saving}
-      >
-        {saving ? "Saving..." : "Save Changes"}
-      </Button>
-    ] : [])
-  ];
-
   return (
-    <div className="standard-modal-container settings-modal">
-      {/* Header section with photo and title */}
-      <div className="standard-modal-header">
-        <div className="standard-modal-photo-container rectangular">
-          {uploading ? (
-            <label className="standard-modal-photo-upload" title="Click to upload a new image">
-              <img
-                src={getFullImageUrl(user.profilePictureUrl)}
-                alt="Profile Picture"
-                className="standard-modal-photo"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                disabled={uploading}
-                style={{ display: "none" }}
-              />
-            </label>
-          ) : (
-            <label className="standard-modal-photo-upload" title="Click to upload a new image">
-              <img
-                src={getFullImageUrl(user.profilePictureUrl)}
-                alt="Profile Picture"
-                className="standard-modal-photo"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                style={{ display: "none" }}
-              />
-            </label>
+    <StandardModal
+      title="Account Settings"
+      photo={getFullImageUrl(user.profilePictureUrl)}
+      photoAlt={`${user.firstName} ${user.lastName}`}
+      photoShape="rectangular"
+      isEdit={true}
+      onPhotoUpload={handleImageChange}
+      uploading={saving}
+      actions={
+        <div className="settings-actions">
+          {unsavedChanges && (
+            <Button onClick={handleSaveChanges} variant="primary" disabled={saving}>
+              Save Changes
+            </Button>
           )}
-          {uploading && <p className="standard-modal-uploading">Uploading...</p>}
-          {uploadError && <p className="standard-modal-error">{uploadError}</p>}
+          <Link to="/security">
+            <Button variant="secondary">Security Settings</Button>
+          </Link>
         </div>
-
-        <div className="standard-modal-primary-info">
-          <div className="standard-modal-title-container">
-            <h2 className="standard-modal-title">
-              {`${user.firstName} ${user.lastName}`.trim() || user.userName || "User Profile"}
-            </h2>
-          </div>
-
-          {/* Username and Email - clickable to copy */}
-          <div className="standard-modal-subtitle-info">
-            <h5
-              className="copyable-field"
-              onClick={() => navigator.clipboard.writeText(user.userName)}
-              title="Click to copy username"
-            >
-              {user.userName}
-            </h5>
-            <h5
-              className="copyable-field"
-              onClick={() => navigator.clipboard.writeText(user.email)}
-              title="Click to copy email"
-            >
-              {user.email}
-            </h5>
-          </div>
-        </div>
+      }
+    >
+      <div className="standard-form-row name-inputs">
+        <input
+          type="text"
+          className="standard-modal-title editable"
+          value={user.firstName}
+          onChange={(e) => handleChange("firstName", e.target.value)}
+          placeholder="First Name"
+          disabled={saving}
+        />
+        <input
+          type="text"
+          className="standard-modal-title editable"
+          value={user.lastName}
+          onChange={(e) => handleChange("lastName", e.target.value)}
+          placeholder="Last Name"
+          disabled={saving}
+        />
+      </div>
+      <div className="standard-form-row">
+        <input
+          type="text"
+          className="standard-modal-description editable"
+          value={user.middleNames}
+          onChange={(e) => handleChange("middleNames", e.target.value)}
+          placeholder="Middle Names"
+          disabled={saving}
+        />
       </div>
 
-      {/* Content section */}
-      <div className="standard-modal-content">
-        {/* Profile Details Section */}
-        <div className="standard-modal-section">
-          <h3 className="standard-section-title">Profile Details</h3>
-          <div className="standard-modal-details-grid">
-            <div className="standard-field-row">
-              <div className="standard-field-label">First Name</div>
-              <input
-                type="text"
-                className="standard-field-input"
-                value={user.firstName}
-                onChange={e => handleChange("firstName", e.target.value)}
-                placeholder="First Name"
-              />
-            </div>
-
-            <div className="standard-field-row">
-              <div className="standard-field-label">Middle Names</div>
-              <input
-                type="text"
-                className="standard-field-input"
-                value={user.middleNames}
-                onChange={e => handleChange("middleNames", e.target.value)}
-                placeholder="Middle Names"
-              />
-            </div>
-
-            <div className="standard-field-row">
-              <div className="standard-field-label">Last Name</div>
-              <input
-                type="text"
-                className="standard-field-input"
-                value={user.lastName}
-                onChange={e => handleChange("lastName", e.target.value)}
-                placeholder="Last Name"
-              />
-            </div>
-          </div>
+      {/* Profile Details */}
+      <div className="standard-modal-details-grid">
+        <div className="standard-field-row">
+          <div className="standard-field-label">Email:</div>
+          <input
+            className="standard-field-input"
+            type="email"
+            value={user.email}
+            onChange={(e) => handleChange("email", e.target.value)}
+            placeholder="Email address"
+            disabled={saving}
+          />
         </div>
-
-        {/* Account Details Section */}
-        <div className="standard-modal-section">
-          <h3 className="standard-section-title">Account Details</h3>
-          <div className="standard-modal-details-grid">
-            <div className="standard-field-row">
-              <div className="standard-field-label">Username</div>
-              <div className="standard-field-value readonly">{user.userName}</div>
-            </div>
-
-            <div className="standard-field-row">
-              <div className="standard-field-label">Email</div>
-              <input
-                type="email"
-                className="standard-field-input"
-                value={user.email}
-                onChange={e => handleChange("email", e.target.value)}
-                placeholder="Email"
-              />
-            </div>
-
-            <div className="standard-field-row">
-              <div className="standard-field-label">User ID</div>
-              <div className="standard-field-value readonly">{user.userId}</div>
-            </div>
-          </div>
+        <div className="standard-field-row">
+          <div className="standard-field-label">Username:</div>
+          <div className="standard-field-value">{user.userName}</div>
         </div>
-
-        {/* Preferences Section */}
-        <div className="standard-modal-section">
-          <h3 className="standard-section-title">Preferences</h3>
-          <div className="standard-modal-details-grid">
-            <div className="standard-field-row">
-              <div className="standard-field-label">Region</div>
-              <select
-                className="standard-field-input"
-                value={user.region}
-                onChange={e => handleChange("region", e.target.value)}
-              >
-                <option>United States (English)</option>
-                <option>United Kingdom (English)</option>
-                <option>Canada (English)</option>
-                <option>New Zealand (English)</option>
-                <option>Australia (English)</option>
-                <option>Norway (English)</option>
-                <option>Sweden (English)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Security Settings Navigation */}
-        <div className="standard-modal-section">
-          <h3 className="standard-section-title">Security & Privacy</h3>
-          <div className="standard-modal-details-grid">
-            <div className="standard-field-row">
-              <Link to="/security">
-                <Button variant="outline">
-                  Security Settings
-                </Button>
-              </Link>
-            </div>
-          </div>
+        <div className="standard-field-row">
+          <div className="standard-field-label">Region:</div>
+          <select
+            className="standard-field-input"
+            value={user.region}
+            onChange={(e) => handleChange("region", e.target.value)}
+            disabled={saving}
+          >
+            <option value="United States (English)">United States (English)</option>
+            <option value="United Kingdom (English)">United Kingdom (English)</option>
+            <option value="Canada (English)">Canada (English)</option>
+            <option value="Australia (English)">Australia (English)</option>
+            <option value="New Zealand (English)">New Zealand (English)</option>
+          </select>
         </div>
       </div>
-
-      {/* Actions section */}
-      {actions && (
-        <div className="standard-modal-actions">
-          {actions}
-        </div>
-      )}
-    </div>
+    </StandardModal>
   );
 };
 

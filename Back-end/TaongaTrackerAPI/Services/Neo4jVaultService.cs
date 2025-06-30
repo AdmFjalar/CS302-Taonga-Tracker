@@ -45,7 +45,7 @@ public partial class Neo4jService
             return new VaultDto
             {
                 VaultId = node.Properties.ContainsKey("VaultId") ? node["VaultId"].As<string>() : node.ElementId,
-                OwnerId = node.Properties.ContainsKey("OwnerId") ? node["OwnerId"].As<string>() : null,
+                OwnerId = node.Properties.ContainsKey("OwnerId") ? node["OwnerId"].As<string>() ?? string.Empty : string.Empty,
                 SharedWithIds = node.Properties.ContainsKey("SharedWithIds") ? node["SharedWithIds"].As<List<string>>() : new List<string>()
             };
         });
@@ -63,6 +63,7 @@ public partial class Neo4jService
 
         var defaultVault = new VaultDto
         {
+            VaultId = Guid.NewGuid().ToString(),
             OwnerId = userId,
             SharedWithIds = new List<string>()
         };
@@ -87,6 +88,7 @@ public partial class Neo4jService
                 CraftType: $craftType,
                 ItemType: $itemType,
                 EstimatedValue: $estimatedValue,
+                Currency: $currency,
                 DateAcquired: $dateAcquired,
                 PhotoUrl: $photoUrl,
                 PreviousOwnerIds: $previousOwnerIds,
@@ -111,6 +113,7 @@ public partial class Neo4jService
             craftType = item.CraftType ?? new List<string>(),
             itemType = item.ItemType,
             estimatedValue = item.EstimatedValue,
+            currency = item.Currency,
             dateAcquired = item.DateAcquired,
             photoUrl = item.PhotoUrl,
             previousOwnerIds = item.PreviousOwnerIds ?? new List<string>()
@@ -136,6 +139,7 @@ public partial class Neo4jService
                 i.CraftType = $craftType,
                 i.ItemType = $itemType,
                 i.EstimatedValue = $estimatedValue,
+                i.Currency = $currency,
                 i.DateAcquired = $dateAcquired,
                 i.PhotoUrl = $photoUrl,
                 i.PreviousOwnerIds = $previousOwnerIds
@@ -153,6 +157,7 @@ public partial class Neo4jService
             craftType = item.CraftType ?? new List<string>(),
             itemType = item.ItemType,
             estimatedValue = item.EstimatedValue,
+            currency = item.Currency,
             dateAcquired = item.DateAcquired,
             photoUrl = item.PhotoUrl,
             previousOwnerIds = item.PreviousOwnerIds ?? new List<string>()
@@ -185,8 +190,8 @@ public partial class Neo4jService
             var node = record["i"].As<INode>();
             return new VaultItemDto
             {
-                VaultItemId = node.Properties.ContainsKey("VaultItemId") ? node["VaultItemId"].As<string>() : node.ElementId,
-                Title = node.Properties.ContainsKey("Title") ? node["Title"].As<string>() : null,
+                VaultItemId = node.Properties.ContainsKey("VaultItemId") ? node["VaultItemId"].As<string>() ?? string.Empty : node.ElementId,
+                Title = node.Properties.ContainsKey("Title") ? node["Title"].As<string>() ?? string.Empty : string.Empty,
                 Description = node.Properties.ContainsKey("Description") ? node["Description"].As<string>() : null,
                 CreationDate = node.Properties.ContainsKey("CreationDate") ? node["CreationDate"].As<DateTime?>() : null,
                 CreationPlace = node.Properties.ContainsKey("CreationPlace") ? node["CreationPlace"].As<string>() : null,
@@ -195,12 +200,13 @@ public partial class Neo4jService
                 CraftType = node.Properties.ContainsKey("CraftType") ? node["CraftType"].As<List<string>>() : new List<string>(),
                 ItemType = node.Properties.ContainsKey("ItemType") ? node["ItemType"].As<string>() : null,
                 EstimatedValue = node.Properties.ContainsKey("EstimatedValue") ? node["EstimatedValue"].As<decimal?>() ?? 0 : 0,
+                Currency = node.Properties.ContainsKey("Currency") ? node["Currency"].As<string>() : null,
                 DateAcquired = node.Properties.ContainsKey("DateAcquired") ? node["DateAcquired"].As<DateTime?>() : null,
                 PhotoUrl = node.Properties.ContainsKey("PhotoUrl") ? node["PhotoUrl"].As<string>() : null,
                 PreviousOwnerIds = node.Properties.ContainsKey("PreviousOwnerIds") ? node["PreviousOwnerIds"].As<List<string>>() : new List<string>(),
                 SharedWithIds = node.Properties.ContainsKey("SharedWithIds") ? node["SharedWithIds"].As<List<string>>() : new List<string>(),
-                CurrentOwnerId = node.Properties.ContainsKey("CurrentOwnerId") ? node["CurrentOwnerId"].As<string>() : null,
-                CurrentOwnerUserId = node.Properties.ContainsKey("CurrentOwnerUserId") ? node["CurrentOwnerUserId"].As<string>() : null
+                CurrentOwnerId = node.Properties.ContainsKey("CurrentOwnerId") ? node["CurrentOwnerId"].As<string>() ?? string.Empty : string.Empty,
+                CurrentOwnerUserId = node.Properties.ContainsKey("CurrentOwnerUserId") ? node["CurrentOwnerUserId"].As<string>() ?? string.Empty : string.Empty
             };
         });
 

@@ -1,160 +1,335 @@
 /**
- * GDPR compliance utilities for data export, deletion, and consent management.
+ * GDPR compliance service for data export, deletion, and privacy rights
  */
 
-import { authAPI } from './api';
-import { STORAGE_KEYS } from './constants';
+import { authAPI, familyAPI, vaultAPI } from './api';
+import { GDPR_ENDPOINTS } from './constants';
+import { securityLogger } from './securityMonitoring';
+import { SECURITY_EVENT_TYPES, SECURITY_RISK_LEVELS } from './constants';
 
 /**
- * GDPR data management functions.
+ * GDPR compliance service
  */
-export const gdprManager = {
+export const gdprService = {
   /**
-   * Export all user data in structured format.
-   * @returns {Promise<Object>} Complete user data export
+   * Export all user data in compliance with GDPR Article 20 (Data Portability)
+   * @returns {Promise<void>} Downloads a complete data export
    */
   exportUserData: async () => {
     try {
-      const userData = await authAPI.getCurrentUser();
-      const familyData = await authAPI.getFamilyMembers?.() || [];
-      const heirloomData = await authAPI.getHeirlooms?.() || [];
-      
-      return {
-        personal_information: {
-          id: userData.id,
-          username: userData.username,
-          email: userData.email,
-          created_at: userData.createdAt,
-          profile_picture: userData.profilePictureUrl
-        },
-        family_members: familyData,
-        heirlooms: heirloomData,
-        export_date: new Date().toISOString(),
-        export_version: '1.0'
-      };
-    } catch (error) {
-      console.error('Error exporting user data:', error);
-      throw new Error('Failed to export user data');
-    }
-  },
+      securityLogger.logSecurityEvent(
+        SECURITY_EVENT_TYPES.DATA_EXPORT,
+        { action: 'data_export_initiated' },
+        SECURITY_RISK_LEVELS.MEDIUM
+      );
 
-  /**
-   * Download user data as JSON file.
-   */
-  downloadUserData: async () => {
-    try {
-      const data = await gdprManager.exportUserData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: 'application/json'
-      });
-      
+      // Fetch all user data in parallel
+      const [
+        userProfile,
+        familyMembers,
+        heirlooms
+      ] = await Promise.all([
+        authAPI.getCurrentUser(),
+        familyAPI.getAll().catch(() => []), // Handle if no family members exist
+        vaultAPI.getAll().catch(() => [])   // Handle if no heirlooms exist
+      ]);
+
+      // Compile comprehensive data export
+      const exportData = {
+        exportInfo: {
+          exportDate: new Date().toISOString(),
+          exportVersion: '1.0',
+          format: 'JSON',
+          description: 'Complete user data export as per GDPR Article 20'
+        },
+        userProfile: {
+          ...userProfile,
+          // Remove sensitive fields that shouldn't be exported
+          password: undefined,
+          passwordHash: undefined
+        },
+        familyMembers: familyMembers.map(member => ({
+          ...member,
+          // Include all family member data
+          id: member.id,
+          name: member.name,
+          relationship: member.relationship,
+          birthDate: member.birthDate,
+          deathDate: member.deathDate,
+          biography: member.biography,
+          profileImage: member.profileImage,
+          contactInfo: member.contactInfo,
+          additionalNotes: member.additionalNotes,
+          createdAt: member.createdAt,
+          updatedAt: member.updatedAt
+        })),
+        heirlooms: heirlooms.map(heirloom => ({
+          ...heirloom,
+          // Include all heirloom data
+          id: heirloom.id,
+          name: heirloom.name,
+          description: heirloom.description,
+          category: heirloom.category,
+          estimatedValue: heirloom.estimatedValue,
+          currency: heirloom.currency,
+          acquisitionDate: heirloom.acquisitionDate,
+          currentLocation: heirloom.currentLocation,
+          condition: heirloom.condition,
+          images: heirloom.images,
+          documents: heirloom.documents,
+          provenance: heirloom.provenance,
+          insuranceInfo: heirloom.insuranceInfo,
+          associatedFamilyMembers: heirloom.associatedFamilyMembers,
+          tags: heirloom.tags,
+          isPublic: heirloom.isPublic,
+          createdAt: heirloom.createdAt,
+          updatedAt: heirloom.updatedAt
+        })),
+        metadata: {
+          totalFamilyMembers: familyMembers.length,
+          totalHeirlooms: heirlooms.length,
+          accountCreated: userProfile.createdAt,
+          lastLogin: userProfile.lastLogin,
+          dataProcessingConsent: userProfile.dataProcessingConsent,
+          marketingConsent: userProfile.marketingConsent
+        },
+        legalNotice: {
+          rightsInfo: 'This export contains all personal data processed by Taonga Tracker as per GDPR Article 20.',
+          dataController: 'Taonga Tracker',
+          contactInfo: 'privacy@taongatracker.com',
+          retentionPolicy: 'Data is retained as long as your account is active or as needed to provide services.',
+          yourRights: [
+            'Right to access your data (Article 15)',
+            'Right to rectification (Article 16)',
+            'Right to erasure (Article 17)',
+            'Right to restrict processing (Article 18)',
+            'Right to data portability (Article 20)',
+            'Right to object (Article 21)'
+          ]
+        }
+      };
+
+      // Create and download the export file
+      const exportJson = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([exportJson], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
+
       const link = document.createElement('a');
       link.href = url;
-      link.download = `taonga-trove-data-${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `taonga-tracker-data-export-${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+
+      securityLogger.logSecurityEvent(
+        SECURITY_EVENT_TYPES.DATA_EXPORT,
+        {
+          action: 'data_export_completed',
+          familyMembers: familyMembers.length,
+          heirlooms: heirlooms.length,
+          fileSize: blob.size
+        },
+        SECURITY_RISK_LEVELS.MEDIUM
+      );
+
     } catch (error) {
-      console.error('Error downloading user data:', error);
-      throw new Error('Failed to download user data');
+      console.error('Error exporting user data:', error);
+
+      securityLogger.logSecurityEvent(
+        SECURITY_EVENT_TYPES.DATA_EXPORT,
+        {
+          action: 'data_export_failed',
+          error: error.message
+        },
+        SECURITY_RISK_LEVELS.HIGH
+      );
+
+      throw new Error('Failed to export user data. Please try again later.');
     }
   },
 
   /**
-   * Request account deletion with confirmation.
+   * Request account deletion with confirmation (GDPR Article 17 - Right to Erasure)
    * @returns {Promise<boolean>} True if deletion was successful
    */
   requestAccountDeletion: async () => {
     const confirmed = window.confirm(
-      'Are you sure you want to delete your account? This action cannot be undone.'
+      'Are you sure you want to delete your account? This action cannot be undone and will permanently remove:\n\n' +
+      '• Your user profile and account information\n' +
+      '• All family member records you\'ve created\n' +
+      '• All heirloom records and associated media\n' +
+      '• All uploaded images and documents\n' +
+      '• Your activity and security logs\n\n' +
+      'This action complies with GDPR Article 17 (Right to Erasure).'
     );
 
     if (!confirmed) return false;
 
+    // Second confirmation for critical action
+    const doubleConfirmed = window.confirm(
+      'Final confirmation: This will permanently delete ALL your data. Are you absolutely sure?'
+    );
+
+    if (!doubleConfirmed) return false;
+
     try {
-      await authAPI.deleteAccount?.();
+      securityLogger.logSecurityEvent(
+        SECURITY_EVENT_TYPES.ACCOUNT_DELETION,
+        { action: 'account_deletion_initiated' },
+        SECURITY_RISK_LEVELS.HIGH
+      );
+
+      // Call the delete account API endpoint
+      const response = await fetch(GDPR_ENDPOINTS.DELETE_DATA, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          confirmDeletion: true,
+          reason: 'User requested account deletion (GDPR Article 17)'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Account deletion failed: ${response.status}`);
+      }
+
+      // Clear all local data
       localStorage.clear();
+      sessionStorage.clear();
+
+      // Clear any cached data
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+        });
+      }
+
+      // Redirect to home page
       window.location.href = '/';
       return true;
+
     } catch (error) {
       console.error('Error deleting account:', error);
-      throw new Error('Failed to delete account');
+
+      securityLogger.logSecurityEvent(
+        SECURITY_EVENT_TYPES.ACCOUNT_DELETION,
+        {
+          action: 'account_deletion_failed',
+          error: error.message
+        },
+        SECURITY_RISK_LEVELS.HIGH
+      );
+
+      throw new Error('Failed to delete account. Please contact support if this problem persists.');
     }
   },
 
   /**
-   * Check if user has given cookie consent.
-   * @returns {boolean} True if consent given
+   * Get current consent status
+   * @returns {Promise<Object>} Current consent settings
    */
-  hasConsent: () => {
-    return localStorage.getItem('cookie_consent') === 'true';
-  },
+  getConsentStatus: async () => {
+    try {
+      const response = await fetch(GDPR_ENDPOINTS.CONSENT_STATUS, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      });
 
-  /**
-   * Record user's cookie consent.
-   * @param {boolean} [consent=true] - Consent status
-   */
-  setConsent: (consent = true) => {
-    localStorage.setItem('cookie_consent', consent.toString());
-    localStorage.setItem('consent_date', new Date().toISOString());
-  },
-
-  /**
-   * Show cookie consent banner.
-   */
-  showConsentBanner: () => {
-    // Trigger cookie consent banner display
-    window.dispatchEvent(new CustomEvent('showCookieConsent'));
-  },
-
-  /**
-   * Clear all user data from local storage.
-   */
-  clearLocalData: () => {
-    const keysToKeep = ['cookie_consent', 'consent_date'];
-    const allKeys = Object.keys(localStorage);
-
-    allKeys.forEach(key => {
-      if (!keysToKeep.includes(key)) {
-        localStorage.removeItem(key);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch consent status: ${response.status}`);
       }
-    });
-  }
-};
 
-/**
- * Data minimization helper
- * Ensures only necessary data is collected and stored
- */
-export const dataMinimizer = {
-  /**
-   * Clean user input to only include necessary fields
-   * @param {Object} userData - Raw user data
-   * @param {string[]} requiredFields - Fields required for the operation
-   * @returns {Object} Minimized data object
-   */
-  minimizeUserData: (userData, requiredFields) => {
-    const minimized = {};
-    requiredFields.forEach(field => {
-      if (userData[field] !== undefined) {
-        minimized[field] = userData[field];
-      }
-    });
-    return minimized;
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching consent status:', error);
+      throw error;
+    }
   },
 
   /**
-   * Check data retention period and flag old data
-   * @param {Date} createdDate - When the data was created
-   * @param {number} retentionDays - Retention period in days
-   * @returns {boolean} True if data should be reviewed for deletion
+   * Update consent preferences
+   * @param {Object} consentData - Consent preferences
+   * @returns {Promise<Object>} Updated consent status
    */
-  shouldReviewForDeletion: (createdDate, retentionDays = 2555) => { // ~7 years
-    const now = new Date();
-    const created = new Date(createdDate);
-    const daysDiff = (now - created) / (1000 * 60 * 60 * 24);
-    return daysDiff > retentionDays;
+  updateConsent: async (consentData) => {
+    try {
+      const response = await fetch(GDPR_ENDPOINTS.CONSENT_STATUS, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify(consentData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update consent: ${response.status}`);
+      }
+
+      securityLogger.logSecurityEvent(
+        SECURITY_EVENT_TYPES.API_CALL,
+        {
+          action: 'consent_updated',
+          consentTypes: Object.keys(consentData)
+        },
+        SECURITY_RISK_LEVELS.LOW
+      );
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating consent:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Request data portability (structured export for migration)
+   * @param {string} format - Export format ('json', 'csv', 'xml')
+   * @returns {Promise<void>} Downloads portable data export
+   */
+  requestDataPortability: async (format = 'json') => {
+    try {
+      const response = await fetch(GDPR_ENDPOINTS.DATA_PORTABILITY, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({ format })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Data portability request failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `taonga-tracker-portable-data.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      securityLogger.logSecurityEvent(
+        SECURITY_EVENT_TYPES.DATA_EXPORT,
+        {
+          action: 'data_portability_completed',
+          format
+        },
+        SECURITY_RISK_LEVELS.MEDIUM
+      );
+
+    } catch (error) {
+      console.error('Error with data portability request:', error);
+      throw error;
+    }
   }
 };

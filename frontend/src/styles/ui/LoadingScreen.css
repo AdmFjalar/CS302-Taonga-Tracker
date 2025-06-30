@@ -1,16 +1,13 @@
-/**
- * Loading screen component styles with spinner animations.
- * Provides both overlay and inline loading states with configurable sizes.
- */
+/* Reusable Loading Screen Styles */
 
-/* Full-screen overlay version */
+/* Full-screen overlay version (like sign-out screen) */
 .loading-screen-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, var(--color-primary-100), var(--color-secondary-100));
+  background: linear-gradient(135deg, var(--color-primary-50), var(--color-secondary-50));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -19,7 +16,7 @@
   animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Inline version for component use */
+/* Inline version for use within components */
 .loading-screen-inline {
   display: flex;
   align-items: center;
@@ -34,12 +31,12 @@
   background: var(--color-neutral-white);
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: var(--color-shadow-medium);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   max-width: 400px;
   width: 90%;
 }
 
-/* Base spinner styling */
+/* Spinner sizes */
 .loading-spinner {
   border: 4px solid var(--color-primary-200);
   border-top: 4px solid var(--color-primary-700);
@@ -48,7 +45,6 @@
   margin: 0 auto 1rem auto;
 }
 
-/* Spinner size variants */
 .loading-spinner-small {
   width: 24px;
   height: 24px;
@@ -56,23 +52,23 @@
 }
 
 .loading-spinner-medium {
-  width: 40px;
-  height: 40px;
-  border-width: 3px;
-}
-
-.loading-spinner-large {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   border-width: 4px;
 }
 
-/* Loading message */
+.loading-spinner-large {
+  width: 64px;
+  height: 64px;
+  border-width: 5px;
+}
+
 .loading-message {
   color: var(--color-primary-700);
   font-size: var(--text-base);
   font-weight: var(--weight-medium);
   margin: 0;
+  line-height: 1.5;
 }
 
 /* Animations */
@@ -86,14 +82,13 @@
   to { opacity: 1; }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .loading-container {
-    padding: 1.5rem;
-    width: 95%;
-  }
+/* Inline loading without background card */
+.loading-screen-inline .loading-container {
+  background: transparent;
+  box-shadow: none;
+  padding: 1rem;
+}
 
-  .loading-message {
-    font-size: var(--text-sm);
-  }
+.loading-screen-inline .loading-message {
+  color: var(--color-primary-600);
 }

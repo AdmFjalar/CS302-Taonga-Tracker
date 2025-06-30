@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.StaticFiles;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Security;
 
 namespace TaongaTrackerAPI.Services;
 
@@ -22,8 +23,6 @@ public class FileUploadService : IFileUploadService
     private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
     private readonly string[] _allowedMimeTypes = { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
     private readonly int _maxFileSizeBytes = 5 * 1024 * 1024; // 5MB
-    private readonly int _maxImageWidth = 2048;
-    private readonly int _maxImageHeight = 2048;
 
     public FileUploadService(
         IWebHostEnvironment environment, 
@@ -93,7 +92,7 @@ public class FileUploadService : IFileUploadService
         }
     }
 
-    public async Task<bool> DeleteImageAsync(string fileName, string userId)
+    public Task<bool> DeleteImageAsync(string fileName, string userId)
     {
         try
         {
@@ -109,22 +108,22 @@ public class FileUploadService : IFileUploadService
             {
                 _logger.LogWarning("Invalid file path for deletion: {FileName} by user: {UserId}", 
                     fileName, userId);
-                return false;
+                return Task.FromResult(false);
             }
 
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
                 _logger.LogInformation("File deleted: {FileName} by user: {UserId}", fileName, userId);
-                return true;
+                return Task.FromResult(true);
             }
 
-            return false;
+            return Task.FromResult(false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "File deletion failed: {FileName} for user: {UserId}", fileName, userId);
-            return false;
+            return Task.FromResult(false);
         }
     }
 
@@ -182,7 +181,7 @@ public class FileUploadService : IFileUploadService
             // Basic file signature validation
             using var stream = file.OpenReadStream();
             var header = new byte[10];
-            await stream.ReadAsync(header, 0, header.Length);
+            await stream.ReadExactlyAsync(header, 0, header.Length);
 
             // Check for known image file signatures
             if (IsValidImageSignature(header, file.ContentType))
@@ -238,26 +237,26 @@ public class FileUploadService : IFileUploadService
         }
     }
 
-    private async Task<bool> ValidateSavedImageAsync(string filePath)
+    private Task<bool> ValidateSavedImageAsync(string filePath)
     {
         try
         {
             // Check if file exists and has content
             var fileInfo = new FileInfo(filePath);
             if (!fileInfo.Exists || fileInfo.Length == 0)
-                return false;
+                return Task.FromResult(false);
 
             // Additional validation could include:
             // - Image library validation (using System.Drawing or ImageSharp)
             // - Metadata stripping
             // - Size validation
             
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Image validation failed for: {FilePath}", filePath);
-            return false;
+            return Task.FromResult(false);
         }
     }
 

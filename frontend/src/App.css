@@ -1,9 +1,11 @@
-/* Import font definitions */
+/**
+ * Main application styles and layout structure.
+ * Defines global layout patterns and base styling for the Taonga Tracker app.
+ */
+
 @import './styles/fonts.css';
 
-/* Global App Styles - Gradient moved to body */
-
-/* Remove gradient from root */
+/* Global layout foundation */
 #root {
   min-height: 100vh;
   position: relative;
@@ -14,7 +16,7 @@ body {
   padding: 0;
 }
 
-/* Layout styles - Updated for header-only navigation */
+/* Main authenticated layout */
 .layout {
   display: flex;
   flex-direction: column;
@@ -27,12 +29,11 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: calc(100vh - 80px); /* Account for sticky header height */
+  min-height: calc(100vh - 80px);
   position: relative;
-  padding-top: 0; /* Remove top padding since header is sticky */
 }
 
-/* Auth pages layout */
+/* Authentication pages layout */
 .auth-page-container {
   min-height: 100vh;
   display: flex;
