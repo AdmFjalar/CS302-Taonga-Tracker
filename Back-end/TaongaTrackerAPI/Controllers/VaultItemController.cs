@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.Security;
 using TaongaTrackerAPI.Models;
 using TaongaTrackerAPI.Services;
 
@@ -67,6 +68,11 @@ public class VaultItemController : ControllerBase
         {
             _logger.LogWarning("File upload validation failed: {Message}", ex.Message);
             return BadRequest(new { Message = ex.Message });
+        }
+        catch (SecurityException ex)
+        {
+            _logger.LogWarning("File upload security check failed: {Message}", ex.Message);
+            return BadRequest(new { Message = "File upload rejected: " + ex.Message });
         }
         catch (Exception ex)
         {

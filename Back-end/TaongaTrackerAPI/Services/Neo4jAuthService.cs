@@ -28,6 +28,8 @@ public partial class Neo4jService
                         EmailConfirmed: $EmailConfirmed, 
                         ConcurrencyStamp: $ConcurrencyStamp,
                         ProfilePictureUrl: $ProfilePictureUrl,
+                        PasswordChangedAt: $PasswordChangedAt,
+                        TwoFactorEnabled: $TwoFactorEnabled,
                         CreatedAt: datetime(),
                         LastModified: datetime()
                     })
@@ -47,7 +49,9 @@ public partial class Neo4jService
                     user.LastName,
                     user.EmailConfirmed,
                     user.ConcurrencyStamp,
-                    user.ProfilePictureUrl
+                    user.ProfilePictureUrl,
+                    PasswordChangedAt = user.PasswordChangedAt?.ToString("o"), // ISO 8601 format
+                    user.TwoFactorEnabled
                 });
 
                 var records = await result.ToListAsync();
@@ -97,7 +101,10 @@ public partial class Neo4jService
                     u.LastName = $LastName,
                     u.ProfilePictureUrl = $ProfilePictureUrl,
                     u.EmailConfirmed = $EmailConfirmed,
-                    u.ConcurrencyStamp = $ConcurrencyStamp
+                    u.ConcurrencyStamp = $ConcurrencyStamp,
+                    u.PasswordChangedAt = $PasswordChangedAt,
+                    u.TwoFactorEnabled = $TwoFactorEnabled,
+                    u.LastModified = datetime()
                 RETURN u";
 
             var result = await session.RunAsync(query, new
@@ -114,7 +121,9 @@ public partial class Neo4jService
                 user.LastName,
                 user.ProfilePictureUrl,
                 user.EmailConfirmed,
-                user.ConcurrencyStamp
+                user.ConcurrencyStamp,
+                PasswordChangedAt = user.PasswordChangedAt?.ToString("o"), // ISO 8601 format
+                user.TwoFactorEnabled
             });
 
             if (!await result.FetchAsync())
@@ -380,8 +389,29 @@ public partial class Neo4jService
                 LastName = GetPropertyOrDefault(node, "LastName", string.Empty),
                 EmailConfirmed = GetPropertyOrDefault(node, "EmailConfirmed", false),
                 ConcurrencyStamp = GetPropertyOrDefault<string?>(node, "ConcurrencyStamp", null),
-                ProfilePictureUrl = GetPropertyOrDefault(node, "ProfilePictureUrl", string.Empty)
+                ProfilePictureUrl = GetPropertyOrDefault(node, "ProfilePictureUrl", string.Empty),
+                PasswordChangedAt = ParsePasswordChangedAt(node),
+                TwoFactorEnabled = GetPropertyOrDefault(node, "TwoFactorEnabled", false)
             };
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static DateTime? ParsePasswordChangedAt(INode node)
+    {
+        try
+        {
+            var passwordChangedAtStr = GetPropertyOrDefault<string?>(node, "PasswordChangedAt", null);
+            if (string.IsNullOrEmpty(passwordChangedAtStr))
+                return null;
+
+            if (DateTime.TryParse(passwordChangedAtStr, out var dateTime))
+                return dateTime;
+
+            return null;
         }
         catch
         {

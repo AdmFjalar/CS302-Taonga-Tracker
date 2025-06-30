@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { differenceInYears, parseISO } from 'date-fns';
 import { ItemView, ItemEdit } from "../heirloom/ItemPages";
 import FamilyMemberEdit from "../family/FamilyMemberEdit";
@@ -8,6 +9,8 @@ import { getFullImageUrl, toDateInputValue } from "../../services/utils";
 import { familyAPI } from "../../services/api";
 import { vaultAPI } from "../../services/api";
 import { getStandardizedValue, formatCurrency } from "../../services/currency";
+import { tokenManager } from "../../services/security";
+import { STORAGE_KEYS } from "../../services/constants";
 import "../../styles/user/HomePage.css";
 
 /**
@@ -110,6 +113,30 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mostValuableHeirloom, setMostValuableHeirloom] = useState(null);
+  const navigate = useNavigate();
+
+  // Handle authentication errors properly
+  const handleAuthError = (err) => {
+    // Check if this is an authentication error
+    if (err.message.includes('401') || err.message.includes('unauthorized') || err.message.includes('token')) {
+      // Clear all stored authentication data
+      tokenManager.clearToken();
+      localStorage.removeItem(STORAGE_KEYS.USER_ID);
+      sessionStorage.clear();
+
+      // Dispatch logout events to update header state
+      window.dispatchEvent(new CustomEvent('userLogout'));
+
+      // Show token expired message briefly, then redirect
+      setError('Your session has expired. Please sign in again.');
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 2000);
+
+      return true; // Indicates this was an auth error
+    }
+    return false; // Not an auth error
+  };
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -124,13 +151,15 @@ const HomePage = () => {
         const mostValuable = await findMostValuableHeirloom(data);
         setMostValuableHeirloom(mostValuable);
       } catch (err) {
-        setError(err.message);
+        if (!handleAuthError(err)) {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchItems();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     const fetchFamilyMembers = async () => {
@@ -140,11 +169,11 @@ const HomePage = () => {
         setFamilyMembers(data);
         setHighlighted(getOldestMembers(data));
       } catch (err) {
-        // Optionally handle error
+        handleAuthError(err);
       }
     };
     fetchFamilyMembers();
-  }, []);
+  }, [navigate]);
 
   const oldestHeirloom = findOldestHeirloom(items);
 
@@ -182,11 +211,16 @@ const HomePage = () => {
 
   // Show error state
   if (error) {
+    // Check if this is an authentication error message
+    const isAuthError = error.includes('session has expired') || error.includes('token') || error.includes('unauthorized');
+
     return (
       <div className="error-container">
-        <h2>Error Loading Data</h2>
+        <h2>{isAuthError ? 'Session Expired' : 'Error Loading Data'}</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Try Again</button>
+        {!isAuthError && (
+          <button onClick={() => window.location.reload()}>Try Again</button>
+        )}
       </div>
     );
   }
@@ -198,115 +232,132 @@ const HomePage = () => {
             <>
               <h1 className="home-title">Welcome to Your Family Archive</h1>
               <div className="highlight-section">
-                {highlighted.oldest && (
-                    <div
-                        className="highlight-card"
-                        onClick={() => setSelectedMember(highlighted.oldest)}
-                        tabIndex={0}
-                        role="button"
-                        aria-label="View oldest relative"
-                    >
-                      <h2>Oldest Recorded Family Member</h2>
-                      <img
-                          src={getFullImageUrl(highlighted.oldest.profilePictureUrl)}
-                          alt={`${highlighted.oldest.firstName} ${highlighted.oldest.lastName}`}
-                          style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
-                      />
-                      <p>
-                        <b>{highlighted.oldest.firstName} {highlighted.oldest.lastName}</b>
-                      </p>
-                      <p>
-                        {toDateInputValue(highlighted.oldest.dateOfBirth)}
-                        {highlighted.oldest.dateOfDeath && (
-                            <> &ndash; {toDateInputValue(highlighted.oldest.dateOfDeath)}</>
-                        )}
-                      </p>
-                      <p>
-                        <strong>Age: {calculateAge(highlighted.oldest.dateOfBirth, highlighted.oldest.dateOfDeath)} years</strong>
-                      </p>
-                      {/*{highlighted.oldest.relationshipType && (*/}
-                      {/*    <p>Relationship: {highlighted.oldest.relationshipType}</p>*/}
-                      {/*)}*/}
+                {/* Check if there are any highlights to show */}
+                {!highlighted.oldest && !highlighted.oldestLiving && !oldestHeirloom && !mostValuableHeirloom ? (
+                  <div className="no-highlights">
+                    <div className="no-highlights-content">
+                      <h2>No highlights found</h2>
+                      <p>Start by adding family members or heirlooms to see your family archive highlights here.</p>
+                      <div className="no-highlights-actions">
+                        <button
+                          className="highlight-action-btn"
+                          onClick={() => navigate('/family')}
+                        >
+                          Add Family Members
+                        </button>
+                        <button
+                          className="highlight-action-btn"
+                          onClick={() => navigate('/heirloom')}
+                        >
+                          Add Heirlooms
+                        </button>
+                      </div>
                     </div>
-                )}
-                {highlighted.oldestLiving && (
-                    <div
-                        className="highlight-card"
-                        onClick={() => setSelectedMember(highlighted.oldestLiving)}
-                        tabIndex={0}
-                        role="button"
-                        aria-label="View oldest living relative"
-                    >
-                      <h2>Oldest Living Family Member</h2>
-                      <img
-                          src={getFullImageUrl(highlighted.oldestLiving.profilePictureUrl)}
-                          alt={`${highlighted.oldestLiving.firstName} ${highlighted.oldestLiving.lastName}`}
-                          style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
-                      />
-                      <p>
-                        <b>{highlighted.oldestLiving.firstName} {highlighted.oldestLiving.lastName}</b>
-                      </p>
-                      <p>
-                        <strong>Age: {calculateAge(highlighted.oldestLiving.dateOfBirth)} years</strong>
-                      </p>
-                      {/*{highlighted.oldestLiving.relationshipType && (*/}
-                      {/*    <p>Relationship: {highlighted.oldestLiving.relationshipType}</p>*/}
-                      {/*)}*/}
-                    </div>
-                )}
-                {oldestHeirloom && (
-                    <div
-                        className="highlight-card"
-                        onClick={() => setSelectedItem(oldestHeirloom)}
-                        tabIndex={0}
-                        role="button"
-                        aria-label="View oldest heirloom"
-                    >
-                      <h2>Oldest Heirloom</h2>
-                      <img
-                          src={getFullImageUrl(oldestHeirloom.photoUrl)}
-                          alt={oldestHeirloom.title}
-                          style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
-                      />
-                      <p>
-                        <b>{oldestHeirloom.title}</b>
-                      </p>
-                      {/*<p>*/}
-                      {/*  Created: {toDateInputValue(oldestHeirloom.creationDate)}*/}
-                      {/*</p>*/}
-                      <p>
-                        <strong>Age: {calculateHeirloomAge(oldestHeirloom.creationDate)} years</strong>
-                      </p>
-                      {oldestHeirloom.estimatedValue && (
-                          <p>${oldestHeirloom.estimatedValue}</p>
-                      )}
-                    </div>
-                )}
-                {mostValuableHeirloom && (
-                    <div
-                        className="highlight-card"
-                        onClick={() => setSelectedItem(mostValuableHeirloom)}
-                        tabIndex={0}
-                        role="button"
-                        aria-label="View most valuable heirloom"
-                    >
-                      <h2>Most Valuable Heirloom</h2>
-                      <img
-                          src={getFullImageUrl(mostValuableHeirloom.photoUrl)}
-                          alt={mostValuableHeirloom.title}
-                          style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
-                      />
-                      <p>
-                        <b>{mostValuableHeirloom.title}</b>
-                      </p>
-                      {mostValuableHeirloom.estimatedValue && (
+                  </div>
+                ) : (
+                  <>
+                    {highlighted.oldest && (
+                        <div
+                            className="highlight-card"
+                            onClick={() => setSelectedMember(highlighted.oldest)}
+                            tabIndex={0}
+                            role="button"
+                            aria-label="View oldest relative"
+                        >
+                          <h2>Oldest Recorded Family Member</h2>
+                          <img
+                              src={getFullImageUrl(highlighted.oldest.profilePictureUrl)}
+                              alt={`${highlighted.oldest.firstName} ${highlighted.oldest.lastName}`}
+                              style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                          />
                           <p>
-                            Estimated Value: <strong>
-                              {formatCurrency(mostValuableHeirloom.estimatedValue, mostValuableHeirloom.currency)}
-                            </strong>
+                            <b>{highlighted.oldest.firstName} {highlighted.oldest.lastName}</b>
                           </p>
-                      )}
-                    </div>
+                          <p>
+                            {toDateInputValue(highlighted.oldest.dateOfBirth)}
+                            {highlighted.oldest.dateOfDeath && (
+                                <> &ndash; {toDateInputValue(highlighted.oldest.dateOfDeath)}</>
+                            )}
+                          </p>
+                          <p>
+                            <strong>Age: {calculateAge(highlighted.oldest.dateOfBirth, highlighted.oldest.dateOfDeath)} years</strong>
+                          </p>
+                        </div>
+                    )}
+                    {highlighted.oldestLiving && (
+                        <div
+                            className="highlight-card"
+                            onClick={() => setSelectedMember(highlighted.oldestLiving)}
+                            tabIndex={0}
+                            role="button"
+                            aria-label="View oldest living relative"
+                        >
+                          <h2>Oldest Living Family Member</h2>
+                          <img
+                              src={getFullImageUrl(highlighted.oldestLiving.profilePictureUrl)}
+                              alt={`${highlighted.oldestLiving.firstName} ${highlighted.oldestLiving.lastName}`}
+                              style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                          />
+                          <p>
+                            <b>{highlighted.oldestLiving.firstName} {highlighted.oldestLiving.lastName}</b>
+                          </p>
+                          <p>
+                            <strong>Age: {calculateAge(highlighted.oldestLiving.dateOfBirth)} years</strong>
+                          </p>
+                        </div>
+                    )}
+                    {oldestHeirloom && (
+                        <div
+                            className="highlight-card"
+                            onClick={() => setSelectedItem(oldestHeirloom)}
+                            tabIndex={0}
+                            role="button"
+                            aria-label="View oldest heirloom"
+                        >
+                          <h2>Oldest Heirloom</h2>
+                          <img
+                              src={getFullImageUrl(oldestHeirloom.photoUrl)}
+                              alt={oldestHeirloom.title}
+                              style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                          />
+                          <p>
+                            <b>{oldestHeirloom.title}</b>
+                          </p>
+                          <p>
+                            <strong>Age: {calculateHeirloomAge(oldestHeirloom.creationDate)} years</strong>
+                          </p>
+                          {oldestHeirloom.estimatedValue && (
+                              <p>${oldestHeirloom.estimatedValue}</p>
+                          )}
+                        </div>
+                    )}
+                    {mostValuableHeirloom && (
+                        <div
+                            className="highlight-card"
+                            onClick={() => setSelectedItem(mostValuableHeirloom)}
+                            tabIndex={0}
+                            role="button"
+                            aria-label="View most valuable heirloom"
+                        >
+                          <h2>Most Valuable Heirloom</h2>
+                          <img
+                              src={getFullImageUrl(mostValuableHeirloom.photoUrl)}
+                              alt={mostValuableHeirloom.title}
+                              style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "2px solid #bcb88a", background: "#fff" }}
+                          />
+                          <p>
+                            <b>{mostValuableHeirloom.title}</b>
+                          </p>
+                          {mostValuableHeirloom.estimatedValue && (
+                              <p>
+                                Estimated Value: <strong>
+                                  {formatCurrency(mostValuableHeirloom.estimatedValue, mostValuableHeirloom.currency)}
+                                </strong>
+                              </p>
+                          )}
+                        </div>
+                    )}
+                  </>
                 )}
               </div>
             </>
