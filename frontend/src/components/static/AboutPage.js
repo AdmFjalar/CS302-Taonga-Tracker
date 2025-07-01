@@ -45,7 +45,7 @@ const AboutPage = () => {
         <section className="privacy-section">
           <h2>Development Team</h2>
           <p>
-            Taonga Tracker was developed by a dedicated group of university computer science students for course work in CS302. Collectively we decided to focus on developing a functional, easy-to-use application that demonstrates the concepts and best practices in software engineering.
+            Taonga Tracker was developed by a group of 2 for course work in CS302. Collectively we decided to focus on developing a functional, easy-to-use application that demonstrates the concepts and best practices in software engineering.
           </p>
         </section>
 
