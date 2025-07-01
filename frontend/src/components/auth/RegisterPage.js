@@ -108,9 +108,8 @@ const RegisterPage = () => {
       return;
     }
 
-    // Final password validation check - make sure all password requirements are met
-    if (!Object.values(passwordErrors).every(Boolean)) {
-      setError("Your password must include: 8+ characters, uppercase & lowercase letters, numbers, and special characters");
+    if (!isPasswordValid) {
+      setError("Your password must include: 12+ characters, uppercase & lowercase letters, numbers, and special characters");
       return;
     }
 
@@ -124,7 +123,34 @@ const RegisterPage = () => {
       // Redirect to login page on success
       navigate("/login");
     } catch (err) {
-      setError(err.message || "Registration failed. Please try again.");
+      let errorMessages = [];
+
+      // Try to parse the error response
+      if (err.message && err.message.includes('API Error:')) {
+        // Extract the error body from the API error message
+        const errorBody = err.message.split(' - ').slice(1).join(' - ');
+        try {
+          const parsedError = JSON.parse(errorBody);
+          // Check if the parsed error contains an errors array
+          if (parsedError.errors && Array.isArray(parsedError.errors)) {
+            errorMessages = parsedError.errors;
+          } else if (parsedError.error) {
+            errorMessages = [parsedError.error];
+          } else if (parsedError.message) {
+            errorMessages = [parsedError.message];
+          } else {
+            errorMessages = [errorBody];
+          }
+        } catch (parseError) {
+          // If parsing fails, use the raw error body
+          errorMessages = [errorBody];
+        }
+      } else {
+        // Fallback to the original error message
+        errorMessages = [err.message || "Registration failed. Please try again."];
+      }
+
+      setError(errorMessages);
     } finally {
       setLoading(false);
     }
@@ -221,7 +247,11 @@ const RegisterPage = () => {
           </ul>
         </div>
 
-        {error && <div className="auth-error">{error}</div>}
+        {error && (
+          <div className="auth-error">
+            {Array.isArray(error) ? error.map((err, index) => <div key={index}>{err}</div>) : error}
+          </div>
+        )}
 
         <span className="auth-action-container">
           <button
