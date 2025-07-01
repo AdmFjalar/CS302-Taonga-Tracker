@@ -66,24 +66,22 @@ const Header = () => {
 
         checkAuthAndFetchUser();
 
-        // Listen for login events to update state immediately
-        const handleLogin = () => {
-            checkAuthAndFetchUser();
+        const handleLogin = async () => {
+            console.log("Login event received, updating header state...");
+            setIsLoggingOut(false);
+            await new Promise(resolve => setTimeout(resolve, 50));
+            await checkAuthAndFetchUser();
         };
 
-        // Listen for profile picture updates
-        const handleProfileUpdate = () => {
-            checkAuthAndFetchUser();
+        const handleProfileUpdate = async () => {
+            await checkAuthAndFetchUser();
         };
 
-        // Listen for logout events to update state immediately
         const handleStorageChange = (e) => {
             if (e.key === STORAGE_KEYS.AUTH_TOKEN) {
                 if (e.newValue) {
-                    // Token added - user logged in
                     checkAuthAndFetchUser();
                 } else {
-                    // Token removed - user logged out
                     setIsLoggingOut(true);
                     setIsAuthenticated(false);
                     setIsLoading(false);
@@ -91,17 +89,16 @@ const Header = () => {
             }
         };
 
-        window.addEventListener("storage", handleStorageChange);
-        window.addEventListener("userLogin", handleLogin);
-        window.addEventListener("profileUpdated", handleProfileUpdate);
-
-        // Custom event listener for same-tab logout
         const handleLogout = () => {
+            console.log("Logout event received, updating header state...");
             setIsLoggingOut(true);
             setIsAuthenticated(false);
             setIsLoading(false);
         };
 
+        window.addEventListener("storage", handleStorageChange);
+        window.addEventListener("userLogin", handleLogin);
+        window.addEventListener("profileUpdated", handleProfileUpdate);
         window.addEventListener("userLogout", handleLogout);
 
         return () => {
@@ -110,45 +107,36 @@ const Header = () => {
             window.removeEventListener("profileUpdated", handleProfileUpdate);
             window.removeEventListener("userLogout", handleLogout);
         };
-    }, [isLoggingOut]);
+    }, []);
 
     /**
      * Handles sign out with a proper loading screen and controlled navigation
      */
     const handleSignOut = async () => {
         try {
-            // Dispatch sign out start event to show loading screen
             window.dispatchEvent(new CustomEvent('userSigningOut'));
 
-            // Log the logout event for security monitoring
             securityLogger.logSecurityEvent('user_logout', {
                 method: 'header_dropdown',
                 timestamp: new Date().toISOString()
             }, 'low');
 
-            // Wait a brief moment to ensure loading screen is shown
             await new Promise(resolve => setTimeout(resolve, 200));
 
-            // Use secure token management to clear all auth data
             tokenManager.clearToken();
 
-            // Clear any additional session data
             sessionStorage.clear();
 
-            // Brief processing time
             await new Promise(resolve => setTimeout(resolve, 300));
 
-            // Dispatch sign out complete event to hide loading screen and navigate
             window.dispatchEvent(new CustomEvent('userSignOutComplete'));
 
-            // Navigate to landing page after a brief delay
             setTimeout(() => {
                 navigate("/", { replace: true });
             }, 50);
 
         } catch (error) {
             console.error('Error during sign out:', error);
-            // Fallback: force clear everything and navigate
             localStorage.clear();
             sessionStorage.clear();
             window.dispatchEvent(new CustomEvent('userSignOutComplete'));
@@ -274,4 +262,3 @@ const Header = () => {
 };
 
 export default Header;
-

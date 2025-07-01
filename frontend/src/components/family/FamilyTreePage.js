@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import ReactFlow, { Background, Controls, useNodesState, useEdgesState, Handle, Position } from "reactflow";
 import "reactflow/dist/style.css";
 import { getFullImageUrl, toDateInputValue } from "../../services/utils";
@@ -6,9 +7,13 @@ import FamilyMemberView from "./FamilyMemberView";
 import FamilyMemberEdit from "./FamilyMemberEdit";
 import FamilyMemberAdd from "./FamilyMemberAdd";
 import LoadingScreen from "../ui/LoadingScreen";
+import AuthErrorOverlay from "../ui/AuthErrorOverlay";
 import Button from "../shared/Button";
 import { FamilyService } from "../../services/family";
 import { authAPI } from "../../services/api";
+import { tokenManager } from "../../services/security";
+import { STORAGE_KEYS } from "../../services/constants";
+import { isAuthError } from "../../services/authErrorUtils";
 import "../../styles/family/FamilyTreePage.css";
 import "../../styles/family/FamilyTreeMenu.css";
 import ELK from "elkjs/lib/elk.bundled.js";
@@ -734,6 +739,7 @@ const FamilyTreePage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentView, setCurrentView] = useState('tree'); // 'tree', 'view', 'edit', 'add'
+    const navigate = useNavigate();
 
     /**
      * Fetches all family members from the API and sets the initial reference user.
@@ -741,6 +747,7 @@ const FamilyTreePage = () => {
     const fetchMembers = useCallback(async () => {
         try {
             setLoading(true);
+            setError(null);
             const data = await FamilyService.getAllMembers();
             setFamilyMembers(data);
 
@@ -762,8 +769,10 @@ const FamilyTreePage = () => {
                     }
                 } catch (authErr) {
                     console.error("Error fetching current user:", authErr);
-                    // Fallback to first family member if there's an error getting the current user
-                    if (data.length > 0) {
+                    // Set error for auth errors, fallback for others
+                    if (isAuthError(authErr)) {
+                        setError(authErr.message);
+                    } else if (data.length > 0) {
                         setReferenceUserId(String(data[0].familyMemberId));
                     }
                 }
@@ -771,7 +780,7 @@ const FamilyTreePage = () => {
 
             setLoading(false);
         } catch (err) {
-            setError(err.message);
+            setError(err.message || err.toString());
             setLoading(false);
         }
     }, [referenceUserId]);
@@ -884,12 +893,16 @@ const FamilyTreePage = () => {
 
     // Show error state
     if (error) {
+        // Check if this is an authentication error message
+        if (isAuthError(error)) {
+            return <AuthErrorOverlay error={error} />;
+        }
+
         return (
             <div className="familytree-container">
                 <div className="error-container">
                     <h2>Error Loading Family Tree</h2>
                     <p>{error}</p>
-                    <Button onClick={fetchMembers}>Try Again</Button>
                 </div>
             </div>
         );

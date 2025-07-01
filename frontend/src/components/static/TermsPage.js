@@ -10,7 +10,7 @@ const TermsPage = () => {
   return (
     <div className="terms-page">
       <h1>Terms and Conditions</h1>
-      <p className="last-updated">Last updated: 2025-06-28</p>
+      <p className="last-updated">Last updated: 2025-07-01</p>
 
       <div className="terms-notice">
         <h2>⚠️ Important Notice: Academic Project</h2>
@@ -62,7 +62,7 @@ const TermsPage = () => {
         <p>
           This project is developed for educational purposes. Users retain ownership of their
           uploaded content, while the application code and design remain the intellectual
-          property of the development team and university.
+          property of the development team.
         </p>
       </section>
 
@@ -78,7 +78,7 @@ const TermsPage = () => {
         <h2>7. Contact</h2>
         <p>
           For questions about these terms or the project, please contact the development team
-          through the university's computer science department.
+          through the email in the footer.
         </p>
       </section>
     </div>

@@ -105,7 +105,7 @@ const PrivacyPage = () => {
           <h2>8. Contact</h2>
           <p>
             For questions about this privacy policy or your data, contact the development
-            team through the university's computer science department.
+            team through the email in the footer.
           </p>
         </section>
       </div>

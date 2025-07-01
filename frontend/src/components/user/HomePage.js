@@ -5,12 +5,14 @@ import { ItemView, ItemEdit } from "../heirloom/ItemPages";
 import FamilyMemberEdit from "../family/FamilyMemberEdit";
 import FamilyMemberView from "../family/FamilyMemberView";
 import LoadingScreen from "../ui/LoadingScreen";
+import AuthErrorOverlay from "../ui/AuthErrorOverlay";
 import { getFullImageUrl, toDateInputValue } from "../../services/utils";
 import { familyAPI } from "../../services/api";
 import { vaultAPI } from "../../services/api";
 import { getStandardizedValue, formatCurrency } from "../../services/currency";
 import { tokenManager } from "../../services/security";
 import { STORAGE_KEYS } from "../../services/constants";
+import { isAuthError } from "../../services/authErrorUtils";
 import "../../styles/user/HomePage.css";
 
 /**
@@ -115,29 +117,6 @@ const HomePage = () => {
   const [mostValuableHeirloom, setMostValuableHeirloom] = useState(null);
   const navigate = useNavigate();
 
-  // Handle authentication errors properly
-  const handleAuthError = (err) => {
-    // Check if this is an authentication error
-    if (err.message.includes('401') || err.message.includes('unauthorized') || err.message.includes('token')) {
-      // Clear all stored authentication data
-      tokenManager.clearToken();
-      localStorage.removeItem(STORAGE_KEYS.USER_ID);
-      sessionStorage.clear();
-
-      // Dispatch logout events to update header state
-      window.dispatchEvent(new CustomEvent('userLogout'));
-
-      // Show token expired message briefly, then redirect
-      setError('Your session has expired. Please sign in again.');
-      setTimeout(() => {
-        navigate('/', { replace: true });
-      }, 2000);
-
-      return true; // Indicates this was an auth error
-    }
-    return false; // Not an auth error
-  };
-
   useEffect(() => {
     const fetchItems = async () => {
       setLoading(true);
@@ -151,9 +130,7 @@ const HomePage = () => {
         const mostValuable = await findMostValuableHeirloom(data);
         setMostValuableHeirloom(mostValuable);
       } catch (err) {
-        if (!handleAuthError(err)) {
-          setError(err.message);
-        }
+        setError(err.message || err.toString());
       } finally {
         setLoading(false);
       }
@@ -169,7 +146,7 @@ const HomePage = () => {
         setFamilyMembers(data);
         setHighlighted(getOldestMembers(data));
       } catch (err) {
-        handleAuthError(err);
+        setError(err.message || err.toString());
       }
     };
     fetchFamilyMembers();
@@ -212,15 +189,14 @@ const HomePage = () => {
   // Show error state
   if (error) {
     // Check if this is an authentication error message
-    const isAuthError = error.includes('session has expired') || error.includes('token') || error.includes('unauthorized');
+    if (isAuthError(error)) {
+      return <AuthErrorOverlay error={error} />;
+    }
 
     return (
       <div className="error-container">
-        <h2>{isAuthError ? 'Session Expired' : 'Error Loading Data'}</h2>
+        <h2>Error Loading Data</h2>
         <p>{error}</p>
-        {!isAuthError && (
-          <button onClick={() => window.location.reload()}>Try Again</button>
-        )}
       </div>
     );
   }

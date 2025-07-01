@@ -63,7 +63,6 @@ const LoginPage = () => {
       tokenManager.setToken(data.token, data.expiresIn || 3600);
       localStorage.setItem(STORAGE_KEYS.USER_ID, data.userId);
 
-      // Dispatch login event to reset logout flag
       window.dispatchEvent(new CustomEvent('userLogin'));
 
       // Record GDPR processing activity
@@ -73,7 +72,10 @@ const LoginPage = () => {
         { userId: data.userId, loginTime: new Date().toISOString() }
       );
 
-      navigate("/home");
+      // Give the header component time to update before navigation
+      setTimeout(() => {
+        navigate("/home");
+      }, 100);
     } catch (error) {
       setError(error.message || "Login failed. Please try again.");
     } finally {

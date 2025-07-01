@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import LoadingScreen from "../ui/LoadingScreen";
+import AuthErrorOverlay from "../ui/AuthErrorOverlay";
 import StandardModal from "../shared/StandardModal";
 import Button from "../shared/Button";
 import "../../styles/shared/StandardModal.css";
 import { getFullImageUrl } from "../../services/utils";
 import { authAPI, vaultAPI } from "../../services/api";
-import { Link } from "react-router-dom";
+import { tokenManager } from "../../services/security";
+import { STORAGE_KEYS } from "../../services/constants";
+import { isAuthError } from "../../services/authErrorUtils";
 
 /**
  * SettingsPage component - user profile and account settings
@@ -25,6 +29,7 @@ const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch user data on component mount
@@ -40,7 +45,7 @@ const SettingsPage = () => {
           userId: data.id || "",
         }));
       } catch (err) {
-        setError("Failed to load user settings");
+        setError(err.message || err.toString());
       } finally {
         setLoading(false);
       }
@@ -101,11 +106,15 @@ const SettingsPage = () => {
 
   // Show error state
   if (error) {
+    // Check if this is an authentication error message
+    if (isAuthError(error)) {
+      return <AuthErrorOverlay error={error} />;
+    }
+
     return (
       <div className="error-container">
         <h2>Error Loading Settings</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Try Again</button>
       </div>
     );
   }

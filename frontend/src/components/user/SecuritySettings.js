@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '../shared/Button';
 import { gdprManager } from '../../services/gdpr';
 import { securityScanner, breachDetector } from '../../services/breachResponse';
@@ -9,7 +9,10 @@ import { getFullImageUrl } from '../../services/utils';
 import { SECURITY_ENDPOINTS } from '../../services/constants';
 import StandardModal from '../shared/StandardModal';
 import LoadingScreen from '../ui/LoadingScreen';
+import AuthErrorOverlay from '../ui/AuthErrorOverlay';
+import { isAuthError } from '../../services/authErrorUtils';
 import '../../styles/shared/StandardModal.css';
+import '../../styles/user/SecuritySettings.css';
 
 const SecuritySettings = () => {
   const [consentPreferences, setConsentPreferences] = useState({
@@ -42,6 +45,9 @@ const SecuritySettings = () => {
     profilePictureUrl: "",
   });
   const [userLoading, setUserLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -50,6 +56,7 @@ const SecuritySettings = () => {
         setUser(userData);
       } catch (error) {
         console.error('Failed to fetch user data:', error);
+        setError(error.message || error.toString());
       } finally {
         setUserLoading(false);
       }
@@ -212,6 +219,25 @@ const SecuritySettings = () => {
       setLoading(false);
     }
   };
+
+  // Show loading screen while fetching user data
+  if (userLoading) {
+    return <LoadingScreen message="Loading security settings..." />;
+  }
+
+  // Show error state for authentication issues
+  if (error) {
+    if (isAuthError(error)) {
+      return <AuthErrorOverlay error={error} />;
+    }
+
+    return (
+      <div className="error-container">
+        <h2>Error Loading Security Settings</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
     <StandardModal

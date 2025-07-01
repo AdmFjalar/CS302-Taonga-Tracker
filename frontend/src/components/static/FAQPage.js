@@ -10,7 +10,7 @@ const FAQPage = () => {
   return (
     <div className="faq-page">
       <h1>Frequently Asked Questions</h1>
-      <p className="last-updated">Last updated: 2025-06-28</p>
+      <p className="last-updated">Last updated: 2025-07-01</p>
 
       <div className="faq-intro">
         <p>
@@ -26,7 +26,7 @@ const FAQPage = () => {
             <p>
               Taonga Tracker is a family heritage application for documenting, organizing,
               and preserving heritage items and family relationships across generations.
-              It creates digital records of family heirlooms with photos, stories, and provenance information.
+              It creates digital records of family heirlooms with photos, stories, and other information.
             </p>
           </div>
         </div>
@@ -36,8 +36,8 @@ const FAQPage = () => {
           <div className="faq-answer">
             <p>
               Yes, this is an academic project developed for educational purposes and is
-              completely free to use. However, please note this is a prototype system
-              and not a commercial product.
+              completely free to use at this stage. However, please note this is a prototype system
+              and not a commercial product. This may change in the future.
             </p>
           </div>
         </div>
@@ -48,7 +48,7 @@ const FAQPage = () => {
             <p>
               Simply create an account by clicking "Sign Up" and start adding your family
               members and heirlooms. You can build your family tree and document your
-              heritage items with photos and descriptions.
+              heirlooms with photos and descriptions.
             </p>
           </div>
         </div>
@@ -59,7 +59,8 @@ const FAQPage = () => {
             <p>
               While we implement basic security measures, this is an academic project
               and may not have commercial-grade security. Please avoid uploading highly
-              sensitive personal information.
+              sensitive personal information. Data is encrypted in transit, but currently
+              not at rest.
             </p>
           </div>
         </div>
@@ -69,7 +70,7 @@ const FAQPage = () => {
           <div className="faq-answer">
             <p>
               Yes, you can export your family and heirloom data through the settings page.
-              This allows you to download your information in a readable format.
+              This allows you to download your information in JSON format.
             </p>
           </div>
         </div>
@@ -78,8 +79,9 @@ const FAQPage = () => {
           <h3>What file formats are supported for photos?</h3>
           <div className="faq-answer">
             <p>
-              The application supports common image formats including JPEG, PNG, and GIF.
-              For best results, use high-quality photos under 5MB in size.
+              The application supports common image formats including JPEG, PNG, and WEBP.
+              For best results, use high-quality photos under 5MB in size. Images are subject
+              to denial if they exceed the size limit or are marked as suspicious.
             </p>
           </div>
         </div>
@@ -89,7 +91,8 @@ const FAQPage = () => {
           <div className="faq-answer">
             <p>
               Currently, this MVP version focuses on individual family documentation.
-              Sharing features may be added in future versions of the project.
+              Sharing features may be added in future versions of the project. Fields
+              for sharing currently do not function.
             </p>
           </div>
         </div>
@@ -109,7 +112,7 @@ const FAQPage = () => {
           <div className="faq-answer">
             <p>
               Since this is an educational project, feedback can be provided through
-              the university's computer science department or project team members.
+              the email address provided in the contact footer.
             </p>
           </div>
         </div>

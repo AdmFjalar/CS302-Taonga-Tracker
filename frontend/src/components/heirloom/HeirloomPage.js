@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { ItemView, ItemEdit } from "./ItemPages";
 import AddItem from "./AddItem";
 import LoadingScreen from "../ui/LoadingScreen";
+import AuthErrorOverlay from "../ui/AuthErrorOverlay";
 import { getFullImageUrl } from "../../services/utils";
 import Button from "../shared/Button";
 import { HeirloomService } from "../../services/heirloom";
+import { tokenManager } from "../../services/security";
+import { STORAGE_KEYS } from "../../services/constants";
+import { isAuthError } from "../../services/authErrorUtils";
 import "../../styles/heirloom/HeirloomPage.css";
 
 /**
@@ -20,6 +25,7 @@ const HeirloomPage = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [wiggle, setWiggle] = useState(false);
   const wiggleTimeout = useRef();
+  const navigate = useNavigate();
 
   // Wiggle effect every 10 seconds
   useEffect(() => {
@@ -43,7 +49,7 @@ const HeirloomPage = () => {
         const data = await HeirloomService.getAllItems();
         setItems(data);
       } catch (err) {
-        setError(err.message || "Failed to fetch heirloom");
+        setError(err.message || err.toString());
       } finally {
         setLoading(false);
       }
@@ -85,6 +91,22 @@ const HeirloomPage = () => {
     }
   };
 
+  // Handle token expiration
+  useEffect(() => {
+    const handleTokenExpiration = (event) => {
+      if (event.key === STORAGE_KEYS.TOKEN_EXPIRED) {
+        // Token expired, navigate to login
+        navigate("/login");
+      }
+    };
+
+    window.addEventListener("storage", handleTokenExpiration);
+
+    return () => {
+      window.removeEventListener("storage", handleTokenExpiration);
+    };
+  }, [navigate]);
+
   // Show loading screen while fetching data
   if (loading) {
     return <LoadingScreen message="Loading your heirlooms..." />;
@@ -92,11 +114,15 @@ const HeirloomPage = () => {
 
   // Show error state
   if (error) {
+    // Check if this is an authentication error message
+    if (isAuthError(error)) {
+      return <AuthErrorOverlay error={error} />;
+    }
+
     return (
       <div className="error-container">
         <h2>Error Loading Heirlooms</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Try Again</button>
       </div>
     );
   }
