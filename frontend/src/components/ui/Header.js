@@ -252,11 +252,11 @@ const Header = () => {
                     <div className="about-dropdown" tabIndex={0}>
                         <span className="about-link">About Us ▾</span>
                         <div className="about-dropdown-menu">
-                            <Link to="/about" className="dropdown-item">About Page</Link>
-                            <Link to="/heirloom" className="dropdown-item">Heirlooms</Link>
-                            <Link to="/family" className="dropdown-item">Family Tree</Link>
-                            <Link to="/login" className="dropdown-item">Sign in</Link>
-                            <Link to="/register" className="dropdown-item">Sign up</Link>
+                            <Link to="/about" className="dropdown-item">About Us</Link>
+                            <Link to="/faq" className="dropdown-item">FAQ</Link>
+                            <Link to="/terms" className="dropdown-item">Terms & Conditions</Link>
+                            <Link to="/privacy" className="dropdown-item">Privacy Policy</Link>
+                            <Link to="/sitemap" className="dropdown-item">Sitemap</Link> 
                         </div>
                     </div>
                     <Link to="/login" className="signin-link">

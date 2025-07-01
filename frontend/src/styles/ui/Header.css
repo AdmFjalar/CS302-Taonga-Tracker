@@ -243,6 +243,7 @@
   align-items: center;
   justify-content: center;
 }
+
 /* About dropdown styles */
 .about-dropdown {
     position: relative;
@@ -253,6 +254,9 @@
 .about-link {
     padding: 0.5rem 1rem;
     font-weight: 500;
+    color: var(--color-primary-700);
+    font-family: var(--font-secondary);
+    font-size: var(--text-base);
     color: #333;
     background: none;
     border: none;
