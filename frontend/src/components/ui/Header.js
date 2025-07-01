@@ -11,6 +11,7 @@ import "../../styles/ui/Header.css";
  * Navigation items configuration (moved from sidebar)
  */
 const NAV_ITEMS = [
+  { path: "/home", label: "Home" }, // Added Home link
   { path: "/heirloom", label: "Heirlooms" },
   { path: "/family", label: "Family Tree" }
 ];
@@ -207,7 +208,6 @@ const Header = () => {
                             </NavLink>
                         ))}
                     </nav>
-
                     <div className="header-icons">
                         <div
                             className="avatar-dropdown"
@@ -247,8 +247,18 @@ const Header = () => {
                     </div>
                 </div>
             ) : (
-                // Show authentication buttons for unauthenticated users
+                // Show authentication buttons and About Us dropdown for unauthenticated users
                 <div className="auth-links">
+                    <div className="about-dropdown" tabIndex={0}>
+                        <span className="about-link">About Us ▾</span>
+                        <div className="about-dropdown-menu">
+                            <Link to="/about" className="dropdown-item">About Page</Link>
+                            <Link to="/heirloom" className="dropdown-item">Heirlooms</Link>
+                            <Link to="/family" className="dropdown-item">Family Tree</Link>
+                            <Link to="/login" className="dropdown-item">Sign in</Link>
+                            <Link to="/register" className="dropdown-item">Sign up</Link>
+                        </div>
+                    </div>
                     <Link to="/login" className="signin-link">
                         Sign in
                     </Link>
