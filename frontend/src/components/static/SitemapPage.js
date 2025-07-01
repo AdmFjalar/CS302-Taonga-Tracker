@@ -18,54 +18,54 @@ const SitemapPage = () => {
         <div className="sitemap-section">
           <h2>Main Pages</h2>
           <ul className="sitemap-list">
-            <li><Link to="/">Home</Link> - Welcome page and overview</li>
-            <li><Link to="/login">Login</Link> - Sign in to your account</li>
-            <li><Link to="/register">Register</Link> - Create a new account</li>
+            <li><Link to="/" className="sitemap-link">Home <span className="sitemap-description">- Welcome page and overview</span></Link></li>
+            <li><Link to="/login" className="sitemap-link">Login <span className="sitemap-description">- Sign in to your account</span></Link></li>
+            <li><Link to="/register" className="sitemap-link">Register <span className="sitemap-description">- Create a new account</span></Link></li>
           </ul>
         </div>
 
         <div className="sitemap-section">
           <h2>User Dashboard</h2>
           <ul className="sitemap-list">
-            <li><Link to="/home">Dashboard</Link> - Main user dashboard with statistics</li>
-            <li><Link to="/settings">Settings</Link> - Account settings and preferences</li>
-            <li><Link to="/security">Security</Link> - Security settings and privacy controls</li>
+            <li><Link to="/home" className="sitemap-link">Dashboard <span className="sitemap-description">- Main user dashboard with statistics</span></Link></li>
+            <li><Link to="/settings" className="sitemap-link">Settings <span className="sitemap-description">- Account settings and preferences</span></Link></li>
+            <li><Link to="/security" className="sitemap-link">Security <span className="sitemap-description">- Security settings and privacy controls</span></Link></li>
           </ul>
         </div>
 
         <div className="sitemap-section">
           <h2>Family Management</h2>
           <ul className="sitemap-list">
-            <li><Link to="/family">Family Tree</Link> - Interactive family tree visualization</li>
+            <li><Link to="/family" className="sitemap-link">Family Tree <span className="sitemap-description">- Interactive family tree visualization</span></Link></li>
           </ul>
         </div>
 
         <div className="sitemap-section">
           <h2>Heirloom Collection</h2>
           <ul className="sitemap-list">
-            <li><Link to="/heirloom">Heirloom Collection</Link> - View and manage your heirlooms</li>
+            <li><Link to="/heirloom" className="sitemap-link">Heirloom Collection <span className="sitemap-description">- View and manage your heirlooms</span></Link></li>
           </ul>
         </div>
 
         <div className="sitemap-section">
           <h2>Information Pages</h2>
           <ul className="sitemap-list">
-            <li><Link to="/about">About</Link> - About Taonga Tracker and the project</li>
-            <li><Link to="/faq">FAQ</Link> - Frequently asked questions</li>
-            <li><Link to="/terms">Terms & Conditions</Link> - Terms of use</li>
-            <li><Link to="/privacy">Privacy Policy</Link> - Privacy policy and data handling</li>
-            <li><Link to="/sitemap">Sitemap</Link> - This page</li>
+            <li><Link to="/about" className="sitemap-link">About <span className="sitemap-description">- About Taonga Tracker and the project</span></Link></li>
+            <li><Link to="/faq" className="sitemap-link">FAQ <span className="sitemap-description">- Frequently asked questions</span></Link></li>
+            <li><Link to="/terms" className="sitemap-link">Terms & Conditions <span className="sitemap-description">- Terms of use</span></Link></li>
+            <li><Link to="/privacy" className="sitemap-link">Privacy Policy <span className="sitemap-description">- Privacy policy and data handling</span></Link></li>
+            <li><Link to="/sitemap" className="sitemap-link">Sitemap <span className="sitemap-description">- This page</span></Link></li>
           </ul>
         </div>
 
         <div className="sitemap-section">
           <h2>Key Features</h2>
           <ul className="sitemap-list">
-            <li>Family Tree Visualization - Interactive family member connections</li>
-            <li>Heirloom Documentation - Photo and story preservation</li>
-            <li>Secure User Accounts - Personal data protection</li>
-            <li>Data Export - Download your family heritage data</li>
-            <li>GDPR Compliance - Privacy controls and consent management</li>
+            <li><span className="sitemap-feature">Family Tree Visualization <span className="sitemap-description">- Interactive family member connections</span></span></li>
+            <li><span className="sitemap-feature">Heirloom Documentation <span className="sitemap-description">- Photo and story preservation</span></span></li>
+            <li><span className="sitemap-feature">Secure User Accounts <span className="sitemap-description">- Personal data protection</span></span></li>
+            <li><span className="sitemap-feature">Data Export <span className="sitemap-description">- Download your family heritage data</span></span></li>
+            <li><span className="sitemap-feature">GDPR Compliance <span className="sitemap-description">- Privacy controls and consent management</span></span></li>
           </ul>
         </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/static/PrivacyPage.css';
+import '../../styles/static/StaticPage.css';
 
 /**
  * Privacy policy page component.
@@ -8,8 +8,8 @@ import '../../styles/static/PrivacyPage.css';
  */
 const PrivacyPage = () => {
   return (
-    <div className="privacy-page">
-      <div className="privacy-container">
+    <div className="static-page">
+      <div className="static-content">
         <h1>Privacy Policy</h1>
         <p className="last-updated">Last updated: 2025-06-28</p>
 
