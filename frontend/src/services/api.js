@@ -107,7 +107,37 @@ async function apiCall(url, options = {}) {
       throw new Error(`API Error: ${response.status} - ${errorText}`);
     }
 
-    return await response.json();
+    // Handle successful DELETE responses which often return empty bodies
+    if (response.status === 204) {
+      return null;
+    }
+
+    // Check content type and length headers
+    const contentType = response.headers.get('content-type');
+    const contentLength = response.headers.get('content-length');
+
+    // If no content type is specified or it's not JSON, and content length is 0 or not specified
+    if ((!contentType || !contentType.includes('application/json')) &&
+        (contentLength === '0' || contentLength === null)) {
+      return null;
+    }
+
+    // Clone the response to safely check if it's empty
+    const responseClone = response.clone();
+    const responseText = await responseClone.text();
+
+    if (!responseText || responseText.trim() === '') {
+      return null;
+    }
+
+    // Parse as JSON if we have content
+    try {
+      return JSON.parse(responseText);
+    } catch (jsonError) {
+      // If JSON parsing fails but we have text content, return the text as-is
+      console.warn('Failed to parse response as JSON, returning as text:', jsonError);
+      return responseText;
+    }
   } catch (error) {
     if (error.name === 'AbortError') {
       throw new Error('Request timeout. Please try again.');
