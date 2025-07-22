@@ -4,7 +4,7 @@ using TaongaTrackerAPI.Services;
 
 namespace TaongaTrackerAPI.Data;
 
-public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>, IUserEmailStore<ApplicationUser>
+public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<ApplicationUser>, IUserEmailStore<ApplicationUser>, IUserSecurityStampStore<ApplicationUser>, IUserTwoFactorStore<ApplicationUser>
 {
     private readonly INeo4jService Neo4jService;
 
@@ -13,7 +13,7 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
         Neo4jService = neo4JService;
     }
 
-    public Task<string> GetPasswordHashAsync(ApplicationUser user, CancellationToken cancellationToken)
+    public Task<string?> GetPasswordHashAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
         return Task.FromResult(user.PasswordHash);
     }
@@ -23,7 +23,7 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
         return Task.FromResult(!string.IsNullOrEmpty(user.PasswordHash));
     }
 
-    public Task SetPasswordHashAsync(ApplicationUser user, string passwordHash, CancellationToken cancellationToken)
+    public Task SetPasswordHashAsync(ApplicationUser user, string? passwordHash, CancellationToken cancellationToken)
     {
         user.PasswordHash = passwordHash;
         return Task.CompletedTask;
@@ -40,7 +40,7 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
         return await Task.FromResult(user.NormalizedUserName);
     }
 
-    public Task SetNormalizedUserNameAsync(ApplicationUser user, string normalizedName,
+    public Task SetNormalizedUserNameAsync(ApplicationUser user, string? normalizedName,
         CancellationToken cancellationToken)
     {
         user.NormalizedUserName = normalizedName;
@@ -52,7 +52,7 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
         return await Task.FromResult(user.UserName);
     }
 
-    public Task SetUserNameAsync(ApplicationUser user, string userName, CancellationToken cancellationToken)
+    public Task SetUserNameAsync(ApplicationUser user, string? userName, CancellationToken cancellationToken)
     {
         user.UserName = userName;
         return Task.CompletedTask;
@@ -114,7 +114,7 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
         await Task.CompletedTask;
     }
 
-    public async Task<ApplicationUser> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
+    public async Task<ApplicationUser?> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken)
     {
         var user = await Neo4jService.FindUserByEmailAsync(normalizedEmail, cancellationToken);
         return user;
@@ -144,5 +144,28 @@ public class UserStore : IUserStore<ApplicationUser>, IUserPasswordStore<Applica
     public Task<string> GetLastNameAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
         return Task.FromResult(user.LastName);
+    }
+
+    public Task<string?> GetSecurityStampAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(user.SecurityStamp);
+    }
+
+    public Task SetSecurityStampAsync(ApplicationUser user, string stamp, CancellationToken cancellationToken)
+    {
+        user.SecurityStamp = stamp;
+        return Task.CompletedTask;
+    }
+
+    // IUserTwoFactorStore implementation
+    public Task SetTwoFactorEnabledAsync(ApplicationUser user, bool enabled, CancellationToken cancellationToken)
+    {
+        user.TwoFactorEnabled = enabled;
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> GetTwoFactorEnabledAsync(ApplicationUser user, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(user.TwoFactorEnabled);
     }
 }

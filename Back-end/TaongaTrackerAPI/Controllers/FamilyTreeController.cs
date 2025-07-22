@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using TaongaTrackerAPI.Models;
 using TaongaTrackerAPI.Services;
 
@@ -10,30 +11,24 @@ namespace TaongaTrackerAPI.Controllers
     [Authorize]
     public class FamilyTreeController : ControllerBase
     {
-        private readonly INeo4jService Neo4jService;
-        
+        private readonly INeo4jService _neo4jService;
+
         public FamilyTreeController(INeo4jService neo4jService)
         {
-            Neo4jService = neo4jService;
+            _neo4jService = neo4jService;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<FamilyMemberDto>> CreateFamilyTreeFromJsonAsync([FromBody] string jsonRequest)
+        /// <summary>
+        /// Gets the user's family tree with all members and relationships.
+        /// </summary>
+        [HttpGet("me")]
+        public async Task<ActionResult<FamilyTreeDto>> GetMyFamilyTree()
         {
-            await Neo4jService.CreateFamilyTreeFromJsonAsync(jsonRequest);
-            return Ok();
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null) return Unauthorized();
+
+            var tree = await _neo4jService.GetUserFamilyTreeAsync(userId);
+            return Ok(tree);
         }
-        // public async Task<ActionResult<FamilyMemberDto>> CreateFamilyMember(FamilyMemberDto familyMember)
-        // {
-        //     await Neo4jService.CreateFamilyMemberAsync(familyMember);
-        //     return Ok(familyMember);
-        // }
-        
-        [HttpGet]
-        public async Task<ActionResult<List<FamilyTreeDto>>> GetAllFamilyTrees()
-        {
-            var familyTrees = await Neo4jService.GetAllFamilyTreesAsync();
-            return Ok(familyTrees);
-        }
-    }   
+    }
 }

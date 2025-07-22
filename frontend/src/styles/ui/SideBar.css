@@ -1,0 +1,60 @@
+.sidebar {
+  width: fit-content;
+  background-color: transparent; /* Made transparent */
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: sticky;
+  top: 80px; /* Distance from viewport top when stuck at header */
+  bottom: 80px; /* Distance from viewport bottom when stuck at footer */
+  left: 0;
+  height: calc(100vh - 160px); /* Available height between constraints */
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  z-index: 1000;
+  pointer-events: auto; /* Re-enable pointer events for sidebar itself */
+  align-self: flex-start; /* Important: makes sticky behavior work properly */
+  float: left; /* This helps with the sticky behavior */
+  margin-right: -200px; /* Negative margin to not affect layout flow */
+}
+
+.sidebar-title {
+  font-family: var(--font-secondary);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-primary-500);
+  margin-bottom: 11.8rem;
+  width: auto;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2.7rem;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-primary-500);
+}
+
+.nav-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-link.active {
+  text-decoration: underline;
+}
+
+.signout-button {
+  background-color: var(--color-primary-700);
+  color: var(--color-neutral-white);
+  border-radius: 9999px;
+  padding: 0.5rem 1.5rem;
+  font-size: var(--text-md);
+  transition: background 0.2s ease;
+}
+
+.signout-button:hover {
+  background-color: var(--color-primary-600);
+}

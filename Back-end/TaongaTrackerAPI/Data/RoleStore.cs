@@ -25,17 +25,17 @@ public class RoleStore : IRoleStore<ApplicationRole>
         throw new NotImplementedException();
     }
 
-    public async Task SetNormalizedRoleNameAsync(ApplicationRole role, string? normalizedName, CancellationToken cancellationToken)
+    public Task SetNormalizedRoleNameAsync(ApplicationRole role, string? normalizedName, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ApplicationRole> FindByIdAsync(string roleId, CancellationToken cancellationToken)
+    public Task<ApplicationRole?> FindByIdAsync(string roleId, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ApplicationRole> FindByNameAsync(string normalizedRoleName, CancellationToken cancellationToken)
+    public Task<ApplicationRole?> FindByNameAsync(string normalizedRoleName, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -45,18 +45,18 @@ public class RoleStore : IRoleStore<ApplicationRole>
         return Task.FromResult(role.Id);
     }
 
-    public Task<string> GetRoleNameAsync(ApplicationRole role, CancellationToken cancellationToken)
+    public Task<string?> GetRoleNameAsync(ApplicationRole role, CancellationToken cancellationToken)
     {
-        return Task.FromResult(role.Name);
+        return Task.FromResult<string?>(role.Name);
     }
 
-    public Task SetRoleNameAsync(ApplicationRole role, string roleName, CancellationToken cancellationToken)
+    public Task SetRoleNameAsync(ApplicationRole role, string? roleName, CancellationToken cancellationToken)
     {
-        role.Name = roleName;
+        role.Name = roleName ?? string.Empty;
         return Task.CompletedTask;
     }
 
-    public async Task<string?> GetNormalizedRoleNameAsync(ApplicationRole role, CancellationToken cancellationToken)
+    public Task<string?> GetNormalizedRoleNameAsync(ApplicationRole role, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -68,6 +68,6 @@ public class RoleStore : IRoleStore<ApplicationRole>
 
     public void Dispose()
     {
-        // Dispose resources if needed
+        // Nothing to dispose
     }
 }

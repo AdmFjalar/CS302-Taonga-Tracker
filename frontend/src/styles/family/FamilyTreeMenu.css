@@ -1,0 +1,71 @@
+.family-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--color-overlay);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.family-modal {
+    background: var(--color-secondary-100);
+    border-radius: 18px;
+    box-shadow: 0 8px 32px 0 var(--color-shadow-dark), 0 2px 8px 0 var(--color-shadow-medium);
+    padding: 2.5rem 2.2rem 2rem 2.2rem;
+    min-width: 370px;
+    max-width: 95vw;
+    max-height: 95vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    font-family: var(--font-primary);
+}
+
+.family-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.family-modal-img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: var(--color-secondary-200);
+    border: 1.5px solid var(--color-secondary-300);
+}
+
+.family-modal-rel {
+    font-size: var(--text-md);
+    color: var(--color-primary-400);
+    margin-top: 0.2rem;
+}
+
+.family-modal-dob {
+    font-size: var(--text-base);
+    color: var(--color-secondary-300);
+    margin-top: 0.1rem;
+}
+
+.family-modal-details {
+    font-size: var(--text-base);
+    color: var(--color-primary-500);
+    background: var(--color-primary-100);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.family-modal-actions {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: flex-end;
+    margin-top: 1.2rem;
+}

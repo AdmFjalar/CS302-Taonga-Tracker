@@ -1,37 +1,47 @@
-.sidebar {
-    width: 200px;
-    background-color: #f3f4ec;
-    padding: 1rem;
-  }
-  
-  .header {
-    display: flex;
-    justify-content: flex-end;
-    padding: 1rem;
-    background-color: #b5b690;
-  }
-  
-  .card-container {
-    display: flex;
-    gap: 2rem;
-    margin: 2rem;
-  }
-  
-  .card {
-    background-color: #6b5843;
-    color: white;
-    width: 300px;
-    height: 200px;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-  }
-  
-  .placeholder-image {
-    flex: 1;
-    background-color: #5c4a35;
-    margin-bottom: 0.5rem;
-  }
-  
-  
+/**
+ * Main application styles and layout structure.
+ * Defines global layout patterns and base styling for the Taonga Tracker app.
+ */
+
+@import './styles/fonts.css';
+
+/* Global layout foundation */
+#root {
+  min-height: 100vh;
+  position: relative;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Main authenticated layout */
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+}
+
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  position: relative;
+}
+
+/* Authentication pages layout */
+.auth-page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
